@@ -17,7 +17,7 @@ setup(
     license='GPL-3.0',
     classifiers=[
         'License :: OSI Approved :: GPL-3.0',
-        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3',
         'Operating System :: OS Independent',
     ],
     install_requires=['pandas>=2'], # Might need review
