@@ -1,0 +1,16 @@
+{
+    "pylint.args": [
+    ],
+    // ↓ Change to "Hint" to not show spell checker in problems
+    "cSpell.diagnosticLevel": "Information",
+    "black-formatter.args": [
+        "--skip-string-normalization",
+        "--line-length=100"
+    ],
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "autoDocstring": {
+        "docstringFormat": "numpy"
+    }
+}
