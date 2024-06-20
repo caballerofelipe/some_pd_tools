@@ -1,4 +1,4 @@
-# pd_tools
+# some_pd_tools
 Some Pandas tools like compare and number formatting.
 
 # Install
@@ -9,7 +9,7 @@ pip install pd-tools
 # pd_compare
 Usage:
 ```python
-from pd_tools import pd_compare
+from some_pd_tools import pd_compare
 pd_compare.compare(
     df1, # First DataFrame
     df1_name, # First DataFrame name to be displayed
@@ -77,7 +77,7 @@ diff_original_vals_df: A DataFrame where differences where found but with the or
 # pd_format
 Usage:
 ```python
-from pd_tools import pd_format
+from some_pd_tools import pd_format
 pd_format.format_nums(
     df, # DataFrame to format
     thousands, # Whether to add a thousands separator

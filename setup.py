@@ -4,14 +4,14 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='pd_tools',
+    name='some_pd_tools',
     version='0.1.0',
     description='Some tools to be used with Pandas.',
     package_dir={'': 'packages'},
     packages=find_packages(where='packages'),
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/caballerofelipe/pd_tools',
+    url='https://github.com/caballerofelipe/some_pd_tools',
     author='Felipe Caballero',
     # author_email='mail@mail.mail',
     license='GPL-3.0',
