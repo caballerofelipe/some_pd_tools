@@ -267,6 +267,7 @@ def compare(
     joined_df[new_diff_columns] = ''
 
     for col in diff_columns:
+        # TODO: This equality must check for nan equality
         diff_rows_for_col_mask = joined_df[f'{col}_{df1_name}'] != joined_df[f'{col}_{df2_name}']
         joined_df.loc[diff_rows_for_col_mask, f'{col}_diff'] = 'diff'
 
@@ -280,7 +281,7 @@ def compare(
     # Different columns with different rows
     diff_df = joined_df.loc[diff_rows, all_diff_cols]
 
-    # Creating a DataFrame where differenes where found but with the original values
+    # Creating a DataFrame where differences where found but with the original values
     diff_original_vals_df = pd.merge(
         df1.loc[diff_rows, diff_columns],
         df2.loc[diff_rows, diff_columns],
