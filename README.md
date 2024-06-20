@@ -3,7 +3,7 @@ Some Pandas tools like compare and number formatting.
 
 # Install
 ```shell
-pip install pd-tools
+pip install some-pd-tools
 ```
 
 # pd_compare
