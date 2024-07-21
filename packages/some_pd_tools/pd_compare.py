@@ -13,7 +13,6 @@ __all__ = ['compare', 'compare_lists', 'compare_dtypes']
 
 _ = '''
 TODO 2024-06-27:
-- From `compare_lists()` remove the returned list1_dups_common, list2_dups_common.
   These should be computed manually with the other returned values.
 - Add functions for where large code is done to keep code cleaner.
 - Populate metadata while advancing, if a return is done, test metadata with pytest
@@ -22,7 +21,7 @@ TODO 2024-06-27:
 - Add doctrings.
 - When using the original DataFrames, not the ones copied, be aware that the columns on the copies where sorted.
   Check if this is a problem somehow.
-- Think if maybe a parameter should exist to do an orderd copy or not (columns and indexes).
+- Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
 '''
 
 
@@ -195,13 +194,17 @@ def compare_lists(
     list1_set = set(list1)
     list2_set = set(list2)
     # Items that exist only in either list
-    list1_exclusives = list1_set - list2_set
-    list2_exclusives = list2_set - list1_set
-    items_in_both = set(list1_set - list1_exclusives)
-    list1_dups = {i: q for i, q in Counter(list1).items() if q > 1}
-    list2_dups = {i: q for i, q in Counter(list2).items() if q > 1}
-    list1_dups_common = {i: q for i, q in Counter(list1).items() if q > 1 and i in items_in_both}
-    list2_dups_common = {i: q for i, q in Counter(list2).items() if q > 1 and i in items_in_both}
+    list1_exclusives_set = list1_set - list2_set
+    list2_exclusives_set = list2_set - list1_set
+    items_in_both_set = set(list1_set - list1_exclusives_set)
+    list1_dups_dict = {i: q for i, q in Counter(list1).items() if q > 1}
+    list2_dups_dict = {i: q for i, q in Counter(list2).items() if q > 1}
+    list1_dups_set = set(list1_dups_dict)
+    list2_dups_set = set(list2_dups_dict)
+    list1_dups_exclusive_set = list1_dups_set - items_in_both_set
+    list2_dups_exclusive_set = list2_dups_set - items_in_both_set
+    list1_dups_common_set = list1_dups_set.intersection(list2_dups_set)
+    list2_dups_common_set = list2_dups_set.intersection(list1_dups_set)
 
     # Report
     # ************************************
@@ -209,11 +212,11 @@ def compare_lists(
         _print_title(1, f'Comparing {type_name_plural}')
         if list1 == list2:
             _print_event(1, f'✅ {type_name_plural.capitalize()} equal')
-            if len(list1_dups) == 0:
+            if len(list1_dups_dict) == 0:
                 _print_event(1, f'✅ No duplicate {type_name_plural}')
             else:
                 _print_event(1, f'😓 Duplicate {type_name_plural} (value:count):')
-                _pprint(1, list1_dups)
+                _pprint(1, list1_dups_dict)
         else:
             _print_event(1, f'😓 {type_name_plural.capitalize()} not equal')
 
@@ -225,45 +228,65 @@ def compare_lists(
                 lgnd_maxlen = max(len(list1_name), len(list2_name))
                 _print_event(2, f'{list1_name:>{lgnd_maxlen}}: {len(list1)}')
                 _print_event(2, f'{list2_name:>{lgnd_maxlen}}: {len(list2)}')
+            
+            if len(items_in_both_set) > 0:
+                _print_event(1, f'✅ {type_name_plural.capitalize()} in common:')
+                _pprint(1, items_in_both_set)
+            else:
+                _print_event(1, f'😓 No {type_name_plural} in common')
 
             # Print specifics for each list
-            for name, exclusive_items, dups, dups_common in (
-                (list1_name, list1_exclusives, list1_dups, list1_dups_common),
-                (list2_name, list2_exclusives, list2_dups, list2_dups_common),
+            for name, exclusive_items, dups, dups_exclusive, dups_common in (
+                (
+                    list1_name,
+                    list1_exclusives_set,
+                    list1_dups_dict,
+                    list1_dups_exclusive_set,
+                    list1_dups_common_set,
+                ),
+                (
+                    list2_name,
+                    list2_exclusives_set,
+                    list2_dups_dict,
+                    list2_dups_exclusive_set,
+                    list2_dups_common_set,
+                ),
             ):
                 _print_event(1, f'{name}')  # List name
-                # Exclusive items
+                # Print exclusive items
                 if len(exclusive_items) == 0:
                     _print_event(2, f'✅ No exclusive {type_name_plural}')
                 else:
                     _print_event(2, f'😓 Exclusive {type_name_plural}:')
                     _pprint(2, exclusive_items)
-                # Duplicates
+                # Print duplicates
                 if len(dups) == 0:
                     _print_event(2, f'✅ No duplicate {type_name_plural}')
                 else:
+                    # Print value and the number of times duplicated
                     _print_event(2, f'😓 Duplicate {type_name_plural} (value:count):')
                     _pprint(2, dups)
-                # Duplicates also in common items
-                if len(dups_common) == 0:
-                    _print_event(2, f'✅ No duplicate {type_name_plural} also common')
-                else:
-                    _print_event(
-                        2,
-                        f'😓 Duplicate {type_name_plural} also common (value:count):',
-                    )
-                    _pprint(2, dups_common)
+                    # Print duplicates exclusive items, value list only
+                    if len(dups_exclusive) == 0:
+                        _print_event(2, f'✅ No duplicate {type_name_plural} exclusive')
+                    else:
+                        _print_event(2, f'😓 Duplicate {type_name_plural} exclusive:')
+                        _pprint(2, dups_exclusive)
+                    # Print duplicates in common items, value list only
+                    if len(dups_common) == 0:
+                        _print_event(2, f'✅ No duplicate {type_name_plural} in common')
+                    else:
+                        _print_event(2, f'😓 Duplicate {type_name_plural} in common:')
+                        _pprint(2, dups_common)
 
     # Return
     # ************************************
     return (
-        items_in_both,
-        list1_exclusives,
-        list2_exclusives,
-        list1_dups,
-        list2_dups,
-        list1_dups_common,
-        list2_dups_common,
+        items_in_both_set,
+        list1_exclusives_set,
+        list2_exclusives_set,
+        list1_dups_dict,
+        list2_dups_dict,
     )
 
 
@@ -296,17 +319,18 @@ def compare_dtypes(
         df2_extra_cols_set,
         df1_dups_cols_dict,
         df2_dups_cols_dict,
-        df1_dups_cols_common_dict,
-        df2_dups_cols_common_dict,
     ) = compare_lists(
         list1=list(df1.columns),
         list2=list(df2.columns),
-        # list1_name=df1_name,
-        # list2_name=df2_name,
-        # type_name='column',
-        # type_name_plural='columns',
-        # report=report,
+        report=False,
     )
+    # Duplicate columns dictionaries containing only common elements
+    df1_dups_cols_common_dict = {
+        val: count for val, count in df1_dups_cols_dict.items() if val in common_cols_set
+    }
+    df2_dups_cols_common_dict = {
+        val: count for val, count in df2_dups_cols_dict.items() if val in common_cols_set
+    }
     if df1_dups_cols_common_dict != df2_dups_cols_common_dict:
         raise ValueError('Duplicate common columns found but duplicates don\'t match.')
 
@@ -447,8 +471,6 @@ def compare(
             df2_extra_cols_set,
             df1_dups_cols_dict,
             df2_dups_cols_dict,
-            df1_dups_cols_common_dict,
-            df2_dups_cols_common_dict,
         ) = compare_lists(
             list1=list(df1_cp.columns),
             list2=list(df2_cp.columns),
@@ -458,6 +480,13 @@ def compare(
             type_name_plural='columns',
             report=report,
         )
+    # Duplicate columns dictionaries containing only common elements
+    df1_dups_cols_common_dict = {
+        val: count for val, count in df1_dups_cols_dict.items() if val in common_cols_set
+    }
+    df2_dups_cols_common_dict = {
+        val: count for val, count in df2_dups_cols_dict.items() if val in common_cols_set
+    }
     equality_metadata = {
         **equality_metadata,
         'common_cols_set': common_cols_set,
@@ -495,8 +524,6 @@ def compare(
             df2_extra_idxs_set,
             df1_dups_idxs_dict,
             df2_dups_idxs_dict,
-            df1_dups_idxs_common_dict,
-            df2_dups_idxs_common_dict,
         ) = compare_lists(
             list1=list(df1_cp.index),
             list2=list(df2_cp.index),
@@ -506,6 +533,13 @@ def compare(
             type_name_plural='indexes',
             report=report,
         )
+    # Duplicate indexes dictionaries containing only common elements
+    df1_dups_idxs_common_dict = {
+        val: count for val, count in df1_dups_idxs_dict.items() if val in common_idxs_set
+    }
+    df2_dups_idxs_common_dict = {
+        val: count for val, count in df2_dups_idxs_dict.items() if val in common_idxs_set
+    }
     equality_metadata = {
         **equality_metadata,
         'common_idxs_set': common_idxs_set,

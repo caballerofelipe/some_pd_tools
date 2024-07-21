@@ -109,16 +109,12 @@ def test__compare_lists__equal_lists_no_dups():
         list2_exclusives,
         list1_dups,
         list2_dups,
-        list1_dups_common,
-        list2_dups_common,
     ) = returned
     assert items_in_both == {1, 2, 's'}
     assert list1_exclusives == set()
     assert list2_exclusives == set()
     assert list1_dups == {}
     assert list2_dups == {}
-    assert list1_dups_common == {}
-    assert list2_dups_common == {}
     io_predicted_str = _return_printed_title(1, 'Comparing someitems')
     io_predicted_str += _return_printed_event(1, '✅ Someitems equal')
     io_predicted_str += _return_printed_event(1, '✅ No duplicate someitems')
@@ -139,16 +135,12 @@ def test__compare_lists__equal_lists_no_dups():
         list2_exclusives,
         list1_dups,
         list2_dups,
-        list1_dups_common,
-        list2_dups_common,
     ) = returned
     assert items_in_both == {1, 2, 's'}
     assert list1_exclusives == set()
     assert list2_exclusives == set()
     assert list1_dups == {}
     assert list2_dups == {}
-    assert list1_dups_common == {}
-    assert list2_dups_common == {}
     io_predicted_str = ''
     assert io_predicted_str == io_out
 
@@ -170,16 +162,12 @@ def test__compare_lists__equal_lists_w_dups():
         list2_exclusives,
         list1_dups,
         list2_dups,
-        list1_dups_common,
-        list2_dups_common,
     ) = returned
     assert items_in_both == {1, 2, 's'}
     assert list1_exclusives == set()
     assert list2_exclusives == set()
     assert list1_dups == {1: 4, 2: 3, 's': 2}
     assert list2_dups == {1: 4, 2: 3, 's': 2}
-    assert list1_dups_common == {1: 4, 2: 3, 's': 2}
-    assert list2_dups_common == {1: 4, 2: 3, 's': 2}
     io_predicted_str = _return_printed_title(1, 'Comparing someitems')
     io_predicted_str += _return_printed_event(1, '✅ Someitems equal')
     io_predicted_str += _return_printed_event(1, '😓 Duplicate someitems (value:count):')
@@ -201,16 +189,12 @@ def test__compare_lists__equal_lists_w_dups():
         list2_exclusives,
         list1_dups,
         list2_dups,
-        list1_dups_common,
-        list2_dups_common,
     ) = returned
     assert items_in_both == {1, 2, 's'}
     assert list1_exclusives == set()
     assert list2_exclusives == set()
     assert list1_dups == {1: 4, 2: 3, 's': 2}
     assert list2_dups == {1: 4, 2: 3, 's': 2}
-    assert list1_dups_common == {1: 4, 2: 3, 's': 2}
-    assert list2_dups_common == {1: 4, 2: 3, 's': 2}
     io_predicted_str = ''
     assert io_predicted_str == io_out
 
@@ -232,31 +216,27 @@ def test__compare_lists__diff_lists_no_dups():
         list2_exclusives,
         list1_dups,
         list2_dups,
-        list1_dups_common,
-        list2_dups_common,
     ) = returned
     assert items_in_both == {'s'}
     assert list1_exclusives == {1, 2}
     assert list2_exclusives == {3, 4, 5}
     assert list1_dups == {}
     assert list2_dups == {}
-    assert list1_dups_common == {}
-    assert list2_dups_common == {}
     io_predicted_str = _return_printed_title(1, 'Comparing someitems')
     io_predicted_str += _return_printed_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_printed_event(1, '😓 Someitems lengths don\'t match')
     io_predicted_str += _return_printed_event(2, 'list1: 3')
     io_predicted_str += _return_printed_event(2, 'list2: 4')
+    io_predicted_str += _return_printed_event(1, '✅ Someitems in common:')
+    io_predicted_str += _return_pprinted(1, {'s'})
     io_predicted_str += _return_printed_event(1, 'list1')
     io_predicted_str += _return_printed_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprinted(2, {1, 2})
     io_predicted_str += _return_printed_event(2, '✅ No duplicate someitems')
-    io_predicted_str += _return_printed_event(2, '✅ No duplicate someitems also common')
     io_predicted_str += _return_printed_event(1, 'list2')
     io_predicted_str += _return_printed_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprinted(2, {3, 4, 5})
     io_predicted_str += _return_printed_event(2, '✅ No duplicate someitems')
-    io_predicted_str += _return_printed_event(2, '✅ No duplicate someitems also common')
     assert io_predicted_str == io_out
     # No report
     # ************************************
@@ -274,21 +254,19 @@ def test__compare_lists__diff_lists_no_dups():
         list2_exclusives,
         list1_dups,
         list2_dups,
-        list1_dups_common,
-        list2_dups_common,
     ) = returned
     assert items_in_both == {'s'}
     assert list1_exclusives == {1, 2}
     assert list2_exclusives == {3, 4, 5}
     assert list1_dups == {}
     assert list2_dups == {}
-    assert list1_dups_common == {}
-    assert list2_dups_common == {}
     io_predicted_str = ''
     assert io_predicted_str == io_out
 
 
 def test__compare_lists__diff_lists_w_dups():
+    # With something in common
+    # ************************************
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare_lists,
         [1, 2, 's', 2, 2, 1, 1, 1, 's'],
@@ -303,39 +281,82 @@ def test__compare_lists__diff_lists_w_dups():
         list2_exclusives,
         list1_dups,
         list2_dups,
-        list1_dups_common,
-        list2_dups_common,
     ) = returned
     assert items_in_both == {'s'}
     assert list1_exclusives == {1, 2}
     assert list2_exclusives == {3, 4}
     assert list1_dups == {2: 3, 1: 4, 's': 2}
     assert list2_dups == {4: 2, 's': 3}
-    assert list1_dups_common == {'s': 2}
-    assert list2_dups_common == {'s': 3}
     io_predicted_str = _return_printed_title(1, 'Comparing someitems')
     io_predicted_str += _return_printed_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_printed_event(1, '😓 Someitems lengths don\'t match')
     io_predicted_str += _return_printed_event(2, 'list1: 9')
     io_predicted_str += _return_printed_event(2, 'list2: 6')
+    io_predicted_str += _return_printed_event(1, '✅ Someitems in common:')
+    io_predicted_str += _return_pprinted(1, {'s'})
     io_predicted_str += _return_printed_event(1, 'list1')
     io_predicted_str += _return_printed_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprinted(2, {1, 2})
     io_predicted_str += _return_printed_event(2, '😓 Duplicate someitems (value:count):')
     io_predicted_str += _return_pprinted(2, {2: 3, 1: 4, 's': 2})
-    io_predicted_str += _return_printed_event(
-        2, '😓 Duplicate someitems also common (value:count):'
-    )
-    io_predicted_str += _return_pprinted(2, {'s': 2})
+    io_predicted_str += _return_printed_event(2, '😓 Duplicate someitems exclusive:')
+    io_predicted_str += _return_pprinted(2, {1,2})
+    io_predicted_str += _return_printed_event(2, '😓 Duplicate someitems in common:')
+    io_predicted_str += _return_pprinted(2, {'s'})
     io_predicted_str += _return_printed_event(1, 'list2')
     io_predicted_str += _return_printed_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprinted(2, {3, 4})
     io_predicted_str += _return_printed_event(2, '😓 Duplicate someitems (value:count):')
     io_predicted_str += _return_pprinted(2, {4: 2, 's': 3})
-    io_predicted_str += _return_printed_event(
-        2, '😓 Duplicate someitems also common (value:count):'
+    io_predicted_str += _return_printed_event(2, '😓 Duplicate someitems exclusive:')
+    io_predicted_str += _return_pprinted(2, {4})
+    io_predicted_str += _return_printed_event(2, '😓 Duplicate someitems in common:')
+    io_predicted_str += _return_pprinted(2, {'s'})
+    assert io_predicted_str == io_out
+    # With nothing in common
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare_lists,
+        [1, 2, 2, 2, 1, 1, 1],
+        ['s', 3, 4, 4, 's', 's'],
+        type_name='someitem',
+        type_name_plural='someitems',
+        report=True,
     )
-    io_predicted_str += _return_pprinted(2, {'s': 3})
+    (
+        items_in_both,
+        list1_exclusives,
+        list2_exclusives,
+        list1_dups,
+        list2_dups,
+    ) = returned
+    assert items_in_both == set()
+    assert list1_exclusives == {1, 2}
+    assert list2_exclusives == {3, 4, 's'}
+    assert list1_dups == {2: 3, 1: 4}
+    assert list2_dups == {4: 2, 's': 3}
+    io_predicted_str = _return_printed_title(1, 'Comparing someitems')
+    io_predicted_str += _return_printed_event(1, '😓 Someitems not equal')
+    io_predicted_str += _return_printed_event(1, '😓 Someitems lengths don\'t match')
+    io_predicted_str += _return_printed_event(2, 'list1: 7')
+    io_predicted_str += _return_printed_event(2, 'list2: 6')
+    io_predicted_str += _return_printed_event(1, '😓 No someitems in common')
+    io_predicted_str += _return_printed_event(1, 'list1')
+    io_predicted_str += _return_printed_event(2, '😓 Exclusive someitems:')
+    io_predicted_str += _return_pprinted(2, {1, 2})
+    io_predicted_str += _return_printed_event(2, '😓 Duplicate someitems (value:count):')
+    io_predicted_str += _return_pprinted(2, {2: 3, 1: 4})
+    io_predicted_str += _return_printed_event(2, '😓 Duplicate someitems exclusive:')
+    io_predicted_str += _return_pprinted(2, {1,2})
+    io_predicted_str += _return_printed_event(2, '✅ No duplicate someitems in common')
+    io_predicted_str += _return_printed_event(1, 'list2')
+    io_predicted_str += _return_printed_event(2, '😓 Exclusive someitems:')
+    io_predicted_str += _return_pprinted(2, {3, 4,'s'})
+    io_predicted_str += _return_printed_event(2, '😓 Duplicate someitems (value:count):')
+    io_predicted_str += _return_pprinted(2, {4: 2, 's': 3})
+    io_predicted_str += _return_printed_event(2, '😓 Duplicate someitems exclusive:')
+    io_predicted_str += _return_pprinted(2, {4, 's'})
+    io_predicted_str += _return_printed_event(2, '✅ No duplicate someitems in common')
     assert io_predicted_str == io_out
 
 
