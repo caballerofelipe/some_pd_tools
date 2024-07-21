@@ -6,3 +6,9 @@ build-backend = "setuptools.build_meta"
 # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 #
 # setuptools configured from setup.py
+
+
+[tool.pytest.ini_options]
+testpaths = ["./packages/some_pd_tools/tests"]
+# Make pytest ignore a warning, see https://stackoverflow.com/a/75492693/1071459
+filterwarnings = ["ignore:.*distutils Version classes.*packaging.version:DeprecationWarning:pytest_freezegun"]
