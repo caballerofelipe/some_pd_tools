@@ -22,61 +22,8 @@ TODO 2024-06-27:
 - When using the original DataFrames, not the ones copied, be aware that the columns on the copies where sorted.
   Check if this is a problem somehow.
 - Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
+- Add documentation for all functions in README.md.
 '''
-
-
-def _save_compared_df(
-    joined_df: pd.DataFrame, diff_rows, all_diff_cols, path: str, fixed_cols: list
-):
-    # Different columns with different rows
-    df_tosave = joined_df.loc[
-        diff_rows,
-        [*fixed_cols, *all_diff_cols],
-    ].copy()
-
-    for col in joined_df.columns:
-        if pd.api.types.is_datetime64_any_dtype(joined_df[col]):
-            joined_df[col] = joined_df[col].dt.strftime('%Y-%m-%d %H:%M:%S')
-
-    # df_tosave.to_excel(f'tmp_comparison_{now_str()}.xlsx', freeze_panes=(1, 6))
-
-    # From https://xlsxwriter.readthedocs.io/example_pandas_autofilter.html
-
-    # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter(path, engine="xlsxwriter")
-
-    show_index = True
-    add_if_show_index = 1 if show_index is True else 0
-
-    # Convert the dataframe to an XlsxWriter Excel object. We also turn off the
-    # index column at the left of the output dataframe.
-    df_tosave.to_excel(
-        writer,
-        sheet_name="Sheet1",
-        index=show_index,
-    )
-
-    # Get the xlsxwriter workbook and worksheet objects.
-    workbook = writer.book
-    worksheet = writer.sheets["Sheet1"]
-
-    # Get the dimensions of the dataframe.
-    (max_row, max_col) = df_tosave.shape
-
-    # # Make the columns wider for clarity.
-    # worksheet.set_column(0, max_col, 12)
-
-    # Set the autofilter.
-    worksheet.autofilter(0, 0, max_row, max_col)
-
-    # From https://xlsxwriter.readthedocs.io/example_panes.html
-    worksheet.freeze_panes(1, len(fixed_cols) + add_if_show_index)
-
-    # From https://stackoverflow.com/a/75120836/1071459
-    worksheet.autofit()
-
-    # Close the Pandas Excel writer and output the Excel file.
-    writer.close()
 
 
 def _print_title(
@@ -228,7 +175,7 @@ def compare_lists(
                 lgnd_maxlen = max(len(list1_name), len(list2_name))
                 _print_event(2, f'{list1_name:>{lgnd_maxlen}}: {len(list1)}')
                 _print_event(2, f'{list2_name:>{lgnd_maxlen}}: {len(list2)}')
-            
+
             if len(items_in_both_set) > 0:
                 _print_event(1, f'✅ {type_name_plural.capitalize()} in common:')
                 _pprint(1, items_in_both_set)
@@ -385,6 +332,60 @@ def compare_dtypes(
     )
 
 
+def _save_compared_df(
+    joined_df: pd.DataFrame, diff_rows, all_diff_cols, path: str, fixed_cols: list
+):
+    # Different columns with different rows
+    df_tosave = joined_df.loc[
+        diff_rows,
+        [*fixed_cols, *all_diff_cols],
+    ].copy()
+
+    for col in joined_df.columns:
+        if pd.api.types.is_datetime64_any_dtype(joined_df[col]):
+            joined_df[col] = joined_df[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    # df_tosave.to_excel(f'tmp_comparison_{now_str()}.xlsx', freeze_panes=(1, 6))
+
+    # From https://xlsxwriter.readthedocs.io/example_pandas_autofilter.html
+
+    # Create a Pandas Excel writer using XlsxWriter as the engine.
+    writer = pd.ExcelWriter(path, engine="xlsxwriter")
+
+    show_index = True
+    add_if_show_index = 1 if show_index is True else 0
+
+    # Convert the dataframe to an XlsxWriter Excel object. We also turn off the
+    # index column at the left of the output dataframe.
+    df_tosave.to_excel(
+        writer,
+        sheet_name="Sheet1",
+        index=show_index,
+    )
+
+    # Get the xlsxwriter workbook and worksheet objects.
+    workbook = writer.book
+    worksheet = writer.sheets["Sheet1"]
+
+    # Get the dimensions of the dataframe.
+    (max_row, max_col) = df_tosave.shape
+
+    # # Make the columns wider for clarity.
+    # worksheet.set_column(0, max_col, 12)
+
+    # Set the autofilter.
+    worksheet.autofilter(0, 0, max_row, max_col)
+
+    # From https://xlsxwriter.readthedocs.io/example_panes.html
+    worksheet.freeze_panes(1, len(fixed_cols) + add_if_show_index)
+
+    # From https://stackoverflow.com/a/75120836/1071459
+    worksheet.autofit()
+
+    # Close the Pandas Excel writer and output the Excel file.
+    writer.close()
+
+
 def fnreturn(
     equality_full: bool,
     equality_partial: bool,
@@ -409,7 +410,7 @@ def compare(
     round_to_decimals: int | bool = False,
     astype_str: bool = False,
     path: str = None,
-    fixed_cols: list = [],
+    fixed_cols: list = None,
     report: bool = True,
 ):
     '''
@@ -421,8 +422,11 @@ def compare(
     '''
     if not isinstance(df1_name, str) or not isinstance(df2_name, str):
         raise ValueError('df1_name and df2_name must be of type str.')
-
-    # report = True  # TODO: DELETE
+    
+    # Used to avoid dangerous default value
+    # https://pylint.readthedocs.io/en/latest/user_guide/messages/warning/dangerous-default-value.html
+    if fixed_cols is None:
+        fixed_cols = []
 
     # MARK: io.StringIO
     str_io = io.StringIO()
@@ -611,7 +615,7 @@ def compare(
         # Equality with special settings
         _print_title(1, 'Equality with special settings', file=str_io)
         if df1_cp.equals(df2_cp):  # Are the dfs equal? (after Special Settings:)
-            _print_result(f'🥸 Fully Equal (with special setting)', file=str_io)
+            _print_result('🥸 Fully Equal (with special setting)', file=str_io)
             return fnreturn(False, True, equality_metadata, str_io, report)
         else:
             _print_result('😡 Not fully Equal (with special setting)', file=str_io)
