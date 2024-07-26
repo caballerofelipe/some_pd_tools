@@ -11,6 +11,7 @@ from . import pd_format
 
 __all__ = ['compare', 'compare_lists', 'compare_dtypes']
 
+# MARK: TODO
 _ = '''
 TODO 2024-06-27:
   These should be computed manually with the other returned values.
@@ -23,6 +24,7 @@ TODO 2024-06-27:
   Check if this is a problem somehow.
 - Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
 - Add documentation for all functions in README.md.
+- Functions should probably return the report in a metadata dict like compare does.
 '''
 
 
@@ -62,6 +64,18 @@ def _print_event(
     level_str = '  ' * (level - 1)
     print(
         textwrap.fill(f'{level_str}-> {event}'),
+        file=file,
+    )
+
+
+def _print_plain(
+    level: int,
+    txt: str,
+    file: io.StringIO = None,
+) -> None:
+    level_str = '  ' * (level - 1)
+    print(
+        textwrap.fill(f'{level_str}{txt}'),
         file=file,
     )
 
@@ -242,94 +256,176 @@ def compare_dtypes(
     df2: pd.DataFrame,
     df1_name: str = 'df1',
     df2_name: str = 'df2',
-    # type_name: str = 'item',
-    # type_name_plural: str = 'items',
     report: bool = False,
-) -> tuple[set, set, set, dict, dict]:
+    show_common_dtypes=False,
+) -> tuple[pd.Series, dict]:
+    """Compare dtypes for columns in two DataFrames.
+
+    Some clarifications:
+    - The order of the columns is irrelevant, they will be sorted alphabetically to do the dtype
+      comparison.
+    - The columns from both DataFrames must be equal, if they're not an Exception will be raised.
+    - If columns are different and/or an Exception is raised, you can use the function `compare_lists()`
+      to review the differences. If using `compare_lists()`, the result can be used to compare the
+      DataFrames specifying only the common columns.
+    - If there are duplicates the comparison might not match because the order might be unexpected.
+      If exact order is needed a manual compare might be in order.
+
+    Parameters
+    ----------
+    df1 : pd.DataFrame
+        The first DataFrame to compare.
+    df2 : pd.DataFrame
+        The second DataFrame to compare.
+    df1_name : str, optional
+        The name to show for the first DataFrame, by default 'df1'.
+    df2_name : str, optional
+        The name to show for the second DataFrame, by default 'df2'.
+    report : bool, optional
+        Whether to show the comparison report, by default False
+    show_common_dtypes : bool, optional
+        Whether to show the columns that have the same dtype in the report, by default False.
+
+    Returns
+    -------
+    tuple[pd.Series, dict]
+        - tuple[0]: A DataFrame where the index is a number for the analyzed columns and 4 columns:
+          1. 'column' representing the column name.
+          2. 'equal' representing wether the column is equal or not in both input DataFrames (True means equal, False means different).
+          3. {df1_name} (stated name for first DataFrame): the dtype for every column for df1.
+          4. {df2_name} (stated name for second DataFrame): the dtype for every column for df2.
+        - tuple[1]: Metadata dict. This contains the report in case the param `report` is False.
+
+    Raises
+    ------
+    ValueError
+        If df1 or df2 are not of type DataFrame.
+    ValueError
+        If df1_name or df2_name are not of type str.
+    ValueError
+        If df1 and df2 columns are not equal (disregarding the order).
+    """
     # Type validation
     # ************************************
     if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
         raise ValueError('df1 and df2 must be of type pd.DataFrame.')
-    if (
-        not isinstance(df1_name, str)
-        or not isinstance(df2_name, str)
-        # or not isinstance(type_name, str)
-        # or not isinstance(type_name_plural, str)
-    ):
+    if not isinstance(df1_name, str) or not isinstance(df2_name, str):
         raise ValueError('df1_name and df2_name must be of type str.')
+    # Lists aren't equal, raise Exception with the report using `compare_lists()`
+    if sorted(df1.columns) != sorted(df2.columns):
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            compare_lists(
+                list(df1.columns),
+                list(df2.columns),
+                list1_name=df1_name,
+                list2_name=df2_name,
+                type_name='column',
+                type_name_plural='columns',
+                report=True,
+            )
+        raise ValueError(
+            f'df1 ({df1_name}) and df2 ({df2_name}) must have the same columns.'
+            + f'\n{stream.getvalue()}'
+        )
 
     # Computations
     # ************************************
-    (
-        common_cols_set,
-        df1_extra_cols_set,
-        df2_extra_cols_set,
-        df1_dups_cols_dict,
-        df2_dups_cols_dict,
-    ) = compare_lists(
-        list1=list(df1.columns),
-        list2=list(df2.columns),
-        report=False,
-    )
-    # Duplicate columns dictionaries containing only common elements
-    df1_dups_cols_common_dict = {
-        val: count for val, count in df1_dups_cols_dict.items() if val in common_cols_set
-    }
-    df2_dups_cols_common_dict = {
-        val: count for val, count in df2_dups_cols_dict.items() if val in common_cols_set
-    }
-    if df1_dups_cols_common_dict != df2_dups_cols_common_dict:
-        raise ValueError('Duplicate common columns found but duplicates don\'t match.')
-
-    common_cols_list = sorted(list(common_cols_set))
-    common_cols_equal_dtypes_mask = (
-        df1[common_cols_list].dtypes.sort_index() == df2[common_cols_list].dtypes.sort_index()
-    )
-    common_cols_equal_dtypes = df1[common_cols_list].dtypes.sort_index()[
-        common_cols_equal_dtypes_mask
-    ]
-    common_cols_different_dtypes = df1[common_cols_list].dtypes.sort_index()[
-        ~common_cols_equal_dtypes_mask
-    ]
+    df1_dtypes = df1.dtypes.sort_index()
+    df2_dtypes = df2.dtypes.sort_index()
+    cols_equal_dtypes_mask = df1_dtypes == df2_dtypes
 
     # Report
     # ************************************
-    if report is True:
-        _print_title(1, 'Comparing dtypes for common columns')
-        if common_cols_equal_dtypes_mask.all(axis=None):
-            _print_event(1, '✅ No different dtypes')
+    stream = io.StringIO()
+    _print_title(1, 'Comparing column dtypes', file=stream)
+    if cols_equal_dtypes_mask.all(axis=None):
+        _print_event(1, '✅ Columns have equal dtypes', file=stream)
+    else:
+        _print_event(1, '😓 Columns have different dtypes', file=stream)
+        # <Formatting computations>
+        if show_common_dtypes is True:
+            # Show all columns dtypes
+            cols_to_show = list(cols_equal_dtypes_mask.index)
+            cols_equality = list(cols_equal_dtypes_mask.values)
         else:
-            _print_event(1, '😓 Different dtypes')
-            # <Formatting computations>
-            legend = "col\\dataframe"
-            lgnd_maxlen = max([len(i) for i in common_cols_different_dtypes.index])
-            lgnd_maxlen = max(lgnd_maxlen, len(legend))
-            diff_dtypes_cols = common_cols_different_dtypes.index
-            df1types_col_len = [len(str(d)) for d in df1[diff_dtypes_cols].dtypes]
-            df1types_col_len.append(len(df1_name))
-            df1types_maxlen = max(df1types_col_len)
-            df2types_col_len = [len(str(d)) for d in df2[diff_dtypes_cols].dtypes]
-            df2types_col_len.append(len(df2_name))
-            df2types_maxlen = max(df2types_col_len)
-            # </Formatting computations>
-            print(
-                f'|{legend:<{lgnd_maxlen}}|{df1_name:<{df1types_maxlen}}|{df2_name:<{df2types_maxlen}}|'
+            # Filter only by not equal dtypes
+            cols_to_show = list(cols_equal_dtypes_mask[~cols_equal_dtypes_mask].index)
+            cols_equality = list(cols_equal_dtypes_mask[~cols_equal_dtypes_mask].values)
+        legend = "col\\dataframe"
+        lgnd_maxlen = max([len(i) for i in cols_to_show])
+        lgnd_maxlen = max(lgnd_maxlen, len(legend))
+        df1types_col_len = [len(str(d)) for d in df1[cols_to_show].dtypes]
+        df1types_col_len.append(len(df1_name))
+        df1types_maxlen = max(df1types_col_len)
+        df2types_col_len = [len(str(d)) for d in df2[cols_to_show].dtypes]
+        df2types_col_len.append(len(df2_name))
+        df2types_maxlen = max(df2types_col_len)
+        equal_title = 'different'
+        equal_tit_maxlen = len(equal_title)
+        # </Formatting computations>
+        # Initial bar
+        _print_plain(
+            2,
+            f'|{"-"*lgnd_maxlen}|{"-"*df1types_maxlen}'
+            + f'|{"-"*df2types_maxlen}|{"-"*equal_tit_maxlen}|',
+            file=stream,
+        )
+        # Legend
+        _print_plain(
+            2,
+            f'|{legend:<{lgnd_maxlen}}|{df1_name:<{df1types_maxlen}}'
+            + f'|{df2_name:<{df2types_maxlen}}|{equal_title}|',
+            file=stream,
+        )
+        # Middle bar
+        _print_plain(
+            2,
+            f'|{"-"*lgnd_maxlen}|{"-"*df1types_maxlen}'
+            + f'|{"-"*df2types_maxlen}|{"-"*equal_tit_maxlen}|',
+            file=stream,
+        )
+        # Data
+        for col_idx, col_name in enumerate(cols_to_show):
+            _print_plain(
+                2,
+                f'|{col_name:<{lgnd_maxlen}}'
+                + f'|{str(df1_dtypes.iloc[col_idx]):<{df1types_maxlen}}'
+                + f'|{str(df2_dtypes.iloc[col_idx]):<{df2types_maxlen}}'
+                + f'|{"" if cols_equality[col_idx] else "*":^{equal_tit_maxlen}}'
+                + '|',
+                file=stream,
             )
-            print(f'|{"-"*lgnd_maxlen}|{"-"*df1types_maxlen}|{"-"*df2types_maxlen}|')
-            for idx in common_cols_different_dtypes.index:
-                print(
-                    f'|{idx:<{lgnd_maxlen}}|{str(df1[idx].dtype):<{df1types_maxlen}}|{str(df2[idx].dtype):<{df2types_maxlen}}|',
-                )
+        # Final bar
+        _print_plain(
+            2,
+            f'|{"-"*lgnd_maxlen}|{"-"*df1types_maxlen}'
+            + f'|{"-"*df2types_maxlen}|{"-"*equal_tit_maxlen}|',
+            file=stream,
+        )
+
+    if report is True:
+        print(stream.getvalue(), end='')
 
     # Return
     # ************************************
-    return (
-        common_cols_set,
-        df1_extra_cols_set,
-        df2_extra_cols_set,
-        df1_dups_cols_dict,
-        df2_dups_cols_dict,
+    # Merge `df1_types` and `df2_types`
+    returned_dtypes_df = pd.merge(
+        pd.DataFrame(df1_dtypes, columns=[df1_name]).reset_index()[df1_name],
+        pd.DataFrame(df2_dtypes, columns=[df2_name]).reset_index()[df2_name],
+        left_index=True,
+        right_index=True,
+        how='inner',
     )
+    # Add `cols_equal_dtypes_mask`
+    returned_dtypes_df = pd.merge(
+        pd.DataFrame(cols_equal_dtypes_mask, columns=['equal']).reset_index(names=['column']),
+        returned_dtypes_df,
+        left_index=True,
+        right_index=True,
+        how='inner',
+    )
+    return returned_dtypes_df, {'report': stream.getvalue()}
 
 
 def _save_compared_df(
@@ -386,7 +482,7 @@ def _save_compared_df(
     writer.close()
 
 
-def fnreturn(
+def compare_returner(
     equality_full: bool,
     equality_partial: bool,
     equality_metadata: dict,
@@ -422,7 +518,7 @@ def compare(
     '''
     if not isinstance(df1_name, str) or not isinstance(df2_name, str):
         raise ValueError('df1_name and df2_name must be of type str.')
-    
+
     # Used to avoid dangerous default value
     # https://pylint.readthedocs.io/en/latest/user_guide/messages/warning/dangerous-default-value.html
     if fixed_cols is None:
@@ -460,7 +556,7 @@ def compare(
     # *************************************************************************
     if df1_cp.equals(df2_cp):  # Are the dfs equal?
         _print_result('🥳 Fully equal', file=str_io)
-        return fnreturn(True, False, equality_metadata, str_io, report)
+        return compare_returner(True, False, equality_metadata, str_io, report)
     else:
         _print_result('😓 Not fully equal', file=str_io)
 
@@ -508,7 +604,7 @@ def compare(
         #       straightforward because dict might be unordered
         _print_event(1, error, file=str_io)
         equality_metadata = {**equality_metadata, 'error': error}
-        return fnreturn(False, False, equality_metadata, str_io, report)
+        return compare_returner(False, False, equality_metadata, str_io, report)
 
     # MARK: SHOW COMMON COLS
     # Show common columns if set in the options
@@ -561,7 +657,7 @@ def compare(
         #       straightforward because dict might be unordered
         _print_event(1, error, file=str_io)
         equality_metadata = {**equality_metadata, 'error': error}
-        return fnreturn(False, False, equality_metadata, str_io, report)
+        return compare_returner(False, False, equality_metadata, str_io, report)
 
     # MARK: SHOW COMMON IDXS
     # Show common indexes if set in the options
@@ -616,7 +712,7 @@ def compare(
         _print_title(1, 'Equality with special settings', file=str_io)
         if df1_cp.equals(df2_cp):  # Are the dfs equal? (after Special Settings:)
             _print_result('🥸 Fully Equal (with special setting)', file=str_io)
-            return fnreturn(False, True, equality_metadata, str_io, report)
+            return compare_returner(False, True, equality_metadata, str_io, report)
         else:
             _print_result('😡 Not fully Equal (with special setting)', file=str_io)
     else:
@@ -653,7 +749,7 @@ def compare(
 
     if equal_mask_df.all(axis=None):
         _print_result('🥸 Equal values', file=str_io)
-        return fnreturn(False, True, equality_metadata, str_io, report)
+        return compare_returner(False, True, equality_metadata, str_io, report)
 
     diff_columns = equal_mask_df.columns[~(equal_mask_df.all(axis=0))].sort_values()
     _print_event(1, f'😓 Not equal columns (count[{len(diff_columns)}]):', file=str_io)
@@ -734,4 +830,4 @@ def compare(
         'diff_rows': diff_rows,
         'diff_original_vals_df': diff_original_vals_df,
     }
-    return fnreturn(False, False, equality_metadata, str_io, report)
+    return compare_returner(False, False, equality_metadata, str_io, report)

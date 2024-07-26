@@ -363,6 +363,7 @@ def test__compare_lists__diff_lists_w_dups():
 def test__compare_dtypes__wrong_types():
     # df1 or df2 are not of type pd.DataFrame
     # ************************************
+    # List and set
     with pytest.raises(
         ValueError,
         match=re.escape('df1 and df2 must be of type pd.DataFrame.'),
@@ -373,6 +374,23 @@ def test__compare_dtypes__wrong_types():
         match=re.escape('df1 and df2 must be of type pd.DataFrame.'),
     ):
         pd_compare.compare_dtypes({1, 2, 3}, [1, 2, 3])
+    # Two series
+    with pytest.raises(
+        ValueError,
+        match=re.escape('df1 and df2 must be of type pd.DataFrame.'),
+    ):
+        pd_compare.compare_dtypes(pd.Series([1,2,3]), pd.Series([1,2,3]))
+    # One Series and one DataFrame
+    with pytest.raises(
+        ValueError,
+        match=re.escape('df1 and df2 must be of type pd.DataFrame.'),
+    ):
+        pd_compare.compare_dtypes(pd.Series([1,2,3]), pd.DataFrame([1,2,3]))
+    with pytest.raises(
+        ValueError,
+        match=re.escape('df1 and df2 must be of type pd.DataFrame.'),
+    ):
+        pd_compare.compare_dtypes(pd.DataFrame([1,2,3]), pd.Series([1,2,3]))
 
     # df1_name and df2_name must be of type str
     # ************************************
