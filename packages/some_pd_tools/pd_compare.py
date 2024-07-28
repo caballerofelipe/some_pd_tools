@@ -14,7 +14,7 @@ __all__ = ['compare', 'compare_lists', 'compare_dtypes']
 # MARK: TODO
 _ = '''
 TODO 2024-06-27:
-  These should be computed manually with the other returned values.
+- In `compare()` forbid comparing with duplicate columns or index.
 - Add functions for where large code is done to keep code cleaner.
 - Populate metadata while advancing, if a return is done, test metadata with pytest
 - Check that all shown list are sorted lists and not sets or other data types
@@ -258,7 +258,7 @@ def compare_dtypes(
     df2_name: str = 'df2',
     report: bool = False,
     show_common_dtypes=False,
-) -> tuple[pd.Series, dict]:
+) -> tuple[bool, dict]:
     """Compare dtypes for columns in two DataFrames.
 
     Some clarifications:
@@ -288,13 +288,15 @@ def compare_dtypes(
 
     Returns
     -------
-    tuple[pd.Series, dict]
-        - tuple[0]: A DataFrame where the index is a number for the analyzed columns and 4 columns:
-          1. 'column' representing the column name.
-          2. 'equal' representing wether the column is equal or not in both input DataFrames (True means equal, False means different).
-          3. {df1_name} (stated name for first DataFrame): the dtype for every column for df1.
-          4. {df2_name} (stated name for second DataFrame): the dtype for every column for df2.
-        - tuple[1]: Metadata dict. This contains the report in case the param `report` is False.
+    tuple[bool, dict]
+        - tuple[0]: True if all dtypes equal, False if not.
+        - tuple[1]: Metadata dict. This contains:
+          - 'dtypes_df': A DataFrame where the index is a number for the analyzed columns and 4 columns:
+            1. 'column' representing the column name.
+            2. 'equal' representing wether the column is equal or not in both input DataFrames (True means equal, False means different).
+            3. {df1_name} (stated name for first DataFrame): the dtype for every column for df1.
+            4. {df2_name} (stated name for second DataFrame): the dtype for every column for df2.
+          - 'report': The report, useful in case the param `report` is False.
 
     Raises
     ------
@@ -410,7 +412,7 @@ def compare_dtypes(
     # Return
     # ************************************
     # Merge `df1_types` and `df2_types`
-    returned_dtypes_df = pd.merge(
+    dtypes_df = pd.merge(
         pd.DataFrame(df1_dtypes, columns=[df1_name]).reset_index()[df1_name],
         pd.DataFrame(df2_dtypes, columns=[df2_name]).reset_index()[df2_name],
         left_index=True,
@@ -418,14 +420,17 @@ def compare_dtypes(
         how='inner',
     )
     # Add `cols_equal_dtypes_mask`
-    returned_dtypes_df = pd.merge(
+    dtypes_df = pd.merge(
         pd.DataFrame(cols_equal_dtypes_mask, columns=['equal']).reset_index(names=['column']),
-        returned_dtypes_df,
+        dtypes_df,
         left_index=True,
         right_index=True,
         how='inner',
     )
-    return returned_dtypes_df, {'report': stream.getvalue()}
+    return cols_equal_dtypes_mask.all(axis=None), {
+        'dtypes_df': dtypes_df,
+        'report': stream.getvalue(),
+    }
 
 
 def _save_compared_df(
@@ -500,14 +505,15 @@ def compare(
     df2: pd.DataFrame | pd.Series,
     df1_name: str = 'df1',
     df2_name: str = 'df2',
-    show_common_cols: bool = False,
-    show_common_idxs: bool = False,
     int64_to_float64: bool = False,
     round_to_decimals: int | bool = False,
     astype_str: bool = False,
+    report: bool = True,
+    show_common_cols: bool = False,
+    show_common_idxs: bool = False,
+    show_common_dtypes: bool = False,
     path: str = None,
     fixed_cols: list = None,
-    report: bool = True,
 ):
     '''
     Some notes for documenting:
@@ -670,7 +676,15 @@ def compare(
     # dtypes comparison
     # *************************************************************************
     with redirect_stdout(str_io):
-        compare_dtypes(df1=df1_cp, df2=df2_cp, df1_name=df1_name, df2_name=df2_name, report=report)
+        dtypes_equal, dtypes_metadata = compare_dtypes(
+            df1=df1_cp[common_cols_list],
+            df2=df2_cp[common_cols_list],
+            df1_name=df1_name,
+            df2_name=df2_name,
+            show_common_dtypes=show_common_dtypes,
+            report=report,
+        )
+    equality_metadata = {**equality_metadata, 'dtypes_equal': dtypes_equal, 'dtypes_df': dtypes_metadata['dtypes_df']}    
 
     # MARK: SPECIAL SETTINGS
     # Special settings computations

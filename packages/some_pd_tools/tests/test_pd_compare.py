@@ -422,6 +422,33 @@ def test__compare_dtypes__diff_dtypes_no_dups():
 def test__compare_dtypes__diff_dtypes_w_dups():
     assert False  # TODO REMOVE
 
+def test__compare__dtypes_equal_values_equal() -> None:
+    '''Test output/return when dtypes are equal and values are equal.'''
+    assert False  # TODO REMOVE
+    # bdf = BaseDF()
+    # returned, io_out = compare_with_output(
+    #     df1=bdf.df1,
+    #     df1_name=bdf.df1_name,
+    #     df2=bdf.df1_as_object,
+    #     df2_name=bdf.df2_name,
+    # )
+    # io_predicted_str = _return_printed_result('😓 Not fully equal')
+    # io_predicted_str += _return_printed_title(
+    #     1, 'Comparing dtypes for common columns', 'Without special settings'
+    # )
+    # io_predicted_str += _return_printed_event('😓 Different dtypes')
+    # io_predicted_str += '  col\\dataframe first_df second_df\n'
+    # io_predicted_str += '  col_float     float64  object\n'
+    # io_predicted_str += '  col_int       int64    object\n'
+    # io_predicted_str += '  col_nan       float64  object\n'
+    # assert io_out.startswith(io_predicted_str)
+    # assert returned[0] == False and returned[1] == True
+
+
+def test__compare__dtypes_not_equal_values_not_equal() -> None:
+    '''Test output/return when dtypes are not equal and values are not equal.'''
+    assert False  # TODO REMOVE
+
 
 def test__compare__equality_full() -> None:
     bdf = BaseDF()
@@ -788,31 +815,3 @@ def test__compare__io_out_show_common_idxs() -> None:
     assert io_predicted_full_str not in io_out
     equality_metadata = returned[2]
     assert equality_metadata.get('common_idxs_set') == common_idxs_set
-
-
-def test__compare__dtypes_equal_values_equal() -> None:
-    '''Test output/return when dtypes are equal and values are equal.'''
-    assert False  # TODO REMOVE
-    # bdf = BaseDF()
-    # returned, io_out = compare_with_output(
-    #     df1=bdf.df1,
-    #     df1_name=bdf.df1_name,
-    #     df2=bdf.df1_as_object,
-    #     df2_name=bdf.df2_name,
-    # )
-    # io_predicted_str = _return_printed_result('😓 Not fully equal')
-    # io_predicted_str += _return_printed_title(
-    #     1, 'Comparing dtypes for common columns', 'Without special settings'
-    # )
-    # io_predicted_str += _return_printed_event('😓 Different dtypes')
-    # io_predicted_str += '  col\\dataframe first_df second_df\n'
-    # io_predicted_str += '  col_float     float64  object\n'
-    # io_predicted_str += '  col_int       int64    object\n'
-    # io_predicted_str += '  col_nan       float64  object\n'
-    # assert io_out.startswith(io_predicted_str)
-    # assert returned[0] == False and returned[1] == True
-
-
-def test__compare__dtypes_not_equal_values_not_equal() -> None:
-    '''Test output/return when dtypes are not equal and values are not equal.'''
-    assert False  # TODO REMOVE
