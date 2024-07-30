@@ -15,9 +15,8 @@ __all__ = ['compare', 'compare_lists', 'compare_dtypes']
 _ = '''
 TODO 2024-06-27:
 - Add functions for where large code is done to keep code cleaner.
-- Populate metadata while advancing, if a return is done, test metadata with pytest
+- Populate metadata while advancing, if a return is done, test metadata with pytest.
 - Check that all shown list are sorted lists and not sets or other data types.
-- Change printing level, 0=base
 - Add doctrings.
 - When using the original DataFrames, not the ones copied, be aware that the columns on the copies where sorted. Check if this is a problem somehow.
 - Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
