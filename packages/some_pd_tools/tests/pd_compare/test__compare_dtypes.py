@@ -64,27 +64,27 @@ def test__wrong_types():
         pd_compare.compare_dtypes(bdf.df1, bdf.df2, df2_name=1)
 
 
-# def test__equal_dtypes_no_dups():
-#     assert False  # TODO REMOVE
+def test__equal_dtypes_no_dups():
+    assert False  # TODO REMOVE
 
 
-# def test__equal_dtypes_w_dups():
-#     assert False  # TODO REMOVE
+def test__equal_dtypes_w_dups():
+    assert False  # TODO REMOVE
 
 
-# def test__diff_dtypes_no_dups():
-#     assert False  # TODO REMOVE
+def test__diff_dtypes_no_dups():
+    assert False  # TODO REMOVE
 
 
-# def test__diff_dtypes_w_dups():
-#     assert False  # TODO REMOVE
+def test__diff_dtypes_w_dups():
+    assert False  # TODO REMOVE
 
 
-# def test__compare__dtypes_equal_values_equal() -> None:
-#     '''Test output/return when dtypes are equal and values are equal.'''
-#     assert False  # TODO REMOVE
+def test__compare__dtypes_equal_values_equal() -> None:
+    '''Test output/return when dtypes are equal and values are equal.'''
+    assert False  # TODO REMOVE
 
 
-# def test__compare__dtypes_not_equal_values_not_equal() -> None:
-#     '''Test output/return when dtypes are not equal and values are not equal.'''
-#     assert False  # TODO REMOVE
+def test__compare__dtypes_not_equal_values_not_equal() -> None:
+    '''Test output/return when dtypes are not equal and values are not equal.'''
+    assert False  # TODO REMOVE
