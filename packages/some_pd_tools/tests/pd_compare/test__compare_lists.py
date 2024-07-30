@@ -4,7 +4,7 @@ import pytest
 
 from some_pd_tools import pd_compare
 
-from .formatting import (
+from ..formatting import (
     _fn_ret_and_output,
     _return_pprint,
     _return_print_event,
