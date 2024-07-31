@@ -308,7 +308,7 @@ def test_duplicates_abort() -> None:
     assert equality_metadata.get('error') == _return_print_event(1, error)
 
 
-def test_io_out_cols_review() -> None:
+def test_cols_review() -> None:
     bdf = BaseDF()
     df1_colset = set(bdf.df1_extra_col.columns)
     df2_colset = set(bdf.df2_extra_col.columns)
@@ -319,7 +319,7 @@ def test_io_out_cols_review() -> None:
 
     io_predicted_str = _return_print_title(1, 'Columns present in both DataFrames (intersection)')
 
-    # Testing showing common columns
+    # Column metadata returned showing common columns
     # ************************************
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare,
@@ -339,7 +339,7 @@ def test_io_out_cols_review() -> None:
     assert equality_metadata.get('cols_df1_dups_common_dict') == {}
     assert equality_metadata.get('cols_df2_dups_common_dict') == {}
 
-    # Testing NOT showing common columns
+    # Column metadata returned NOT showing common columns
     # ************************************
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare,
@@ -360,7 +360,7 @@ def test_io_out_cols_review() -> None:
     assert equality_metadata.get('cols_df2_dups_common_dict') == {}
 
 
-def test_io_out_idxs_review() -> None:
+def test_idxs_review() -> None:
     bdf = BaseDF()
     df1_idxset = set(bdf.df1.index)
     df2_idxset = set(bdf.df2_index_plus1.index)
@@ -371,7 +371,7 @@ def test_io_out_idxs_review() -> None:
 
     io_predicted_str = _return_print_title(1, 'Indexes present in both DataFrames (intersection)')
 
-    # Testing showing common indexes
+    # Index metadata returned showing common indexes
     # ************************************
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare,
@@ -391,7 +391,7 @@ def test_io_out_idxs_review() -> None:
     assert equality_metadata.get('idxs_df1_dups_common_dict') == {}
     assert equality_metadata.get('idxs_df2_dups_common_dict') == {}
 
-    # Testing NOT showing common indexes
+    # Index metadata returned NOT showing common indexes
     # ************************************
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare,
@@ -410,3 +410,11 @@ def test_io_out_idxs_review() -> None:
     assert equality_metadata.get('idxs_df2_dups_dict') == {}
     assert equality_metadata.get('idxs_df1_dups_common_dict') == {}
     assert equality_metadata.get('idxs_df2_dups_common_dict') == {}
+
+
+def test_dtypes_equal_review() -> None:
+    assert False  # TODO REMOVE
+
+
+def test_dtypes_different_review() -> None:
+    assert False  # TODO REMOVE

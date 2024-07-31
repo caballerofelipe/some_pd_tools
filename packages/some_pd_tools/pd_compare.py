@@ -295,8 +295,15 @@ def compare_dtypes(
     - If columns are different and/or an Exception is raised, you can use the function `compare_lists()`
       to review the differences. If using `compare_lists()`, the result can be used to compare the
       DataFrames specifying only the common columns.
-    - If there are duplicates the comparison might not match because the order might be unexpected.
-      If exact order is needed a manual compare might be in order.
+    - Duplicate columns are forbidden. If a comparison of duplicated columns is needed, rename them
+      manually by index before calling this function. Example:
+      
+      ```python
+      df.columns.values[0] = "same_name_0"
+      df.columns.values[1] = "same_name_1"
+      ```
+      
+      For a fuller example, see https://www.geeksforgeeks.org/rename-column-by-index-in-pandas/.
 
     Parameters
     ----------
@@ -318,11 +325,10 @@ def compare_dtypes(
     tuple[bool, dict]
         - tuple[0]: True if all dtypes equal, False if not.
         - tuple[1]: Metadata dict. This contains:
-          - 'dtypes_df': A DataFrame where the index is a number for the analyzed columns and 4 columns:
-            1. 'column' representing the column name.
-            2. 'equal' representing wether the column is equal or not in both input DataFrames (True means equal, False means different).
-            3. {df1_name} (stated name for first DataFrame): the dtype for every column for df1.
-            4. {df2_name} (stated name for second DataFrame): the dtype for every column for df2.
+          - 'dtypes_df': A DataFrame where the index the analyzed column and 3 columns:
+            1. 'different' representing wether the column is different or not in both input DataFrames (True means different, False means equal).
+            2. {df1_name} (stated name for first DataFrame): the dtype for the given column in df1.
+            3. {df2_name} (stated name for second DataFrame): the dtype for the given column in df2.
           - 'report': The report, useful in case the param `report` is False.
 
     Raises
@@ -333,6 +339,8 @@ def compare_dtypes(
         If df1_name or df2_name are not of type str.
     ValueError
         If df1 and df2 columns are not equal (disregarding the order).
+    ValueError
+        If df1 and/or df2 have duplicate columns.
     """
     # Type validation
     # ************************************
@@ -340,28 +348,34 @@ def compare_dtypes(
         raise ValueError('df1 and df2 must be of type pd.DataFrame.')
     if not isinstance(df1_name, str) or not isinstance(df2_name, str):
         raise ValueError('df1_name and df2_name must be of type str.')
+
+    stream = io.StringIO()
+    with redirect_stdout(stream):
+        lists_equal, lists_metadata = compare_lists(
+            list(df1.columns),
+            list(df2.columns),
+            list_1_name=df1_name,
+            list_2_name=df2_name,
+            type_name='column',
+            type_name_plural='columns',
+            report=True,
+        )
     # Lists aren't equal, raise Exception with the report using `compare_lists()`
-    if sorted(df1.columns) != sorted(df2.columns):
-        stream = io.StringIO()
-        with redirect_stdout(stream):
-            compare_lists(
-                list(df1.columns),
-                list(df2.columns),
-                list_1_name=df1_name,
-                list_2_name=df2_name,
-                type_name='column',
-                type_name_plural='columns',
-                report=True,
-            )
+    if not lists_equal:
         raise ValueError(
             f'df1 ({df1_name}) and df2 ({df2_name}) must have the same columns.'
+            + f'\n{stream.getvalue()}'
+        )
+    if len(lists_metadata['list_1_dups_dict']) > 0 or len(lists_metadata['list_2_dups_dict']) > 0:
+        raise ValueError(
+            f'df1 ({df1_name}) and df2 ({df2_name}) cannot have duplicate columns.'
             + f'\n{stream.getvalue()}'
         )
 
     # Computations
     # ************************************
-    df1_dtypes = df1.dtypes.sort_index()
-    df2_dtypes = df2.dtypes.sort_index()
+    df1_dtypes = df1.dtypes.sort_index().rename(df1_name)
+    df2_dtypes = df2.dtypes.sort_index().rename(df2_name)
     cols_equal_dtypes_mask = df1_dtypes == df2_dtypes
 
     # Report
@@ -372,6 +386,7 @@ def compare_dtypes(
         _print_event(1, '✅ Columns have equal dtypes', file=stream)
     else:
         _print_event(1, '😓 Columns have different dtypes', file=stream)
+    if not cols_equal_dtypes_mask.all(axis=None) or show_common_dtypes is True:
         # <Formatting computations>
         if show_common_dtypes is True:
             # Show all columns dtypes
@@ -381,7 +396,9 @@ def compare_dtypes(
             # Filter only by not equal dtypes
             cols_to_show = list(cols_equal_dtypes_mask[~cols_equal_dtypes_mask].index)
             cols_equality = list(cols_equal_dtypes_mask[~cols_equal_dtypes_mask].values)
-        legend = "col\\dataframe"
+        legend = "column"
+        equal_title = 'different'
+        equal_tit_maxlen = len(equal_title)
         lgnd_maxlen = max([len(i) for i in cols_to_show])
         lgnd_maxlen = max(lgnd_maxlen, len(legend))
         df1types_col_len = [len(str(d)) for d in df1[cols_to_show].dtypes]
@@ -390,28 +407,26 @@ def compare_dtypes(
         df2types_col_len = [len(str(d)) for d in df2[cols_to_show].dtypes]
         df2types_col_len.append(len(df2_name))
         df2types_maxlen = max(df2types_col_len)
-        equal_title = 'different'
-        equal_tit_maxlen = len(equal_title)
         # </Formatting computations>
         # Initial bar
         _print_plain(
             1,
-            f'|{"-"*lgnd_maxlen}|{"-"*df1types_maxlen}'
-            + f'|{"-"*df2types_maxlen}|{"-"*equal_tit_maxlen}|',
+            f'|{"-"*lgnd_maxlen}|{"-"*equal_tit_maxlen}|{"-"*df1types_maxlen}'
+            + f'|{"-"*df2types_maxlen}|',
             file=stream,
         )
         # Legend
         _print_plain(
             1,
-            f'|{legend:<{lgnd_maxlen}}|{df1_name:<{df1types_maxlen}}'
-            + f'|{df2_name:<{df2types_maxlen}}|{equal_title}|',
+            f'|{legend:<{lgnd_maxlen}}|{equal_title}|{df1_name:<{df1types_maxlen}}'
+            + f'|{df2_name:<{df2types_maxlen}}|',
             file=stream,
         )
         # Middle bar
         _print_plain(
             1,
-            f'|{"-"*lgnd_maxlen}|{"-"*df1types_maxlen}'
-            + f'|{"-"*df2types_maxlen}|{"-"*equal_tit_maxlen}|',
+            f'|{"-"*lgnd_maxlen}|{"-"*equal_tit_maxlen}|{"-"*df1types_maxlen}'
+            + f'|{"-"*df2types_maxlen}|',
             file=stream,
         )
         # Data
@@ -419,17 +434,17 @@ def compare_dtypes(
             _print_plain(
                 1,
                 f'|{col_name:<{lgnd_maxlen}}'
+                + f'|{"" if cols_equality[col_idx] else "*":^{equal_tit_maxlen}}'
                 + f'|{str(df1_dtypes.iloc[col_idx]):<{df1types_maxlen}}'
                 + f'|{str(df2_dtypes.iloc[col_idx]):<{df2types_maxlen}}'
-                + f'|{"" if cols_equality[col_idx] else "*":^{equal_tit_maxlen}}'
                 + '|',
                 file=stream,
             )
         # Final bar
         _print_plain(
             1,
-            f'|{"-"*lgnd_maxlen}|{"-"*df1types_maxlen}'
-            + f'|{"-"*df2types_maxlen}|{"-"*equal_tit_maxlen}|',
+            f'|{"-"*lgnd_maxlen}|{"-"*equal_tit_maxlen}|{"-"*df1types_maxlen}'
+            + f'|{"-"*df2types_maxlen}|',
             file=stream,
         )
 
@@ -440,21 +455,21 @@ def compare_dtypes(
     # ************************************
     # Merge `df1_types` and `df2_types`
     dtypes_df = pd.merge(
-        pd.DataFrame(df1_dtypes, columns=[df1_name]).reset_index()[df1_name],
-        pd.DataFrame(df2_dtypes, columns=[df2_name]).reset_index()[df2_name],
+        df1_dtypes,
+        df2_dtypes,
         left_index=True,
         right_index=True,
         how='inner',
     )
     # Add `cols_equal_dtypes_mask`
     dtypes_df = pd.merge(
-        pd.DataFrame(cols_equal_dtypes_mask, columns=['equal']).reset_index(names=['column']),
+        pd.DataFrame(~cols_equal_dtypes_mask, columns=['different']),
         dtypes_df,
         left_index=True,
         right_index=True,
         how='inner',
     )
-    return cols_equal_dtypes_mask.all(axis=None), {
+    return bool(cols_equal_dtypes_mask.all(axis=None)), {
         'dtypes_df': dtypes_df,
         'report': stream.getvalue(),
     }

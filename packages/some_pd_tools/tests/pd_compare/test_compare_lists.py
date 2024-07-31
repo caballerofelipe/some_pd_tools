@@ -78,7 +78,7 @@ def test_equal_lists_no_dups():
     list_2_excl_set = lists_metadata['list_2_excl_set']
     list_1_dups_dict = lists_metadata['list_1_dups_dict']
     list_2_dups_dict = lists_metadata['list_2_dups_dict']
-    assert lists_comp == True
+    assert lists_comp is True
     assert list_common_set == {1, 2, 's'}
     assert list_1_excl_set == set()
     assert list_2_excl_set == set()
@@ -104,7 +104,7 @@ def test_equal_lists_no_dups():
     list_2_excl_set = lists_metadata['list_2_excl_set']
     list_1_dups_dict = lists_metadata['list_1_dups_dict']
     list_2_dups_dict = lists_metadata['list_2_dups_dict']
-    assert lists_comp == True
+    assert lists_comp is True
     assert list_common_set == {1, 2, 's'}
     assert list_1_excl_set == set()
     assert list_2_excl_set == set()
@@ -131,7 +131,7 @@ def test_equal_lists_w_dups():
     list_2_excl_set = lists_metadata['list_2_excl_set']
     list_1_dups_dict = lists_metadata['list_1_dups_dict']
     list_2_dups_dict = lists_metadata['list_2_dups_dict']
-    assert lists_comp == True
+    assert lists_comp is True
     assert list_common_set == {1, 2, 's'}
     assert list_1_excl_set == set()
     assert list_2_excl_set == set()
@@ -158,7 +158,7 @@ def test_equal_lists_w_dups():
     list_2_excl_set = lists_metadata['list_2_excl_set']
     list_1_dups_dict = lists_metadata['list_1_dups_dict']
     list_2_dups_dict = lists_metadata['list_2_dups_dict']
-    assert lists_comp == True
+    assert lists_comp is True
     assert list_common_set == {1, 2, 's'}
     assert list_1_excl_set == set()
     assert list_2_excl_set == set()
@@ -185,7 +185,7 @@ def test_diff_lists_no_dups():
     list_2_excl_set = lists_metadata['list_2_excl_set']
     list_1_dups_dict = lists_metadata['list_1_dups_dict']
     list_2_dups_dict = lists_metadata['list_2_dups_dict']
-    assert lists_comp == False
+    assert lists_comp is False
     assert list_common_set == {'s'}
     assert list_1_excl_set == {1, 2}
     assert list_2_excl_set == {3, 4, 5}
@@ -223,7 +223,7 @@ def test_diff_lists_no_dups():
     list_2_excl_set = lists_metadata['list_2_excl_set']
     list_1_dups_dict = lists_metadata['list_1_dups_dict']
     list_2_dups_dict = lists_metadata['list_2_dups_dict']
-    assert lists_comp == False
+    assert lists_comp is False
     assert list_common_set == {'s'}
     assert list_1_excl_set == {1, 2}
     assert list_2_excl_set == {3, 4, 5}
@@ -250,7 +250,7 @@ def test_diff_lists_w_dups():
     list_2_excl_set = lists_metadata['list_2_excl_set']
     list_1_dups_dict = lists_metadata['list_1_dups_dict']
     list_2_dups_dict = lists_metadata['list_2_dups_dict']
-    assert lists_comp == False
+    assert lists_comp is False
     assert list_common_set == {'s'}
     assert list_1_excl_set == {1, 2}
     assert list_2_excl_set == {3, 4}
@@ -298,7 +298,7 @@ def test_diff_lists_w_dups():
     list_2_excl_set = lists_metadata['list_2_excl_set']
     list_1_dups_dict = lists_metadata['list_1_dups_dict']
     list_2_dups_dict = lists_metadata['list_2_dups_dict']
-    assert lists_comp == False
+    assert lists_comp is False
     assert list_common_set == set()
     assert list_1_excl_set == {1, 2}
     assert list_2_excl_set == {3, 4, 's'}
