@@ -8,8 +8,8 @@ from ..formatting import (
     _fn_ret_and_output,
     _return_pprint,
     _return_print_event,
-    _return_print_plain,
-    _return_print_result,
+    # _return_print_plain,
+    # _return_print_result,
     _return_print_title,
     _sorted,
 )

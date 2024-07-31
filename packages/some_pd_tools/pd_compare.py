@@ -22,7 +22,6 @@ TODO 2024-06-27:
 - Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
 - Add documentation for all functions in README.md.
 - Functions should probably return the report in a metadata dict like compare does.
-- Separate tests in multiple files?
 '''
 
 

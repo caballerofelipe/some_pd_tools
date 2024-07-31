@@ -1,7 +1,5 @@
 import re
 
-import pandas as pd
-import pytest
 
 from some_pd_tools import pd_compare
 
@@ -10,14 +8,14 @@ from ..formatting import (
     _fn_ret_and_output,
     _return_pprint,
     _return_print_event,
-    _return_print_plain,
+    # _return_print_plain,
     _return_print_result,
     _return_print_title,
-    _sorted,
+    # _sorted,
 )
 
 
-def test__equality_full() -> None:
+def test_equality_full() -> None:
     bdf = BaseDF()
 
     # Equal DataFrames
@@ -121,7 +119,7 @@ def test__equality_full() -> None:
     assert io_out == _return_print_result('🥳 Fully equal')
 
 
-def test__not_equality_first_line_different_columns() -> None:
+def test_not_equality_first_line_different_columns() -> None:
     # Test wether the first return line when not fully equal is the same.
     bdf = BaseDF()
     returned, io_out = _fn_ret_and_output(
@@ -136,7 +134,7 @@ def test__not_equality_first_line_different_columns() -> None:
     assert _return_print_result('😓 Not fully equal') == first_line
 
 
-def test__not_equality_first_line_different_types() -> None:
+def test_not_equality_first_line_different_types() -> None:
     # Test wether the first return line when not fully equal is the same.
     bdf = BaseDF()
     returned, io_out = _fn_ret_and_output(
@@ -151,7 +149,7 @@ def test__not_equality_first_line_different_types() -> None:
     assert _return_print_result('😓 Not fully equal') == first_line
 
 
-def test__not_equality_first_line_different_indexes() -> None:
+def test_not_equality_first_line_different_indexes() -> None:
     # Test wether the first return line when not fully equal is the same.
     bdf = BaseDF()
     returned, io_out = _fn_ret_and_output(
@@ -166,7 +164,7 @@ def test__not_equality_first_line_different_indexes() -> None:
     assert _return_print_result('😓 Not fully equal') == first_line
 
 
-def test__not_equality_first_line_different_values() -> None:
+def test_not_equality_first_line_different_values() -> None:
     # Test wether the first return line when not fully equal is the same.
     bdf = BaseDF()
     returned, io_out = _fn_ret_and_output(
@@ -182,7 +180,7 @@ def test__not_equality_first_line_different_values() -> None:
     assert _return_print_result('😓 Not fully equal') == first_line
 
 
-def test__duplicates_abort() -> None:
+def test_duplicates_abort() -> None:
     bdf = BaseDF()
 
     # Extra Columns, all duplicated (two instances of each)
@@ -310,7 +308,7 @@ def test__duplicates_abort() -> None:
     assert equality_metadata.get('error') == _return_print_event(1, error)
 
 
-def test__io_out_cols_review() -> None:
+def test_io_out_cols_review() -> None:
     bdf = BaseDF()
     df1_colset = set(bdf.df1_extra_col.columns)
     df2_colset = set(bdf.df2_extra_col.columns)
@@ -362,7 +360,7 @@ def test__io_out_cols_review() -> None:
     assert equality_metadata.get('cols_df2_dups_common_dict') == {}
 
 
-def test__io_out_idxs_review() -> None:
+def test_io_out_idxs_review() -> None:
     bdf = BaseDF()
     df1_idxset = set(bdf.df1.index)
     df2_idxset = set(bdf.df2_index_plus1.index)
