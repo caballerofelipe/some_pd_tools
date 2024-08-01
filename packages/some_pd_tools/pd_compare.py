@@ -13,15 +13,22 @@ __all__ = ['compare', 'compare_lists', 'compare_dtypes']
 
 # MARK: TODO
 _ = '''
-TODO 2024-06-27:
-- Add functions for where large code is done to keep code cleaner.
-- Populate metadata while advancing, if a return is done, test metadata with pytest.
-- Check that all shown list are sorted lists and not sets or other data types.
+TODO 2024-07-31:
+- `compare()` should return three equalities and a metadict.
+    - equalities:
+        - fully_equal True if df1.equals(df2)
+        - equal_w_special_settings True if after applying special settings df1.equals(df2)
+        - common_cols_idx_equal True if all is equal in common columns and indexes
 - Add doctrings.
 - When using the original DataFrames, not the ones copied, be aware that the columns on the copies where sorted. Check if this is a problem somehow.
 - Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
+
+To check for a good structure:
+- Add functions for where large code is done to keep code cleaner.
+- Populate metadata while advancing, if a return is done, test metadata with pytest.
+- Check that all shown list are sorted lists and not sets or other data types.
 - Add documentation for all functions in README.md.
-- Functions should probably return the report in a metadata dict like compare does.
+- Comparing functions should return equality (True/False) and metadata dict, including the report.
 '''
 
 
@@ -196,76 +203,79 @@ def compare_lists(
 
     # Report
     # ************************************
-    if report is True:
-        _print_title(1, f'Comparing {type_name_plural}')
-        if list_1 == list_2:
-            _print_event(1, f'✅ {type_name_plural.capitalize()} equal')
-            if len(list_1_dups_dict) == 0:
-                _print_event(1, f'✅ No duplicate {type_name_plural}')
-            else:
-                _print_event(1, f'😓 Duplicate {type_name_plural} (value,count):')
-                _pprint(1, _sorted(list_1_dups_dict))
+    stream = io.StringIO()
+    _print_title(1, f'Comparing {type_name_plural}', file=stream)
+    if list_1 == list_2:
+        _print_event(1, f'✅ {type_name_plural.capitalize()} equal', file=stream)
+        if len(list_1_dups_dict) == 0:
+            _print_event(1, f'✅ No duplicate {type_name_plural}', file=stream)
         else:
-            _print_event(1, f'😓 {type_name_plural.capitalize()} not equal')
+            _print_event(1, f'😓 Duplicate {type_name_plural} (value,count):', file=stream)
+            _pprint(1, _sorted(list_1_dups_dict), stream=stream)
+    else:
+        _print_event(1, f'😓 {type_name_plural.capitalize()} not equal', file=stream)
 
-            # Print length match
-            if len(list_1) == len(list_2):
-                _print_event(1, f'✅ {type_name_plural.capitalize()} lengths match')
+        # Print length match
+        if len(list_1) == len(list_2):
+            _print_event(1, f'✅ {type_name_plural.capitalize()} lengths match', file=stream)
+        else:
+            _print_event(1, f'😓 {type_name_plural.capitalize()} lengths don\'t match', file=stream)
+            lgnd_maxlen = max(len(list_1_name), len(list_2_name))
+            _print_event(2, f'{list_1_name:<{lgnd_maxlen}}: {len(list_1)}', file=stream)
+            _print_event(2, f'{list_2_name:<{lgnd_maxlen}}: {len(list_2)}', file=stream)
+
+        if len(list_common_set) > 0:
+            _print_event(1, f'✅ {type_name_plural.capitalize()} in common:', file=stream)
+            _pprint(1, sorted(list_common_set), stream=stream)
+        else:
+            _print_event(1, f'😓 No {type_name_plural} in common', file=stream)
+
+        # Print specifics for each list
+        for name, excl_items_set, dups_dict, dups_excl_set, dups_common_set in (
+            (
+                list_1_name,
+                list_1_excl_set,
+                list_1_dups_dict,
+                list_1_dups_exclusive_set,
+                list_1_dups_common_set,
+            ),
+            (
+                list_2_name,
+                list_2_excl_set,
+                list_2_dups_dict,
+                list_2_dups_exclusive_set,
+                list_2_dups_common_set,
+            ),
+        ):
+            _print_event(1, f'{name}', file=stream)  # List nam
+            # Print exclusive items
+            if len(excl_items_set) == 0:
+                _print_event(2, f'✅ No exclusive {type_name_plural}', file=stream)
             else:
-                _print_event(1, f'😓 {type_name_plural.capitalize()} lengths don\'t match')
-                lgnd_maxlen = max(len(list_1_name), len(list_2_name))
-                _print_event(2, f'{list_1_name:<{lgnd_maxlen}}: {len(list_1)}')
-                _print_event(2, f'{list_2_name:<{lgnd_maxlen}}: {len(list_2)}')
-
-            if len(list_common_set) > 0:
-                _print_event(1, f'✅ {type_name_plural.capitalize()} in common:')
-                _pprint(1, sorted(list_common_set))
+                _print_event(2, f'😓 Exclusive {type_name_plural}:', file=stream)
+                _pprint(2, _sorted(excl_items_set), stream=stream)
+            # Print duplicates
+            if len(dups_dict) == 0:
+                _print_event(2, f'✅ No duplicate {type_name_plural}', file=stream)
             else:
-                _print_event(1, f'😓 No {type_name_plural} in common')
+                # Print value and the number of times duplicated
+                _print_event(2, f'😓 Duplicate {type_name_plural} (value,count):', file=stream)
+                _pprint(2, _sorted(dups_dict), stream=stream)
+                # Print duplicates exclusive items, value list only
+                if len(dups_excl_set) == 0:
+                    _print_event(2, f'✅ No duplicate {type_name_plural} exclusive', file=stream)
+                else:
+                    _print_event(2, f'😓 Duplicate {type_name_plural} exclusive:', file=stream)
+                    _pprint(2, _sorted(dups_excl_set), stream=stream)
+                # Print duplicates in common items, value list only
+                if len(dups_common_set) == 0:
+                    _print_event(2, f'✅ No duplicate {type_name_plural} in common', file=stream)
+                else:
+                    _print_event(2, f'😓 Duplicate {type_name_plural} in common:', file=stream)
+                    _pprint(2, _sorted(dups_common_set), stream=stream)
 
-            # Print specifics for each list
-            for name, excl_items_set, dups_dict, dups_excl_set, dups_common_set in (
-                (
-                    list_1_name,
-                    list_1_excl_set,
-                    list_1_dups_dict,
-                    list_1_dups_exclusive_set,
-                    list_1_dups_common_set,
-                ),
-                (
-                    list_2_name,
-                    list_2_excl_set,
-                    list_2_dups_dict,
-                    list_2_dups_exclusive_set,
-                    list_2_dups_common_set,
-                ),
-            ):
-                _print_event(1, f'{name}')  # List name
-                # Print exclusive items
-                if len(excl_items_set) == 0:
-                    _print_event(2, f'✅ No exclusive {type_name_plural}')
-                else:
-                    _print_event(2, f'😓 Exclusive {type_name_plural}:')
-                    _pprint(2, _sorted(excl_items_set))
-                # Print duplicates
-                if len(dups_dict) == 0:
-                    _print_event(2, f'✅ No duplicate {type_name_plural}')
-                else:
-                    # Print value and the number of times duplicated
-                    _print_event(2, f'😓 Duplicate {type_name_plural} (value,count):')
-                    _pprint(2, _sorted(dups_dict))
-                    # Print duplicates exclusive items, value list only
-                    if len(dups_excl_set) == 0:
-                        _print_event(2, f'✅ No duplicate {type_name_plural} exclusive')
-                    else:
-                        _print_event(2, f'😓 Duplicate {type_name_plural} exclusive:')
-                        _pprint(2, _sorted(dups_excl_set))
-                    # Print duplicates in common items, value list only
-                    if len(dups_common_set) == 0:
-                        _print_event(2, f'✅ No duplicate {type_name_plural} in common')
-                    else:
-                        _print_event(2, f'😓 Duplicate {type_name_plural} in common:')
-                        _pprint(2, _sorted(dups_common_set))
+    if report is True:
+        print(stream.getvalue(), end='')
 
     # Return
     # ************************************
@@ -275,6 +285,7 @@ def compare_lists(
         'list_2_excl_set': list_2_excl_set,
         'list_1_dups_dict': list_1_dups_dict,
         'list_2_dups_dict': list_2_dups_dict,
+        'report': stream.getvalue(),
     }
 
 
@@ -297,12 +308,12 @@ def compare_dtypes(
       DataFrames specifying only the common columns.
     - Duplicate columns are forbidden. If a comparison of duplicated columns is needed, rename them
       manually by index before calling this function. Example:
-      
+
       ```python
       df.columns.values[0] = "same_name_0"
       df.columns.values[1] = "same_name_1"
       ```
-      
+
       For a fuller example, see https://www.geeksforgeeks.org/rename-column-by-index-in-pandas/.
 
     Parameters
@@ -349,8 +360,8 @@ def compare_dtypes(
     if not isinstance(df1_name, str) or not isinstance(df2_name, str):
         raise ValueError('df1_name and df2_name must be of type str.')
 
-    stream = io.StringIO()
-    with redirect_stdout(stream):
+    stream_compare = io.StringIO()
+    with redirect_stdout(stream_compare):
         lists_equal, lists_metadata = compare_lists(
             list(df1.columns),
             list(df2.columns),
@@ -364,12 +375,12 @@ def compare_dtypes(
     if not lists_equal:
         raise ValueError(
             f'df1 ({df1_name}) and df2 ({df2_name}) must have the same columns.'
-            + f'\n{stream.getvalue()}'
+            + f'\n{stream_compare.getvalue()}'
         )
     if len(lists_metadata['list_1_dups_dict']) > 0 or len(lists_metadata['list_2_dups_dict']) > 0:
         raise ValueError(
             f'df1 ({df1_name}) and df2 ({df2_name}) cannot have duplicate columns.'
-            + f'\n{stream.getvalue()}'
+            + f'\n{stream_compare.getvalue()}'
         )
 
     # Computations
@@ -529,7 +540,7 @@ def _save_compared_df(
     writer.close()
 
 
-def compare_returner(
+def returner_for_compare(
     equality_full: bool,
     equality_partial: bool,
     equality_metadata: dict,
@@ -604,7 +615,7 @@ def compare(
     # *************************************************************************
     if df1_cp.equals(df2_cp):  # Are the dfs equal?
         _print_result('🥳 Fully equal', file=str_io)
-        return compare_returner(True, False, equality_metadata, str_io, report)
+        return returner_for_compare(True, True, equality_metadata, str_io, report)
     else:
         _print_result('😓 Not fully equal', file=str_io)
 
@@ -612,16 +623,16 @@ def compare(
     # Compare columns, show report if `report==True`
     # and get common columns, extra columns for each DF
     # *************************************************************************
-    with redirect_stdout(str_io):
-        (cols_compare_equal, cols_compare_metadata) = compare_lists(
-            list_1=list(df1_cp.columns),
-            list_2=list(df2_cp.columns),
-            list_1_name=df1_name,
-            list_2_name=df2_name,
-            type_name='column',
-            type_name_plural='columns',
-            report=report,
-        )
+    cols_compare_equal, cols_compare_metadata = compare_lists(
+        list_1=list(df1_cp.columns),
+        list_2=list(df2_cp.columns),
+        list_1_name=df1_name,
+        list_2_name=df2_name,
+        type_name='column',
+        type_name_plural='columns',
+        report=False,
+    )
+    print(cols_compare_metadata['report'], end='', file=str_io)
     cols_common_set = cols_compare_metadata['list_common_set']
     cols_df1_excl_set = cols_compare_metadata['list_1_excl_set']
     cols_df2_excl_set = cols_compare_metadata['list_2_excl_set']
@@ -652,7 +663,7 @@ def compare(
         _print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
-        return compare_returner(False, False, equality_metadata, str_io, report)
+        return returner_for_compare(False, False, equality_metadata, str_io, report)
 
     # MARK: SHOW COMMON COLS
     # Show common columns if set in the options
@@ -665,16 +676,16 @@ def compare(
     # Compare indexes, show report if `report==True`
     # and get common indexes, extra indexes for each DF
     # *************************************************************************
-    with redirect_stdout(str_io):
-        (idxs_compare_equal, idxs_compare_metadata) = compare_lists(
-            list_1=list(df1_cp.index),
-            list_2=list(df2_cp.index),
-            list_1_name=df1_name,
-            list_2_name=df2_name,
-            type_name='index',
-            type_name_plural='indexes',
-            report=report,
-        )
+    idxs_compare_equal, idxs_compare_metadata = compare_lists(
+        list_1=list(df1_cp.index),
+        list_2=list(df2_cp.index),
+        list_1_name=df1_name,
+        list_2_name=df2_name,
+        type_name='index',
+        type_name_plural='indexes',
+        report=False,
+    )
+    print(idxs_compare_metadata['report'], end='', file=str_io)
     idxs_common_set = idxs_compare_metadata['list_common_set']
     idxs_df1_excl_set = idxs_compare_metadata['list_1_excl_set']
     idxs_df2_excl_set = idxs_compare_metadata['list_2_excl_set']
@@ -704,7 +715,7 @@ def compare(
         _print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
-        return compare_returner(False, False, equality_metadata, str_io, report)
+        return returner_for_compare(False, False, equality_metadata, str_io, report)
 
     # MARK: SHOW COMMON IDXS
     # Show common indexes if set in the options
@@ -716,19 +727,19 @@ def compare(
     # MARK: COMPARE DTYPES
     # dtypes comparison
     # *************************************************************************
-    with redirect_stdout(str_io):
-        dtypes_equal, dtypes_metadata = compare_dtypes(
-            df1=df1_cp[cols_common_list],
-            df2=df2_cp[cols_common_list],
-            df1_name=df1_name,
-            df2_name=df2_name,
-            show_common_dtypes=show_common_dtypes,
-            report=report,
-        )
+    dtypes_equal, dtypes_metadata = compare_dtypes(
+        df1=df1_cp[cols_common_list],
+        df2=df2_cp[cols_common_list],
+        df1_name=df1_name,
+        df2_name=df2_name,
+        show_common_dtypes=show_common_dtypes,
+        report=False,
+    )
+    print(dtypes_metadata['report'], end='', file=str_io)
     equality_metadata = {
         **equality_metadata,
-        'dtypes_equal': dtypes_equal,
-        'dtypes_df': dtypes_metadata['dtypes_df'],
+        'dtypes_for_common_cols_equal': dtypes_equal,
+        'dtypes_for_common_cols_df': dtypes_metadata['dtypes_df'],
     }
 
     # MARK: SPECIAL SETTINGS
@@ -771,7 +782,7 @@ def compare(
         _print_title(1, 'Equality with special settings', file=str_io)
         if df1_cp.equals(df2_cp):  # Are the dfs equal? (after Special Settings:)
             _print_result('🥸 Fully Equal (with special setting)', file=str_io)
-            return compare_returner(False, True, equality_metadata, str_io, report)
+            return returner_for_compare(False, True, equality_metadata, str_io, report)
         else:
             _print_result('😡 Not fully Equal (with special setting)', file=str_io)
     else:
@@ -808,7 +819,7 @@ def compare(
 
     if equal_mask_df.all(axis=None):
         _print_result('🥸 Equal values', file=str_io)
-        return compare_returner(False, True, equality_metadata, str_io, report)
+        return returner_for_compare(False, True, equality_metadata, str_io, report)
 
     diff_columns = equal_mask_df.columns[~(equal_mask_df.all(axis=0))].sort_values()
     _print_event(1, f'😓 Not equal columns (count[{len(diff_columns)}]):', file=str_io)
@@ -889,4 +900,4 @@ def compare(
         'diff_rows': diff_rows,
         'diff_original_vals_df': diff_original_vals_df,
     }
-    return compare_returner(False, False, equality_metadata, str_io, report)
+    return returner_for_compare(False, False, equality_metadata, str_io, report)

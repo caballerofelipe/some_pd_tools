@@ -1,5 +1,6 @@
 import re
 
+import pandas as pd
 
 from some_pd_tools import pd_compare
 
@@ -48,7 +49,7 @@ def test_equality_full() -> None:
         },
         'report': _return_print_result('🥳 Fully equal'),
     }
-    assert returned == [True, False, equality_metadata_predicted]
+    assert returned == [True, True, equality_metadata_predicted]
     assert io_out == _return_print_result('🥳 Fully equal')
 
     bdf = BaseDF()
@@ -82,7 +83,7 @@ def test_equality_full() -> None:
         },
         'report': _return_print_result('🥳 Fully equal'),
     }
-    assert returned == [True, False, equality_metadata_predicted]
+    assert returned == [True, True, equality_metadata_predicted]
     assert io_out == _return_print_result('🥳 Fully equal')
 
     # Equal Indexes, equal Dataframes, all duplicated (two instances of each)
@@ -115,11 +116,11 @@ def test_equality_full() -> None:
         },
         'report': _return_print_result('🥳 Fully equal'),
     }
-    assert returned == [True, False, equality_metadata_predicted]
+    assert returned == [True, True, equality_metadata_predicted]
     assert io_out == _return_print_result('🥳 Fully equal')
 
 
-def test_not_equality_first_line_different_columns() -> None:
+def test_not_equality_first_line_diff_columns() -> None:
     # Test wether the first return line when not fully equal is the same.
     bdf = BaseDF()
     returned, io_out = _fn_ret_and_output(
@@ -130,11 +131,11 @@ def test_not_equality_first_line_different_columns() -> None:
         bdf.df2_name,
     )
     first_line = re.search('.*\n', io_out).group(0)
-    assert returned[0] == False
+    assert returned[0] is False
     assert _return_print_result('😓 Not fully equal') == first_line
 
 
-def test_not_equality_first_line_different_types() -> None:
+def test_not_equality_first_line_diff_types() -> None:
     # Test wether the first return line when not fully equal is the same.
     bdf = BaseDF()
     returned, io_out = _fn_ret_and_output(
@@ -145,11 +146,11 @@ def test_not_equality_first_line_different_types() -> None:
         bdf.df2_name,
     )
     first_line = re.search('.*\n', io_out).group(0)
-    assert returned[0] == False
+    assert returned[0] is False
     assert _return_print_result('😓 Not fully equal') == first_line
 
 
-def test_not_equality_first_line_different_indexes() -> None:
+def test_not_equality_first_line_diff_indexes() -> None:
     # Test wether the first return line when not fully equal is the same.
     bdf = BaseDF()
     returned, io_out = _fn_ret_and_output(
@@ -160,11 +161,11 @@ def test_not_equality_first_line_different_indexes() -> None:
         bdf.df2_name,
     )
     first_line = re.search('.*\n', io_out).group(0)
-    assert returned[0] == False
+    assert returned[0] is False
     assert _return_print_result('😓 Not fully equal') == first_line
 
 
-def test_not_equality_first_line_different_values() -> None:
+def test_not_equality_first_line_diff_values() -> None:
     # Test wether the first return line when not fully equal is the same.
     bdf = BaseDF()
     returned, io_out = _fn_ret_and_output(
@@ -176,7 +177,7 @@ def test_not_equality_first_line_different_values() -> None:
         bdf.df2_name,
     )
     first_line = re.search('.*\n', io_out).group(0)
-    assert returned[0] == False and returned[1] == False
+    assert returned[0] is False and returned[1] == False
     assert _return_print_result('😓 Not fully equal') == first_line
 
 
@@ -317,7 +318,7 @@ def test_cols_review() -> None:
     cols_df1_excl_set = df1_colset - cols_common_set
     cols_df2_excl_set = df2_colset - cols_common_set
 
-    io_predicted_str = _return_print_title(1, 'Columns present in both DataFrames (intersection)')
+    io_cols_common_title = _return_print_title(1, 'Columns present in both DataFrames (intersection)')
 
     # Column metadata returned showing common columns
     # ************************************
@@ -326,11 +327,23 @@ def test_cols_review() -> None:
         bdf.df1_extra_col,
         bdf.df2_extra_col,
         show_common_cols=True,
+        report=True
     )
-    cols_common_ioret = _return_pprint(1, cols_common_list)
-    io_predicted_full_str = io_predicted_str + cols_common_ioret
-    assert io_predicted_full_str in io_out
+    compare_lists_ret = pd_compare.compare_lists(
+        list_1=list(bdf.df1_extra_col.columns),
+        list_2=list(bdf.df2_extra_col.columns),
+        list_1_name='df1',
+        list_2_name='df2',
+        type_name='column',
+        type_name_plural='columns',
+    )
+    io_predicted_printed_substr = compare_lists_ret[1]['report']
+    io_predicted_printed_substr += io_cols_common_title
+    io_predicted_printed_substr += _return_pprint(1, cols_common_list)
     equality_metadata = returned[2]
+    assert returned[0] is False
+    assert io_predicted_printed_substr in io_out
+    assert io_predicted_printed_substr in equality_metadata.get('report')
     assert equality_metadata.get('cols_common_set') == cols_common_set
     assert equality_metadata.get('cols_df1_excl_set') == cols_df1_excl_set
     assert equality_metadata.get('cols_df2_excl_set') == cols_df2_excl_set
@@ -346,11 +359,16 @@ def test_cols_review() -> None:
         bdf.df1_extra_col,
         bdf.df2_extra_col,
         show_common_cols=False,
+        report=True
     )
-    cols_common_ioret = _return_pprint(1, cols_common_list)
-    io_predicted_full_str = io_predicted_str + cols_common_ioret
-    assert io_predicted_full_str not in io_out
+    io_predicted_notprinted_substr = compare_lists_ret[1]['report']
+    io_predicted_notprinted_substr += io_cols_common_title
+    io_predicted_notprinted_substr += _return_pprint(1, cols_common_list)
     equality_metadata = returned[2]
+    assert returned[0] is False
+    assert io_predicted_notprinted_substr not in io_out
+    assert compare_lists_ret[1]['report'] in equality_metadata.get('report')
+    assert io_predicted_notprinted_substr not in equality_metadata.get('report')
     assert equality_metadata.get('cols_common_set') == cols_common_set
     assert equality_metadata.get('cols_df1_excl_set') == cols_df1_excl_set
     assert equality_metadata.get('cols_df2_excl_set') == cols_df2_excl_set
@@ -369,7 +387,7 @@ def test_idxs_review() -> None:
     idxs_df1_excl_set = df1_idxset - idxs_common_set
     idxs_df2_excl_set = df2_idxset - idxs_common_set
 
-    io_predicted_str = _return_print_title(1, 'Indexes present in both DataFrames (intersection)')
+    io_idxs_common_title = _return_print_title(1, 'Indexes present in both DataFrames (intersection)')
 
     # Index metadata returned showing common indexes
     # ************************************
@@ -378,11 +396,23 @@ def test_idxs_review() -> None:
         bdf.df1,
         bdf.df2_index_plus1,
         show_common_idxs=True,
+        report=True
     )
-    idxs_common_ioret = _return_pprint(1, idxs_common_list)
-    io_predicted_full_str = io_predicted_str + idxs_common_ioret
-    assert io_predicted_full_str in io_out
+    compare_lists_ret = pd_compare.compare_lists(
+        list_1=list(bdf.df1.index),
+        list_2=list(bdf.df2_index_plus1.index),
+        list_1_name='df1',
+        list_2_name='df2',
+        type_name='index',
+        type_name_plural='indexes',
+    )
+    io_predicted_printed_substr = compare_lists_ret[1]['report']
+    io_predicted_printed_substr += io_idxs_common_title
+    io_predicted_printed_substr += _return_pprint(1, idxs_common_list)
     equality_metadata = returned[2]
+    assert returned[0] is False
+    assert io_predicted_printed_substr in io_out
+    assert io_predicted_printed_substr in equality_metadata.get('report')
     assert equality_metadata.get('idxs_common_set') == idxs_common_set
     assert equality_metadata.get('idxs_df1_excl_set') == idxs_df1_excl_set
     assert equality_metadata.get('idxs_df2_excl_set') == idxs_df2_excl_set
@@ -398,11 +428,24 @@ def test_idxs_review() -> None:
         bdf.df1,
         bdf.df2_index_plus1,
         show_common_idxs=False,
+        report=True
     )
-    idxs_common_ioret = _return_pprint(1, idxs_common_list)
-    io_predicted_full_str = io_predicted_str + idxs_common_ioret
-    assert io_predicted_full_str not in io_out
+    compare_lists_ret = pd_compare.compare_lists(
+        list_1=list(bdf.df1.index),
+        list_2=list(bdf.df2_index_plus1.index),
+        list_1_name='df1',
+        list_2_name='df2',
+        type_name='index',
+        type_name_plural='indexes',
+    )
+    io_predicted_notprinted_substr = compare_lists_ret[1]['report']
+    io_predicted_notprinted_substr += io_idxs_common_title
+    io_predicted_notprinted_substr += _return_pprint(1, idxs_common_list)
     equality_metadata = returned[2]
+    assert returned[0] is False
+    assert io_predicted_notprinted_substr not in io_out
+    assert compare_lists_ret[1]['report'] in equality_metadata.get('report')
+    assert io_predicted_notprinted_substr not in equality_metadata.get('report')
     assert equality_metadata.get('idxs_common_set') == idxs_common_set
     assert equality_metadata.get('idxs_df1_excl_set') == idxs_df1_excl_set
     assert equality_metadata.get('idxs_df2_excl_set') == idxs_df2_excl_set
@@ -413,8 +456,202 @@ def test_idxs_review() -> None:
 
 
 def test_dtypes_equal_review() -> None:
-    assert False  # TODO REMOVE
+    bdf = BaseDF()
+
+    predicted_dtypes_df = pd.DataFrame(
+        {
+            'different': [False, False, False, False, False],
+            'df1': ['float64', 'int64', 'float64', 'object', 'object'],
+            'df2': ['float64', 'int64', 'float64', 'object', 'object'],
+        },
+        index=['col_float', 'col_int', 'col_nan', 'col_str', 'col_strnan'],
+    )
+
+    # Different columns some common, equal dtypes, w report, w show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare,
+        bdf.df1_extra_col,
+        bdf.df2_extra_col,
+        show_common_dtypes=True,
+        report=True,
+    )
+    compare_dtypes_ret = pd_compare.compare_dtypes(
+        bdf.df1,
+        bdf.df2,
+        df1_name='df1',
+        df2_name='df2',
+        show_common_dtypes=True
+    )
+    assert returned[0] is False
+    assert compare_dtypes_ret[1]['report'] in io_out
+    assert compare_dtypes_ret[1]['report'] in returned[2]['report']
+    assert returned[2]['dtypes_for_common_cols_equal'] is True
+    assert returned[2]['dtypes_for_common_cols_df'].equals(predicted_dtypes_df)
+
+    # Different columns some common, equal dtypes, w report, no show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare,
+        bdf.df1_extra_col,
+        bdf.df2_extra_col,
+        show_common_dtypes=False,
+        report=True,
+    )
+    compare_dtypes_ret = pd_compare.compare_dtypes(
+        bdf.df1,
+        bdf.df2,
+        df1_name='df1',
+        df2_name='df2',
+        show_common_dtypes=False
+    )
+    assert returned[0] is False
+    assert compare_dtypes_ret[1]['report'] in io_out
+    assert compare_dtypes_ret[1]['report'] in returned[2]['report']
+    assert returned[2]['dtypes_for_common_cols_equal'] is True
+    assert returned[2]['dtypes_for_common_cols_df'].equals(predicted_dtypes_df)
+
+    # Different columns some common, equal dtypes, no report, w show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare,
+        bdf.df1_extra_col,
+        bdf.df2_extra_col,
+        show_common_dtypes=True,
+        report=False,
+    )
+    compare_dtypes_ret = pd_compare.compare_dtypes(
+        bdf.df1,
+        bdf.df2,
+        df1_name='df1',
+        df2_name='df2',
+        show_common_dtypes=True
+    )
+    assert returned[0] is False
+    assert io_out == ''
+    assert compare_dtypes_ret[1]['report'] in returned[2]['report']
+    assert returned[2]['dtypes_for_common_cols_equal'] is True
+    assert returned[2]['dtypes_for_common_cols_df'].equals(predicted_dtypes_df)
+
+    # Different columns some common, equal dtypes, no report, no show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare,
+        bdf.df1_extra_col,
+        bdf.df2_extra_col,
+        show_common_dtypes=False,
+        report=False,
+    )
+    compare_dtypes_ret = pd_compare.compare_dtypes(
+        bdf.df1,
+        bdf.df2,
+        df1_name='df1',
+        df2_name='df2',
+        show_common_dtypes=False
+    )
+    assert returned[0] is False
+    assert io_out == ''
+    assert compare_dtypes_ret[1]['report'] in returned[2]['report']
+    assert returned[2]['dtypes_for_common_cols_equal'] is True
+    assert returned[2]['dtypes_for_common_cols_df'].equals(predicted_dtypes_df)
 
 
-def test_dtypes_different_review() -> None:
-    assert False  # TODO REMOVE
+def test_dtypes_diff_review() -> None:
+    bdf = BaseDF()
+
+    predicted_dtypes_df = pd.DataFrame(
+        {
+            'different': [True, True, True, False, False],
+            'df1': ['float64', 'int64', 'float64', 'object', 'object'],
+            'df2': ['object', 'object', 'object', 'object', 'object'],
+        },
+        index=['col_float', 'col_int', 'col_nan', 'col_str', 'col_strnan'],
+    )
+
+    # Same columns, different dtypes, w report, w show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare,
+        bdf.df1,
+        bdf.df2_as_object,
+        show_common_dtypes=True,
+        report=True,
+    )
+    compare_dtypes_ret = pd_compare.compare_dtypes(
+        bdf.df1,
+        bdf.df2_as_object,
+        df1_name='df1',
+        df2_name='df2',
+        show_common_dtypes=True
+    )
+    assert returned[0] is False
+    assert compare_dtypes_ret[1]['report'] in io_out
+    assert compare_dtypes_ret[1]['report'] in returned[2]['report']
+    assert returned[2]['dtypes_for_common_cols_equal'] is False
+    assert returned[2]['dtypes_for_common_cols_df'].equals(predicted_dtypes_df)
+
+    # Same columns, different dtypes, w report, no show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare,
+        bdf.df1,
+        bdf.df2_as_object,
+        show_common_dtypes=False,
+        report=True,
+    )
+    compare_dtypes_ret = pd_compare.compare_dtypes(
+        bdf.df1,
+        bdf.df2_as_object,
+        df1_name='df1',
+        df2_name='df2',
+        show_common_dtypes=False
+    )
+    assert returned[0] is False
+    assert compare_dtypes_ret[1]['report'] in io_out
+    assert compare_dtypes_ret[1]['report'] in returned[2]['report']
+    assert returned[2]['dtypes_for_common_cols_equal'] is False
+    assert returned[2]['dtypes_for_common_cols_df'].equals(predicted_dtypes_df)
+
+    # Same columns, different dtypes, no report, w show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare,
+        bdf.df1,
+        bdf.df2_as_object,
+        show_common_dtypes=True,
+        report=False,
+    )
+    compare_dtypes_ret = pd_compare.compare_dtypes(
+        bdf.df1,
+        bdf.df2_as_object,
+        df1_name='df1',
+        df2_name='df2',
+        show_common_dtypes=True
+    )
+    assert returned[0] is False
+    assert io_out == ''
+    assert compare_dtypes_ret[1]['report'] in returned[2]['report']
+    assert returned[2]['dtypes_for_common_cols_equal'] is False
+    assert returned[2]['dtypes_for_common_cols_df'].equals(predicted_dtypes_df)
+
+    # Same columns, different dtypes, no report, no show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare,
+        bdf.df1,
+        bdf.df2_as_object,
+        show_common_dtypes=False,
+        report=False,
+    )
+    compare_dtypes_ret = pd_compare.compare_dtypes(
+        bdf.df1,
+        bdf.df2_as_object,
+        df1_name='df1',
+        df2_name='df2',
+        show_common_dtypes=False
+    )
+    assert returned[0] is False
+    assert io_out == ''
+    assert compare_dtypes_ret[1]['report'] in returned[2]['report']
+    assert returned[2]['dtypes_for_common_cols_equal'] is False
+    assert returned[2]['dtypes_for_common_cols_df'].equals(predicted_dtypes_df)
