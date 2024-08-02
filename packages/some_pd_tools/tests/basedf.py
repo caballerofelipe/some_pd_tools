@@ -3,29 +3,44 @@ import pandas as pd
 
 class BaseDF:
     def __init__(self) -> None:
-        df = pd.DataFrame(
+        df_original = pd.DataFrame(
             {
                 'col_int': [1, 2, 3, 4],
-                'col_float': [1.1, 2.2, 3.3, 4.4],
-                'col_str': ['a', 'b', 'c', 'd'],
+                'col_float': [3.3333333333, 4.4444444444, 5.5555555555, 6.6666666666],
+                'col_str': ['a', 'b', 'c', '4.4444444444'],
                 'col_nan': [float('nan'), float('nan'), float('nan'), float('nan')],
-                'col_strnan': ['e', 'f', 'g', float('nan')],
-                'col_df1extra': [5, 6, 7, 8],
-                'col_df2extra': ['i', 'j', 'k', 45],
+                'col_strnan': ['d', 'e', 'f', float('nan')],
+                'col_df1extra': [5, 6, 7, 'i'],
+                'col_df2extra': ['j', 'k', 'l', 45],
             }
         )
-        self._df = df
+        self._df = df_original
+        self._df_diff_values = self._df.sort_values('col_int', ascending=False).reset_index(
+            drop=True
+        )
 
-        self._df_simple = df.copy().drop(columns=['col_df1extra', 'col_df2extra'])
+        self._df_simple = self._df.copy().drop(columns=['col_df1extra', 'col_df2extra'])
+        self._df_simple_diff_values = self._df_diff_values.copy().drop(
+            columns=['col_df1extra', 'col_df2extra']
+        )
 
         self._df1 = self._df_simple.copy()
         self._df2 = self._df_simple.copy()
 
+        self._df1_diff_values = self._df_simple_diff_values.copy()
+        self._df2_diff_values = self._df_simple_diff_values.copy()
+
         self._df1_as_object = self._df_simple.copy().astype('object')
         self._df2_as_object = self._df_simple.copy().astype('object')
 
-        self._df1_extra_col = df.copy().drop(columns=['col_df2extra'])
-        self._df2_extra_col = df.copy().drop(columns=['col_df1extra'])
+        self._df1_as_object_diff_values = self._df_simple_diff_values.copy().astype('object')
+        self._df2_as_object_diff_values = self._df_simple_diff_values.copy().astype('object')
+
+        self._df1_extra_col = self._df.copy().drop(columns=['col_df2extra'])
+        self._df2_extra_col = self._df.copy().drop(columns=['col_df1extra'])
+
+        self._df1_extra_col_diff_values = self._df_diff_values.copy().drop(columns=['col_df2extra'])
+        self._df2_extra_col_diff_values = self._df_diff_values.copy().drop(columns=['col_df1extra'])
 
         self._df_index_plus1 = self._df_simple.copy()
         self._df_index_plus1.index = self._df_index_plus1.index + 1
@@ -47,6 +62,18 @@ class BaseDF:
     @df.deleter
     def df(self, value):
         raise ValueError('df not deletable')
+
+    @property
+    def df_diff_values(self) -> pd.DataFrame | pd.Series:
+        return self._df_diff_values.copy()
+
+    @df_diff_values.setter
+    def df_diff_values(self, value):
+        raise ValueError('df_diff_values not rewritable')
+
+    @df_diff_values.deleter
+    def df_diff_values(self, value):
+        raise ValueError('df_diff_values not deletable')
 
     @property
     def df1(self) -> pd.DataFrame | pd.Series:
@@ -73,6 +100,30 @@ class BaseDF:
         raise ValueError('df2 not deletable')
 
     @property
+    def df1_diff_values(self) -> pd.DataFrame | pd.Series:
+        return self._df1_diff_values.copy()
+
+    @df1_diff_values.setter
+    def df1_diff_values(self, value):
+        raise ValueError('df1_diff_values not rewritable')
+
+    @df1_diff_values.deleter
+    def df1_diff_values(self, value):
+        raise ValueError('df1_diff_values not deletable')
+
+    @property
+    def df2_diff_values(self) -> pd.DataFrame | pd.Series:
+        return self._df2_diff_values.copy()
+
+    @df2_diff_values.setter
+    def df2_diff_values(self, value):
+        raise ValueError('df2_diff_values not rewritable')
+
+    @df2_diff_values.deleter
+    def df2_diff_values(self, value):
+        raise ValueError('df2_diff_values not deletable')
+
+    @property
     def df1_as_object(self) -> pd.DataFrame | pd.Series:
         return self._df1_as_object.copy()
 
@@ -97,6 +148,30 @@ class BaseDF:
         raise ValueError('df2_as_object not deletable')
 
     @property
+    def df1_as_object_diff_values(self) -> pd.DataFrame | pd.Series:
+        return self._df1_as_object_diff_values.copy()
+
+    @df1_as_object_diff_values.setter
+    def df1_as_object_diff_values(self, value):
+        raise ValueError('df1_as_object_diff_values not rewritable')
+
+    @df1_as_object_diff_values.deleter
+    def df1_as_object_diff_values(self, value):
+        raise ValueError('df1_as_object_diff_values not deletable')
+
+    @property
+    def df2_as_object_diff_values(self) -> pd.DataFrame | pd.Series:
+        return self._df2_as_object_diff_values.copy()
+
+    @df2_as_object_diff_values.setter
+    def df2_as_object_diff_values(self, value):
+        raise ValueError('df2_as_object_diff_values not rewritable')
+
+    @df2_as_object_diff_values.deleter
+    def df2_as_object_diff_values(self, value):
+        raise ValueError('df2_as_object_diff_values not deletable')
+
+    @property
     def df1_extra_col(self) -> pd.DataFrame | pd.Series:
         return self._df1_extra_col.copy()
 
@@ -119,6 +194,30 @@ class BaseDF:
     @df2_extra_col.deleter
     def df2_extra_col(self, value):
         raise ValueError('df2_extra_col not deletable')
+
+    @property
+    def df1_extra_col_diff_values(self) -> pd.DataFrame | pd.Series:
+        return self._df1_extra_col_diff_values.copy()
+
+    @df1_extra_col_diff_values.setter
+    def df1_extra_col_diff_values(self, value):
+        raise ValueError('df1_extra_col_diff_values not rewritable')
+
+    @df1_extra_col_diff_values.deleter
+    def df1_extra_col_diff_values(self, value):
+        raise ValueError('df1_extra_col_diff_values not deletable')
+
+    @property
+    def df2_extra_col_diff_values(self) -> pd.DataFrame | pd.Series:
+        return self._df2_extra_col_diff_values.copy()
+
+    @df2_extra_col_diff_values.setter
+    def df2_extra_col_diff_values(self, value):
+        raise ValueError('df2_extra_col_diff_values not rewritable')
+
+    @df2_extra_col_diff_values.deleter
+    def df2_extra_col_diff_values(self, value):
+        raise ValueError('df2_extra_col_diff_values not deletable')
 
     @property
     def df1_index_plus1(self) -> pd.DataFrame | pd.Series:

@@ -19,6 +19,7 @@ TODO 2024-07-31:
         - fully_equal True if df1.equals(df2)
         - equal_w_special_settings True if after applying special settings df1.equals(df2)
         - common_cols_idx_equal True if all is equal in common columns and indexes
+- For testing, add all parameters for functions calls to avoid problems if default parameters change.
 - Add doctrings.
 - When using the original DataFrames, not the ones copied, be aware that the columns on the copies where sorted. Check if this is a problem somehow.
 - Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
@@ -37,6 +38,7 @@ def _sorted(obj):
         return sorted(obj.items(), key=lambda item: str(item[0]))
     if isinstance(obj, set) or isinstance(obj, list):
         return sorted(obj, key=lambda item: str(item))
+    raise ValueError(f'_sorted not implemented for type:{type(obj)}')
 
 
 def _fill(
@@ -540,7 +542,7 @@ def _save_compared_df(
     writer.close()
 
 
-def returner_for_compare(
+def _returner_for_compare(
     equality_full: bool,
     equality_partial: bool,
     equality_metadata: dict,
@@ -610,14 +612,15 @@ def compare(
     df1_cp = pd.DataFrame(df1).sort_index(axis=0).sort_index(axis=1).copy()
     df2_cp = pd.DataFrame(df2).sort_index(axis=0).sort_index(axis=1).copy()
 
-    # MARK: IS FULLY EQUAL
+    # MARK: EQUAL FULL
     # Check if both DataFrames are completely equal using Pandas function
     # *************************************************************************
+    _print_title(1, 'Equality', 'complete', file=str_io)
     if df1_cp.equals(df2_cp):  # Are the dfs equal?
-        _print_result('🥳 Fully equal', file=str_io)
-        return returner_for_compare(True, True, equality_metadata, str_io, report)
+        _print_result('🥳 Equal', file=str_io)
+        return _returner_for_compare(True, True, equality_metadata, str_io, report)
     else:
-        _print_result('😓 Not fully equal', file=str_io)
+        _print_result('😡 Not equal', file=str_io)
 
     # MARK: COMPARE COLUMNS
     # Compare columns, show report if `report==True`
@@ -663,7 +666,7 @@ def compare(
         _print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
-        return returner_for_compare(False, False, equality_metadata, str_io, report)
+        return _returner_for_compare(False, False, equality_metadata, str_io, report)
 
     # MARK: SHOW COMMON COLS
     # Show common columns if set in the options
@@ -715,7 +718,7 @@ def compare(
         _print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
-        return returner_for_compare(False, False, equality_metadata, str_io, report)
+        return _returner_for_compare(False, False, equality_metadata, str_io, report)
 
     # MARK: SHOW COMMON IDXS
     # Show common indexes if set in the options
@@ -723,6 +726,36 @@ def compare(
     if show_common_idxs is True:
         _print_title(1, 'Indexes present in both DataFrames (intersection)', file=str_io)
         _pprint(1, idxs_common_list, stream=str_io)
+
+    # MARK: EQUAL COMMON
+    # Only taking into consideration common columns and indexes
+    # Check if both DataFrames are completely equal using Pandas function
+    # *************************************************************************
+    _print_title(1, 'Common columns and indexes', file=str_io)
+    all_common_cols_idxs = (
+        len(cols_df1_excl_set) == 0
+        and len(cols_df2_excl_set) == 0
+        and len(idxs_df1_excl_set) == 0
+        and len(idxs_df2_excl_set) == 0
+    )
+
+    # Do both DataFrames have no exclusive columns and indexes?
+    if all_common_cols_idxs:
+        _print_event(1, '✅ All columns and indexes are common', file=str_io)
+        _print_event(1, 'No equality check needed (same as "Equality, complete")', file=str_io)
+    else:
+        _print_event(1, '😓 Not all columns and indexes are common', file=str_io)
+        _print_event(1, 'Equality check needed', file=str_io)
+
+        # Equality check for common columns and indexes
+        _print_title(1, 'Equality', 'comparing common columns and indexes', file=str_io)
+        if df1_cp.loc[idxs_common_list, cols_common_list].equals(
+            df2_cp.loc[idxs_common_list, cols_common_list]
+        ):  # Are the dfs equal?
+            _print_result('🥳 Equal', file=str_io)
+            return _returner_for_compare(False, True, equality_metadata, str_io, report)
+        else:
+            _print_result('😡 Not equal', file=str_io)
 
     # MARK: COMPARE DTYPES
     # dtypes comparison
@@ -742,6 +775,36 @@ def compare(
         'dtypes_for_common_cols_df': dtypes_metadata['dtypes_df'],
     }
 
+    # MARK: SPEC SETTINGS REPORT
+    # Special settings report
+    # *************************************************************************
+    ''' TODO
+    Ideas for special settings:
+    - infer_objects=True OR simplify_dtypes (using hack I discovered)
+    - numeric_to_float64=True
+    - round_to_decimals=True
+    - convert_to_object=True
+    - convert_to_str=True
+    - OR convert_to_dtype='str' OR convert_to_dtype='str'
+    '''
+    _print_title(1, 'Special settings', file=str_io)
+    any_special_setting_enabled = (
+        int64_to_float64 is True or round_to_decimals is not False or astype_str is True
+    )
+    if any_special_setting_enabled:
+        _print_event(
+            1, 'All checks from this point on use the following special settings:', file=str_io
+        )
+        # _print_title(1, 'Special settings used', file=str_io)
+        if int64_to_float64 is True:
+            _print_event(1, f'🧪 int64_to_float64[{int64_to_float64}]', file=str_io)
+        if round_to_decimals is not False:
+            _print_event(1, f'🧪 round_to_decimals[{round_to_decimals}]', file=str_io)
+        if astype_str is True:
+            _print_event(1, f'🧪 astype_str[{astype_str}]', file=str_io)
+    else:
+        _print_event(1, '✅ None used', file=str_io)
+
     # MARK: SPECIAL SETTINGS
     # Special settings computations
     # *************************************************************************
@@ -756,6 +819,7 @@ def compare(
             for col in tmp_df.columns:
                 if str(tmp_df[col].dtype) in ('int64'):
                     tmp_df[col] = tmp_df[col].astype('float64')
+            # tmp_df = tmp_df.astype('object')
 
     # Format as string with rounded decimals
     # TODO: review, might only round and in the next block transform to decimals
@@ -767,26 +831,33 @@ def compare(
         df1_cp = df1_cp.astype(str)
         df2_cp = df2_cp.astype(str)
 
-    # MARK: SPEC SETTINGS REPORT
-    # Special settings report
+    # MARK: EQUAL W/SPEC SET
+    # If any special settings is enabled
+    #   If all columns and indexes are common, do a complete check
+    #   If only some columns and/or indexes are common, do a common only check
     # *************************************************************************
-    _print_title(1, 'Special settings used', file=str_io)
-    if int64_to_float64 is True or round_to_decimals is not False or astype_str is True:
-        if int64_to_float64 is True:
-            _print_event(1, f'🧪 int64_to_float64[{int64_to_float64}]', file=str_io)
-        if round_to_decimals is not False:
-            _print_event(1, f'🧪 round_to_decimals[{round_to_decimals}]', file=str_io)
-        if astype_str is True:
-            _print_event(1, f'🧪 astype_str[{astype_str}]', file=str_io)
-        # Equality with special settings
-        _print_title(1, 'Equality with special settings', file=str_io)
-        if df1_cp.equals(df2_cp):  # Are the dfs equal? (after Special Settings:)
-            _print_result('🥸 Fully Equal (with special setting)', file=str_io)
-            return returner_for_compare(False, True, equality_metadata, str_io, report)
+    if any_special_setting_enabled:
+        if all_common_cols_idxs:
+            _print_title(1, 'Equality', 'complete, after special settings', file=str_io)
+            if df1_cp.equals(df2_cp):  # Are the dfs equal?
+                _print_result('🥳 Fully equal', file=str_io)
+                return _returner_for_compare(True, True, equality_metadata, str_io, report)
+            else:
+                _print_result('😡 Not fully equal', file=str_io)
         else:
-            _print_result('😡 Not fully Equal (with special setting)', file=str_io)
-    else:
-        _print_event(1, 'No special settings.', file=str_io)
+            _print_title(
+                1,
+                'Equality',
+                'comparing common columns and indexes, after special settings',
+                file=str_io,
+            )
+            if df1_cp.loc[idxs_common_list, cols_common_list].equals(
+                df2_cp.loc[idxs_common_list, cols_common_list]
+            ):  # Are the dfs equal?
+                _print_result('🥳 Equal', file=str_io)
+                return _returner_for_compare(True, True, equality_metadata, str_io, report)
+            else:
+                _print_result('😡 Not Equal', file=str_io)
 
     # MARK: COMPARE VALUES
     # Comparing values
@@ -794,7 +865,7 @@ def compare(
     _print_title(
         1,
         'Comparing values',
-        'Only equal columns and equal indexes, see above non value differences',
+        'Only equal columns and equal indexes',
         file=str_io,
     )
 
@@ -819,15 +890,15 @@ def compare(
 
     if equal_mask_df.all(axis=None):
         _print_result('🥸 Equal values', file=str_io)
-        return returner_for_compare(False, True, equality_metadata, str_io, report)
+        return _returner_for_compare(False, True, equality_metadata, str_io, report)
 
-    diff_columns = equal_mask_df.columns[~(equal_mask_df.all(axis=0))].sort_values()
-    _print_event(1, f'😓 Not equal columns (count[{len(diff_columns)}]):', file=str_io)
-    _pprint(1, _sorted(diff_columns), stream=str_io)
+    diff_columns_list = list(equal_mask_df.columns[~(equal_mask_df.all(axis=0))].sort_values())
+    _print_event(1, f'😓 Not equal columns (count[{len(diff_columns_list)}]):', file=str_io)
+    _pprint(1, _sorted(diff_columns_list), stream=str_io)
 
-    diff_rows = equal_mask_df.index[~equal_mask_df.all(axis=1)]
-    _print_event(1, f'😓 Not equal rows (count[{len(diff_rows)}]):', file=str_io)
-    _pprint(1, _sorted(diff_rows), stream=str_io)
+    diff_rows_list = list(equal_mask_df.index[~equal_mask_df.all(axis=1)].sort_values())
+    _print_event(1, f'😓 Not equal rows (count[{len(diff_rows_list)}]):', file=str_io)
+    _pprint(1, _sorted(diff_rows_list), stream=str_io)
 
     # MARK: JOINED DF
     # Creating joined_df
@@ -840,11 +911,11 @@ def compare(
     joined_df = df1_cp[[*fixed_cols]].join(joined_df)
 
     # Create a new column with suffix '_diff' to explicitly show if there's a difference
-    new_diff_columns = [f'{col}_diff' for col in diff_columns]
+    new_diff_columns = [f'{col}_diff' for col in diff_columns_list]
     joined_df[new_diff_columns] = ''  # The new diff columns are empty
 
     # Add the word 'diff' where a difference exists
-    for col in diff_columns:
+    for col in diff_columns_list:
         # TODO: This equality must check for nan equality
         diff_rows_for_col_mask = joined_df[f'{col}_{df1_name}'] != joined_df[f'{col}_{df2_name}']
         joined_df.loc[diff_rows_for_col_mask, f'{col}_diff'] = 'diff'
@@ -856,13 +927,13 @@ def compare(
 
     # TODO: review, might be able to remove `cols_diff = [*diff_columns]`
 
-    cols_diff = [*diff_columns]
+    cols_diff = [*diff_columns_list]
     df1_cols_diff = [f'{c}_{df1_name}' for c in cols_diff]
     df2_cols_diff = [f'{c}_{df2_name}' for c in cols_diff]
     show_diff_cols = [f'{c}_diff' for c in cols_diff]
     cols_diff_from_1_2_show_diff = zip(df1_cols_diff, df2_cols_diff, show_diff_cols)
     all_diff_cols = [item for tup in cols_diff_from_1_2_show_diff for item in tup]
-    diff_df = joined_df.loc[diff_rows, all_diff_cols]
+    diff_df = joined_df.loc[diff_rows_list, all_diff_cols]
 
     # MARK: DIFF DF W/ORGN VALS
     # Creating a DataFrame where differences where found but with the original values
@@ -871,8 +942,8 @@ def compare(
     # TODO: REVIEW
 
     diff_original_vals_df = pd.merge(
-        df1_cp.loc[diff_rows, diff_columns],
-        df2_cp.loc[diff_rows, diff_columns],
+        df1_cp.loc[diff_rows_list, diff_columns_list],
+        df2_cp.loc[diff_rows_list, diff_columns_list],
         left_index=True,
         right_index=True,
         suffixes=(f'_{df1_name}', f'_{df2_name}'),
@@ -884,7 +955,7 @@ def compare(
     if path != None:
         _save_compared_df(
             joined_df,
-            diff_rows=diff_rows,
+            diff_rows=diff_rows_list,
             all_diff_cols=all_diff_cols,
             path=path,
             fixed_cols=fixed_cols,
@@ -896,8 +967,8 @@ def compare(
         'joined_df': joined_df,
         'equal_mask_df': equal_mask_df,
         'diff_df': diff_df,
-        'diff_columns': diff_columns,
-        'diff_rows': diff_rows,
+        'diff_columns': diff_columns_list,
+        'diff_rows': diff_rows_list,
         'diff_original_vals_df': diff_original_vals_df,
     }
-    return returner_for_compare(False, False, equality_metadata, str_io, report)
+    return _returner_for_compare(False, False, equality_metadata, str_io, report)
