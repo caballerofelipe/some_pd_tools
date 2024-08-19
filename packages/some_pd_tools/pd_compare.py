@@ -129,6 +129,7 @@ def _pprint(level: int, obj: object, stream: io.StringIO = None) -> None:
 def compare_lists(
     list_1: list,
     list_2: list,
+    show_common_items: bool = False,
     list_1_name: str = 'list1',
     list_2_name: str = 'list2',
     type_name: str = 'item',
@@ -141,6 +142,7 @@ def compare_lists(
     - print "Comparing {type_name_plural}"
     - print if lists are equal
     - print if lists' length is equal
+    - print if there are common items between both lists (if show_common_items==True shows common items)
     - print lists' exclusive items
     - print lists' duplicated
 
@@ -150,6 +152,8 @@ def compare_lists(
         First list.
     list_2 : list
         Second list.
+    show_common_items : bool, optional
+        Wether to show common items in both lists in the report.
     list_1_name : str, optional
         First list name, by default 'list1'.
     list_2_name : str, optional
@@ -171,6 +175,7 @@ def compare_lists(
           - 'list_2_excl_set': items only present in list_2.
           - 'list_1_dups_dict': items duplicated in list_1.
           - 'list_2_dups_dict': items duplicated in list_2.
+          - 'report': The generated report, this stores the report even if it wasn't shown when executing this function.
 
     Raises
     ------
@@ -217,9 +222,9 @@ def compare_lists(
     if list_1 == list_2:
         _print_event(1, f'✅ {type_name_plural.capitalize()} equal', file=stream)
         if len(list_1_dups_dict) == 0:
-            _print_event(1, f'✅ No duplicate {type_name_plural}', file=stream)
+            _print_event(1, f'✅ No duplicates {type_name_plural}', file=stream)
         else:
-            _print_event(1, f'😓 Duplicate {type_name_plural} (value,count):', file=stream)
+            _print_event(1, f'😓 Duplicates {type_name_plural} (value,count):', file=stream)
             _pprint(1, _sorted(list_1_dups_dict), stream=stream)
     else:
         _print_event(1, f'😓 {type_name_plural.capitalize()} not equal', file=stream)
@@ -234,8 +239,11 @@ def compare_lists(
             _print_event(2, f'{list_2_name:<{lgnd_maxlen}}: {len(list_2)}', file=stream)
 
         if len(list_common_set) > 0:
-            _print_event(1, f'✅ {type_name_plural.capitalize()} in common:', file=stream)
-            _pprint(1, sorted(list_common_set), stream=stream)
+            if show_common_items is True:
+                _print_event(1, f'✅ {type_name_plural.capitalize()} in common:', file=stream)
+                _pprint(1, _sorted(list_common_set), stream=stream)
+            else:
+                _print_event(1, f'✅ Some {type_name_plural} in common (not shown)', file=stream)
         else:
             _print_event(1, f'😓 No {type_name_plural} in common', file=stream)
 
@@ -265,22 +273,22 @@ def compare_lists(
                 _pprint(2, _sorted(excl_items_set), stream=stream)
             # Print duplicates
             if len(dups_dict) == 0:
-                _print_event(2, f'✅ No duplicate {type_name_plural}', file=stream)
+                _print_event(2, f'✅ No duplicates {type_name_plural}', file=stream)
             else:
                 # Print value and the number of times duplicated
-                _print_event(2, f'😓 Duplicate {type_name_plural} (value,count):', file=stream)
+                _print_event(2, f'😓 Duplicates {type_name_plural} (value,count):', file=stream)
                 _pprint(2, _sorted(dups_dict), stream=stream)
                 # Print duplicates exclusive items, value list only
                 if len(dups_excl_set) == 0:
-                    _print_event(2, f'✅ No duplicate {type_name_plural} exclusive', file=stream)
+                    _print_event(2, f'✅ No duplicates {type_name_plural} exclusive', file=stream)
                 else:
-                    _print_event(2, f'😓 Duplicate {type_name_plural} exclusive:', file=stream)
+                    _print_event(2, f'😓 Duplicates {type_name_plural} exclusive:', file=stream)
                     _pprint(2, _sorted(dups_excl_set), stream=stream)
                 # Print duplicates in common items, value list only
                 if len(dups_common_set) == 0:
-                    _print_event(2, f'✅ No duplicate {type_name_plural} in common', file=stream)
+                    _print_event(2, f'✅ No duplicates {type_name_plural} in common', file=stream)
                 else:
-                    _print_event(2, f'😓 Duplicate {type_name_plural} in common:', file=stream)
+                    _print_event(2, f'😓 Duplicates {type_name_plural} in common:', file=stream)
                     _pprint(2, _sorted(dups_common_set), stream=stream)
 
     if report is True:
