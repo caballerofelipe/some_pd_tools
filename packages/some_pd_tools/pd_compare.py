@@ -79,11 +79,18 @@ def _print_title(
         )
 
 
+def _return_result(result: str):
+    return f'<<< {result} >>>'
+
+
 def _print_result(
     result: str,
     file: io.StringIO = None,
 ) -> None:
-    print(_fill(f'<<< {result} >>>', initial_indent='', subsequent_indent='    '), file=file)
+    print(
+        _fill(_return_result(result=result), initial_indent='', subsequent_indent='    '),
+        file=file,
+    )
 
 
 def _print_event(
