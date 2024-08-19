@@ -609,8 +609,8 @@ def _returner_for_compare(
 
 
 def compare(
-    df1: pd.DataFrame | pd.Series,
-    df2: pd.DataFrame | pd.Series,
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
     df1_name: str = 'df1',
     df2_name: str = 'df2',
     int64_to_float64: bool = False,
@@ -630,6 +630,8 @@ def compare(
         `.sort_index(axis=0).sort_index(axis=1)`
     - Duplicate indexes and columns are not allowed, UNLESS `if df1_cp.equals(df2_cp)` is True, which means everything is equal.
     '''
+    if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
+        raise ValueError('df1 and df2 must be of type pd.DataFrame.')
     if not isinstance(df1_name, str) or not isinstance(df2_name, str):
         raise ValueError('df1_name and df2_name must be of type str.')
 
