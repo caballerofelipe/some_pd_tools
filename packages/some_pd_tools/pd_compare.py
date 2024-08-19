@@ -682,6 +682,7 @@ def compare(
     cols_compare_equal, cols_compare_metadata = compare_lists(
         list_1=list(df1_cp.columns),
         list_2=list(df2_cp.columns),
+        show_common_items=show_common_cols,
         list_1_name=df1_name,
         list_2_name=df2_name,
         type_name='column',
@@ -721,13 +722,6 @@ def compare(
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
         return _returner_for_compare(False, False, equality_metadata, str_io, report)
 
-    # MARK: SHOW COMMON COLS
-    # Show common columns if set in the options
-    # *************************************************************************
-    if show_common_cols is True:
-        _print_title(1, 'Columns present in both DataFrames (intersection)', file=str_io)
-        _pprint(1, cols_common_list, stream=str_io)
-
     # MARK: COMPARE INDEXES
     # Compare indexes, show report if `report==True`
     # and get common indexes, extra indexes for each DF
@@ -735,6 +729,7 @@ def compare(
     idxs_compare_equal, idxs_compare_metadata = compare_lists(
         list_1=list(df1_cp.index),
         list_2=list(df2_cp.index),
+        show_common_items=show_common_idxs,
         list_1_name=df1_name,
         list_2_name=df2_name,
         type_name='index',
@@ -772,13 +767,6 @@ def compare(
         print(tmp_stream.getvalue(), end='', file=str_io)
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
         return _returner_for_compare(False, False, equality_metadata, str_io, report)
-
-    # MARK: SHOW COMMON IDXS
-    # Show common indexes if set in the options
-    # *************************************************************************
-    if show_common_idxs is True:
-        _print_title(1, 'Indexes present in both DataFrames (intersection)', file=str_io)
-        _pprint(1, idxs_common_list, stream=str_io)
 
     # MARK: EQUAL COMMON
     # Only taking into consideration common columns and indexes
