@@ -9,11 +9,21 @@ import pandas as pd
 
 from . import pd_format
 
-__all__ = ['compare', 'compare_lists', 'compare_dtypes']
+__all__ = [
+    'compare',
+    'compare_lists',
+    'compare_dtypes',
+    'simplify_dtypes',
+]
 
 # MARK: TODO
 _ = '''
 TODO 2024-07-31:
+- (Evaluate) Initially the complete equality check should check if both DataFrames are equal (before sorting), then sort them (and inform about the sorting) and then do an equality check again.
+- Create tests for `simplify_dtypes()`
+- (Evaluate) Move `simplify_dtypes()` to pd_format?
+- IMPORTANT: After (MARK:EQUAL COMMON) all processings must be done using df1_cp_common and df2_cp_common or their equivalent name (these are DataFrames including only common columns and common indexes).
+- Instead of metadata being a dict, maybe it should be a list and in each position of the list is what has been done and the metadata generated, so maybe dicts inside the list position.
 - `compare()` should return three equalities and a metadict.
     - equalities:
         - fully_equal True if df1.equals(df2)
@@ -502,6 +512,33 @@ def compare_dtypes(
         'dtypes_df': dtypes_df,
         'report': stream.getvalue(),
     }
+
+
+def simplify_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+    """Allows to simplify dtypes, for instance, pass from float64 to int64 if no decimals are present.
+
+    Doesn't convert to a dtype that supports pd.NA, like `DataFrame.convert_dtypes()` although it uses it. See https://github.com/pandas-dev/pandas/issues/58543#issuecomment-2101240339 . It might create a performance impact but this hasn't been tested.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame to dtypes simplify.
+
+    Returns
+    -------
+    pd.DataFrame
+       The DataFrame, with simplified dtypes.
+    """
+    with pd.option_context('future.no_silent_downcasting', True):
+        return (
+            df
+            # See https://github.com/pandas-dev/pandas/issues/58543#issuecomment-2101240339
+            .astype('object')
+            .convert_dtypes()
+            .astype('object')
+            .replace(pd.NA, float('nan'))
+            .infer_objects()
+        )
 
 
 def _save_compared_df(
