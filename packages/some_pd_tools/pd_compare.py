@@ -141,10 +141,11 @@ def compare_lists(
     The report does the following:
     - print "Comparing {type_name_plural}"
     - print if lists are equal
+    - if lists are equal print duplicates
     - print if lists' length is equal
     - print if there are common items between both lists (if show_common_items==True shows common items)
     - print lists' exclusive items
-    - print lists' duplicated
+    - print lists' duplicates
 
     Parameters
     ----------
@@ -264,7 +265,7 @@ def compare_lists(
                 list_2_dups_common_set,
             ),
         ):
-            _print_event(1, f'{name}', file=stream)  # List nam
+            _print_event(1, f'{name}', file=stream)  # List name
             # Print exclusive items
             if len(excl_items_set) == 0:
                 _print_event(2, f'✅ No exclusive {type_name_plural}', file=stream)
