@@ -746,7 +746,7 @@ def compare(
             'df2_name': df2_name,
             'show_common_cols': show_common_cols,
             'show_common_idxs': show_common_idxs,
-            'show_all_dtypes': astype_str,
+            'show_all_dtypes': show_all_dtypes,
             'path': path,
             'fixed_cols': fixed_cols,
             'report': report,
