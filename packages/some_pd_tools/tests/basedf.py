@@ -48,6 +48,22 @@ class BaseDF:
         self._df1_index_plus1 = self._df_index_plus1.copy()
         self._df2_index_plus1 = self._df_index_plus1.copy()
 
+        self._df1_diff_values_col_int_made_str = self._df1_diff_values
+        self._df1_diff_values_col_int_made_str['col_int'] = (
+            self._df1_diff_values_col_int_made_str['col_int'].astype(str) + 'endstr'
+        )
+        self._df2_diff_values_col_int_made_str = self._df2_diff_values
+        self._df2_diff_values_col_int_made_str['col_int'] = (
+            self._df2_diff_values_col_int_made_str['col_int'].astype(str) + 'endstr'
+        )
+
+        self._df1_as_object_diff_values_col_int_made_str = (
+            self._df1_diff_values_col_int_made_str.astype('object')
+        )
+        self._df2_as_object_diff_values_col_int_made_str = (
+            self._df2_diff_values_col_int_made_str.astype('object')
+        )
+
         self._df1_name = 'first_df'
         self._df2_name = 'second_df'
 
@@ -221,7 +237,7 @@ class BaseDF:
 
     @property
     def df1_index_plus1(self) -> pd.DataFrame | pd.Series:
-        return self._df1_index_plus1
+        return self._df1_index_plus1.copy()
 
     @df1_index_plus1.setter
     def df1_index_plus1(self, value):
@@ -233,7 +249,7 @@ class BaseDF:
 
     @property
     def df2_index_plus1(self) -> pd.DataFrame | pd.Series:
-        return self._df2_index_plus1
+        return self._df2_index_plus1.copy()
 
     @df2_index_plus1.setter
     def df2_index_plus1(self, value):
@@ -242,6 +258,54 @@ class BaseDF:
     @df2_index_plus1.deleter
     def df2_index_plus1(self, value):
         raise ValueError('df2_index_plus1 not deletable')
+
+    @property
+    def df1_diff_values_col_int_made_str(self) -> pd.DataFrame | pd.Series:
+        return self._df1_diff_values_col_int_made_str.copy()
+
+    @df1_diff_values_col_int_made_str.setter
+    def df1_diff_values_col_int_made_str(self, value):
+        raise ValueError('df1_diff_values_col_int_made_str not rewritable')
+
+    @df1_diff_values_col_int_made_str.deleter
+    def df1_diff_values_col_int_made_str(self, value):
+        raise ValueError('df1_diff_values_col_int_made_str not deletable')
+
+    @property
+    def df2_diff_values_col_int_made_str(self) -> pd.DataFrame | pd.Series:
+        return self._df2_diff_values_col_int_made_str.copy()
+
+    @df2_diff_values_col_int_made_str.setter
+    def df2_diff_values_col_int_made_str(self, value):
+        raise ValueError('df2_diff_values_col_int_made_str not rewritable')
+
+    @df2_diff_values_col_int_made_str.deleter
+    def df2_diff_values_col_int_made_str(self, value):
+        raise ValueError('df2_diff_values_col_int_made_str not deletable')
+
+    @property
+    def df1_as_object_diff_values_col_int_made_str(self) -> pd.DataFrame | pd.Series:
+        return self._df1_as_object_diff_values_col_int_made_str.copy()
+
+    @df1_as_object_diff_values_col_int_made_str.setter
+    def df1_as_object_diff_values_col_int_made_str(self, value):
+        raise ValueError('df1_as_object_diff_values_col_int_made_str not rewritable')
+
+    @df1_as_object_diff_values_col_int_made_str.deleter
+    def df1_as_object_diff_values_col_int_made_str(self, value):
+        raise ValueError('df1_as_object_diff_values_col_int_made_str not deletable')
+
+    @property
+    def df2_as_object_diff_values_col_int_made_str(self) -> pd.DataFrame | pd.Series:
+        return self._df2_as_object_diff_values_col_int_made_str.copy()
+
+    @df2_as_object_diff_values_col_int_made_str.setter
+    def df2_as_object_diff_values_col_int_made_str(self, value):
+        raise ValueError('df2_as_object_diff_values_col_int_made_str not rewritable')
+
+    @df2_as_object_diff_values_col_int_made_str.deleter
+    def df2_as_object_diff_values_col_int_made_str(self, value):
+        raise ValueError('df2_as_object_diff_values_col_int_made_str not deletable')
 
     @property
     def df1_name(self):
