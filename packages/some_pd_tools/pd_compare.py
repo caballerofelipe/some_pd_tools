@@ -1079,20 +1079,6 @@ def compare(
     all_diff_cols = [item for tup in cols_diff_from_1_2_show_diff for item in tup]
     diff_df = joined_df.loc[diff_rows_list, all_diff_cols]
 
-    # MARK: DIFF DF W/ORGN VALS
-    # Creating a DataFrame where differences where found but with the original values
-    # *************************************************************************
-
-    # TODO: REVIEW This doesn't make sense, the comparison is after values have been changed
-
-    diff_original_vals_df = pd.merge(
-        df1_cp.loc[diff_rows_list, diff_columns_list],
-        df2_cp.loc[diff_rows_list, diff_columns_list],
-        left_index=True,
-        right_index=True,
-        suffixes=(f'_{df1_name}', f'_{df2_name}'),
-    )
-
     # MARK: EXCEL
     # Saving to Excel
     # *************************************************************************
@@ -1113,6 +1099,5 @@ def compare(
         'diff_df': diff_df,
         'diff_columns': diff_columns_list,
         'diff_rows': diff_rows_list,
-        'diff_original_vals_df': diff_original_vals_df,
     }
     return _returner_for_compare(False, False, equality_metadata, str_io, report)
