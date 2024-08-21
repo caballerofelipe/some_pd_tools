@@ -330,7 +330,7 @@ def compare_dtypes(
     df1_name: str = 'df1',
     df2_name: str = 'df2',
     report: bool = False,
-    show_common_dtypes=False,
+    show_all_dtypes=False,
 ) -> tuple[bool, dict]:
     """Compare dtypes for columns in two DataFrames.
 
@@ -363,7 +363,7 @@ def compare_dtypes(
         The name to show for the second DataFrame, by default 'df2'.
     report : bool, optional
         Whether to show the comparison report, by default False
-    show_common_dtypes : bool, optional
+    show_all_dtypes : bool, optional
         Whether to show the columns that have the same dtype in the report, by default False.
 
     Returns
@@ -432,9 +432,9 @@ def compare_dtypes(
         _print_event(1, '✅ Columns have equal dtypes', file=stream)
     else:
         _print_event(1, '😓 Columns have different dtypes', file=stream)
-    if not cols_equal_dtypes_mask.all(axis=None) or show_common_dtypes is True:
+    if not cols_equal_dtypes_mask.all(axis=None) or show_all_dtypes is True:
         # <Formatting computations>
-        if show_common_dtypes is True:
+        if show_all_dtypes is True:
             # Show all columns dtypes
             cols_to_show = list(cols_equal_dtypes_mask.index)
             cols_equality = list(cols_equal_dtypes_mask.values)
@@ -633,7 +633,7 @@ def compare(
     report: bool = True,
     show_common_cols: bool = False,
     show_common_idxs: bool = False,
-    show_common_dtypes: bool = False,
+    show_all_dtypes: bool = False,
     path: str = None,
     fixed_cols: list = None,
 ):
@@ -666,9 +666,7 @@ def compare(
             'df2_name': df2_name,
             'show_common_cols': show_common_cols,
             'show_common_idxs': show_common_idxs,
-            'int64_to_float64': int64_to_float64,
-            'round_to_decimals': round_to_decimals,
-            'astype_str': astype_str,
+            'show_all_dtypes': astype_str,
             'path': path,
             'fixed_cols': fixed_cols,
             'report': report,
@@ -822,7 +820,7 @@ def compare(
         df2=df2_cp[cols_common_list],
         df1_name=df1_name,
         df2_name=df2_name,
-        show_common_dtypes=show_common_dtypes,
+        show_all_dtypes=show_common_dtypes,
         report=False,
     )
     print(dtypes_metadata['report'], end='', file=str_io)

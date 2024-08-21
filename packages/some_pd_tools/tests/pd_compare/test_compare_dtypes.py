@@ -118,11 +118,11 @@ def test_equal_dtypes():
     # ************************************
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare_dtypes,
-        bdf.df1,
-        bdf.df2,
+        df1=bdf.df1,
+        df2=bdf.df2,
         df1_name='thedf1',
         df2_name='thedf2',
-        show_common_dtypes=True,
+        show_all_dtypes=True,
         report=True,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
@@ -145,11 +145,11 @@ def test_equal_dtypes():
     # ************************************
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare_dtypes,
-        bdf.df1,
-        bdf.df2,
+        df1=bdf.df1,
+        df2=bdf.df2,
         df1_name='thedf1',
         df2_name='thedf2',
-        show_common_dtypes=False,
+        show_all_dtypes=False,
         report=True,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
@@ -163,11 +163,11 @@ def test_equal_dtypes():
     # ************************************
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare_dtypes,
-        bdf.df1,
-        bdf.df2,
+        df1=bdf.df1,
+        df2=bdf.df2,
         df1_name='thedf1',
         df2_name='thedf2',
-        show_common_dtypes=True,
+        show_all_dtypes=True,
         report=False,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
@@ -190,11 +190,11 @@ def test_equal_dtypes():
     # ************************************
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare_dtypes,
-        bdf.df1,
-        bdf.df2,
+        df1=bdf.df1,
+        df2=bdf.df2,
         df1_name='thedf1',
         df2_name='thedf2',
-        show_common_dtypes=False,
+        show_all_dtypes=False,
         report=False,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
@@ -225,7 +225,7 @@ def test_diff_dtypes_():
         bdf.df2_as_object,
         df1_name='thedf1',
         df2_name='thedf2',
-        show_common_dtypes=True,
+        show_all_dtypes=True,
         report=True,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
@@ -252,7 +252,7 @@ def test_diff_dtypes_():
         bdf.df2_as_object,
         df1_name='thedf1',
         df2_name='thedf2',
-        show_common_dtypes=False,
+        show_all_dtypes=False,
         report=True,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
@@ -277,7 +277,7 @@ def test_diff_dtypes_():
         bdf.df2_as_object,
         df1_name='thedf1',
         df2_name='thedf2',
-        show_common_dtypes=True,
+        show_all_dtypes=True,
         report=False,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
@@ -304,7 +304,7 @@ def test_diff_dtypes_():
         bdf.df2_as_object,
         df1_name='thedf1',
         df2_name='thedf2',
-        show_common_dtypes=False,
+        show_all_dtypes=False,
         report=False,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
