@@ -558,7 +558,7 @@ def test_dtypes_equal_review() -> None:
         bdf.df2,
         df1_name='df1',
         df2_name='df2',
-        show_common_dtypes=True,
+        show_all_dtypes=True,
     )
     assert returned[0] is False
     assert compare_dtypes_ret[1]['report'] in io_out
@@ -581,7 +581,7 @@ def test_dtypes_equal_review() -> None:
         bdf.df2,
         df1_name='df1',
         df2_name='df2',
-        show_common_dtypes=False,
+        show_all_dtypes=False,
     )
     assert returned[0] is False
     assert compare_dtypes_ret[1]['report'] in io_out
@@ -604,7 +604,7 @@ def test_dtypes_equal_review() -> None:
         bdf.df2,
         df1_name='df1',
         df2_name='df2',
-        show_common_dtypes=True,
+        show_all_dtypes=True,
     )
     assert returned[0] is False
     assert io_out == ''
@@ -627,7 +627,7 @@ def test_dtypes_equal_review() -> None:
         bdf.df2,
         df1_name='df1',
         df2_name='df2',
-        show_common_dtypes=False,
+        show_all_dtypes=False,
     )
     assert returned[0] is False
     assert io_out == ''
@@ -662,7 +662,7 @@ def test_dtypes_diff_review() -> None:
         bdf.df2_as_object,
         df1_name='df1',
         df2_name='df2',
-        show_common_dtypes=True,
+        show_all_dtypes=True,
     )
     assert returned[0] is False
     assert compare_dtypes_ret[1]['report'] in io_out
@@ -684,7 +684,7 @@ def test_dtypes_diff_review() -> None:
         bdf.df2_as_object,
         df1_name='df1',
         df2_name='df2',
-        show_common_dtypes=False,
+        show_all_dtypes=False,
     )
     assert returned[0] is False
     assert compare_dtypes_ret[1]['report'] in io_out
@@ -706,7 +706,7 @@ def test_dtypes_diff_review() -> None:
         bdf.df2_as_object,
         df1_name='df1',
         df2_name='df2',
-        show_common_dtypes=True,
+        show_all_dtypes=True,
     )
     assert returned[0] is False
     assert io_out == ''
@@ -728,7 +728,7 @@ def test_dtypes_diff_review() -> None:
         bdf.df2_as_object,
         df1_name='df1',
         df2_name='df2',
-        show_common_dtypes=False,
+        show_all_dtypes=False,
     )
     assert returned[0] is False
     assert io_out == ''
