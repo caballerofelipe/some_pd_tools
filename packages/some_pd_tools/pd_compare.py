@@ -5,9 +5,8 @@ import textwrap
 from collections import Counter
 from contextlib import redirect_stdout
 
+import numpy as np
 import pandas as pd
-
-from . import pd_format
 
 __all__ = [
     'compare',
@@ -19,10 +18,10 @@ __all__ = [
 # MARK: TODO
 _ = '''
 TODO 2024-07-31:
+- Add parameter to save report to file.
 - (Evaluate) Initially the complete equality check should check if both DataFrames are equal (before sorting), then sort them (and inform about the sorting) and then do an equality check again.
-- Create tests for `simplify_dtypes()`
 - (Evaluate) Move `simplify_dtypes()` to pd_format?
-- IMPORTANT: After (MARK:EQUAL COMMON) all processings must be done using df1_cp_common and df2_cp_common or their equivalent name (these are DataFrames including only common columns and common indexes).
+- IMPORTANT: After (MARK:EQUAL COMMON) all processings must be done using df1_common and df2_common or their equivalent name (these are DataFrames including only common columns and common indexes).
 - Instead of metadata being a dict, maybe it should be a list and in each position of the list is what has been done and the metadata generated, so maybe dicts inside the list position.
 - `compare()` should return three equalities and a metadict.
     - equalities:
@@ -33,6 +32,7 @@ TODO 2024-07-31:
 - Add doctrings.
 - When using the original DataFrames, not the ones copied, be aware that the columns on the copies where sorted. Check if this is a problem somehow.
 - Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
+- Change the ROUND_TO part to use a function inside `pd_format` instead of inline processing, only the rounding part, avoid post processing.
 
 To check for a good structure:
 - Add functions for where large code is done to keep code cleaner.
@@ -234,7 +234,7 @@ def compare_lists(
     )
     if list_1 == list_2:
         _print_event(1, f'✅ {type_name_plural.capitalize()} equal', file=stream)
-        
+
         if show_common_items is True:
             _print_event(1, f'✅ {type_name_plural.capitalize()} in common:', file=stream)
             _pprint(1, _sorted(list_common_set), stream=stream)
@@ -249,7 +249,9 @@ def compare_lists(
 
         # Print length match
         if len(list_1) == len(list_2):
-            _print_event(1, f'✅ {type_name_plural.capitalize()} lengths match ({len(list_1)})', file=stream)
+            _print_event(
+                1, f'✅ {type_name_plural.capitalize()} lengths match ({len(list_1)})', file=stream
+            )
         else:
             _print_event(1, f'😓 {type_name_plural.capitalize()} lengths don\'t match', file=stream)
             lgnd_maxlen = max(len(list_1_name), len(list_2_name))
@@ -707,9 +709,7 @@ def compare(
     df2: pd.DataFrame,
     df1_name: str = 'df1',
     df2_name: str = 'df2',
-    int64_to_float64: bool = False,
-    round_to_decimals: int | bool = False,
-    astype_str: bool = False,
+    round_to: None | int | str = None,
     report: bool = True,
     show_common_cols: bool = False,
     show_common_idxs: bool = False,
@@ -719,15 +719,26 @@ def compare(
 ):
     '''
     Some notes for documenting:
+    - The whole goal of this function is to find differences in DataFrames, once they are found to be equal, the comparison stops.
     - df1 and df2 are transformed into DataFrames before any comparing
     - The order of columns and indexes are not taken into account. Columns and indexes are sorted using
         `.sort_index(axis=0).sort_index(axis=1)`
     - Duplicate indexes and columns are not allowed, UNLESS `if df1_cp.equals(df2_cp)` is True, which means everything is equal.
+    - When returning, if an equality is returned, use the functions to get to the point where equality was obtained.
     '''
     if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
         raise ValueError('df1 and df2 must be of type pd.DataFrame.')
     if not isinstance(df1_name, str) or not isinstance(df2_name, str):
         raise ValueError('df1_name and df2_name must be of type str.')
+    if round_to is not None and (
+        isinstance(round_to, bool)
+        or (isinstance(round_to, int) and round_to < 0)
+        or (isinstance(round_to, str) and round_to != 'ceil' and round_to != 'floor')
+        or (not isinstance(round_to, int) and not isinstance(round_to, str))
+    ):
+        raise ValueError(
+            "round_to must be None, a positive integer or a string (either 'floor' or 'ceil')."
+        )
 
     # Used to avoid dangerous default value
     # https://pylint.readthedocs.io/en/latest/user_guide/messages/warning/dangerous-default-value.html
@@ -744,12 +755,13 @@ def compare(
             'df2': df2,
             'df1_name': df1_name,
             'df2_name': df2_name,
+            'round_to': round_to,
+            'report': report,
             'show_common_cols': show_common_cols,
             'show_common_idxs': show_common_idxs,
             'show_all_dtypes': show_all_dtypes,
             'path': path,
             'fixed_cols': fixed_cols,
-            'report': report,
         }
     }
 
@@ -759,10 +771,10 @@ def compare(
     df1_cp = pd.DataFrame(df1).sort_index(axis=0).sort_index(axis=1).copy()
     df2_cp = pd.DataFrame(df2).sort_index(axis=0).sort_index(axis=1).copy()
 
-    # MARK: EQUAL FULL
-    # Check if both DataFrames are completely equal using Pandas function
+    # MARK: EQLTY FULL
+    # Check if both DataFrames are fully equal using Pandas function
     # *************************************************************************
-    _print_title(1, 'Equality', 'complete', file=str_io)
+    _print_title(1, 'Equality check', 'full', file=str_io)
     if df1_cp.equals(df2_cp):  # Are the dfs equal?
         _print_result('🥳 Equal', file=str_io)
         return _returner_for_compare(True, True, equality_metadata, str_io, report)
@@ -773,7 +785,7 @@ def compare(
     # Compare columns, show report if `report==True`
     # and get common columns, extra columns for each DF
     # *************************************************************************
-    cols_compare_equal, cols_compare_metadata = compare_lists(
+    cols_compare_equality, cols_compare_metadata = compare_lists(
         list_1=list(df1_cp.columns),
         list_2=list(df2_cp.columns),
         show_common_items=show_common_cols,
@@ -783,12 +795,15 @@ def compare(
         type_name_plural='columns',
         report=False,
     )
+
     print(cols_compare_metadata['report'], end='', file=str_io)
+
     cols_common_set = cols_compare_metadata['list_common_set']
     cols_df1_excl_set = cols_compare_metadata['list_1_excl_set']
     cols_df2_excl_set = cols_compare_metadata['list_2_excl_set']
     cols_df1_dups_dict = cols_compare_metadata['list_1_dups_dict']
     cols_df2_dups_dict = cols_compare_metadata['list_2_dups_dict']
+
     # Duplicate columns dictionaries containing only common elements
     cols_df1_dups_common_dict = {
         val: count for val, count in cols_df1_dups_dict.items() if val in cols_common_set
@@ -796,9 +811,10 @@ def compare(
     cols_df2_dups_common_dict = {
         val: count for val, count in cols_df2_dups_dict.items() if val in cols_common_set
     }
+
     equality_metadata = {
         **equality_metadata,
-        'cols_compare_equal': cols_compare_equal,
+        'cols_compare_equality': cols_compare_equality,
         'cols_common_set': cols_common_set,
         'cols_df1_excl_set': cols_df1_excl_set,
         'cols_df2_excl_set': cols_df2_excl_set,
@@ -820,7 +836,7 @@ def compare(
     # Compare indexes, show report if `report==True`
     # and get common indexes, extra indexes for each DF
     # *************************************************************************
-    idxs_compare_equal, idxs_compare_metadata = compare_lists(
+    idxs_compare_equality, idxs_compare_metadata = compare_lists(
         list_1=list(df1_cp.index),
         list_2=list(df2_cp.index),
         show_common_items=show_common_idxs,
@@ -830,12 +846,15 @@ def compare(
         type_name_plural='indexes',
         report=False,
     )
+
     print(idxs_compare_metadata['report'], end='', file=str_io)
+
     idxs_common_set = idxs_compare_metadata['list_common_set']
     idxs_df1_excl_set = idxs_compare_metadata['list_1_excl_set']
     idxs_df2_excl_set = idxs_compare_metadata['list_2_excl_set']
     idxs_df1_dups_dict = idxs_compare_metadata['list_1_dups_dict']
     idxs_df2_dups_dict = idxs_compare_metadata['list_2_dups_dict']
+
     # Duplicate indexes dictionaries containing only common elements
     idxs_df1_dups_common_dict = {
         val: count for val, count in idxs_df1_dups_dict.items() if val in idxs_common_set
@@ -843,8 +862,10 @@ def compare(
     idxs_df2_dups_common_dict = {
         val: count for val, count in idxs_df2_dups_dict.items() if val in idxs_common_set
     }
+
     equality_metadata = {
         **equality_metadata,
+        'idxs_compare_equality': idxs_compare_equality,
         'idxs_common_set': idxs_common_set,
         'idxs_df1_excl_set': idxs_df1_excl_set,
         'idxs_df2_excl_set': idxs_df2_excl_set,
@@ -862,164 +883,151 @@ def compare(
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
         return _returner_for_compare(False, False, equality_metadata, str_io, report)
 
-    # MARK: EQUAL COMMON
+    # MARK: EQLTY 4COMMON
     # Only taking into consideration common columns and indexes
-    # Check if both DataFrames are completely equal using Pandas function
+    # Check if both DataFrames are fully equal using Pandas function
     # *************************************************************************
-    _print_title(1, 'Common columns and indexes', file=str_io)
-    all_common_cols_idxs = (
+    _print_title(1, 'Checking common columns and indexes', file=str_io)
+    are_all_cols_and_idxs_common = (
         len(cols_df1_excl_set) == 0
         and len(cols_df2_excl_set) == 0
         and len(idxs_df1_excl_set) == 0
         and len(idxs_df2_excl_set) == 0
     )
 
+    # If both DataFrames have the same columns and indexes,
+    # df{1,2}_common is indeed equal to df{1,2}_cp
+    # but to avoid duplicating code, df{1,2}_common is used from this point on
+    df1_common = df1_cp.loc[idxs_common_list, cols_common_list]
+    df2_common = df2_cp.loc[idxs_common_list, cols_common_list]
+
     # Do both DataFrames have no exclusive columns and indexes?
-    if all_common_cols_idxs:
-        _print_event(1, '✅ All columns and indexes are common', file=str_io)
-        _print_event(1, 'No equality check needed (same as "Equality, complete")', file=str_io)
+    if are_all_cols_and_idxs_common:
+        _print_event(1, '✅ Columns and indexes are equal in both DataFrames', file=str_io)
     else:
-        _print_event(1, '😓 Not all columns and indexes are common', file=str_io)
-        _print_event(1, 'Equality check needed', file=str_io)
+        _print_event(1, '😓 Columns and indexes are not equal in both DataFrames', file=str_io)
+        _print_event(
+            1, '😈 From this point on, comparing only common columns and indexes', file=str_io
+        )
 
         # Equality check for common columns and indexes
-        _print_title(1, 'Equality', 'comparing common columns and indexes', file=str_io)
-        if df1_cp.loc[idxs_common_list, cols_common_list].equals(
-            df2_cp.loc[idxs_common_list, cols_common_list]
-        ):  # Are the dfs equal?
+        _print_title(1, 'Equality check', 'for common columns and indexes', file=str_io)
+        if df1_common.equals(df2_common):  # Are the dfs equal?
             _print_result('🥳 Equal', file=str_io)
             return _returner_for_compare(False, True, equality_metadata, str_io, report)
         else:
             _print_result('😡 Not equal', file=str_io)
 
-    # MARK: COMPARE DTYPES
+    # MARK: DTYPES COMP
     # dtypes comparison
     # *************************************************************************
-    dtypes_equal, dtypes_metadata = compare_dtypes(
-        df1=df1_cp[cols_common_list],
-        df2=df2_cp[cols_common_list],
+    common_cols_dtypes_equality, common_cols_dtypes_metadata = compare_dtypes(
+        df1=df1_common,
+        df2=df2_common,
         df1_name=df1_name,
         df2_name=df2_name,
-        show_all_dtypes=show_common_dtypes,
+        show_all_dtypes=show_all_dtypes,
         report=False,
     )
-    print(dtypes_metadata['report'], end='', file=str_io)
+    print(common_cols_dtypes_metadata['report'], end='', file=str_io)
     equality_metadata = {
         **equality_metadata,
-        'dtypes_for_common_cols_equal': dtypes_equal,
-        'dtypes_for_common_cols_df': dtypes_metadata['dtypes_df'],
+        'common_cols_dtypes_equality': common_cols_dtypes_equality,
+        'common_cols_dtypes_df': common_cols_dtypes_metadata['dtypes_df'],
     }
 
-    # MARK: SPEC SETTINGS REPORT
-    # Special settings report
+    # MARK: DTYPES SIMP
+    # dtypes simplification, dtypes comparison and testing equality afterwards
     # *************************************************************************
-    ''' TODO
-    Ideas for special settings:
-    - infer_objects=True OR simplify_dtypes (using hack I discovered)
-    - numeric_to_float64=True
-    - round_to_decimals=True
-    - convert_to_object=True
-    - convert_to_str=True
-    - OR convert_to_dtype='str' OR convert_to_dtype='str'
-    '''
-    _print_title(1, 'Special settings', file=str_io)
-    any_special_setting_enabled = (
-        int64_to_float64 is True or round_to_decimals is not False or astype_str is True
-    )
-    if any_special_setting_enabled:
-        _print_event(
-            1, 'All checks from this point on use the following special settings:', file=str_io
+    if common_cols_dtypes_equality is False:
+        _print_title(1, 'Since dtypes are different, will try to simplify', file=str_io)
+        (
+            after_simp_equality,
+            df1_common,
+            df2_common,
+            common_cols_dtypes_simplified_equality,
+            common_cols_dtypes_simplified_metadata,
+        ) = _dtypes_simp_and_eqlty_check(
+            df1=df1_common,
+            df2=df2_common,
+            df1_name=df1_name,
+            df2_name=df2_name,
+            show_all_dtypes=show_all_dtypes,
+            str_io=str_io,
         )
-        # _print_title(1, 'Special settings used', file=str_io)
-        if int64_to_float64 is True:
-            _print_event(1, f'🧪 int64_to_float64[{int64_to_float64}]', file=str_io)
-        if round_to_decimals is not False:
-            _print_event(1, f'🧪 round_to_decimals[{round_to_decimals}]', file=str_io)
-        if astype_str is True:
-            _print_event(1, f'🧪 astype_str[{astype_str}]', file=str_io)
-    else:
-        _print_event(1, '✅ None used', file=str_io)
 
-    # MARK: SPECIAL SETTINGS
-    # Special settings computations
+        equality_metadata = {
+            **equality_metadata,
+            'common_cols_dtypes_simplified_equality': common_cols_dtypes_simplified_equality,
+            'common_cols_dtypes_simplified_df': common_cols_dtypes_simplified_metadata['dtypes_df'],
+        }
+
+        if after_simp_equality is True:
+            return _returner_for_compare(False, True, equality_metadata, str_io, report)
+
+    # MARK: ROUND_TO
+    # Rounding numeric columns.
     # *************************************************************************
+    if round_to is not None:
+        _print_title(1, f'Rounding [round_to={round_to}]', file=str_io)
+        # No additional validation needed
+        # in the beginning an error is raised if round_to doesn't comply
+        if isinstance(round_to, int):
+            df1_common = df1_common.round(round_to)
+            df2_common = df2_common.round(round_to)
+        if round_to == 'floor' or round_to == 'ceil':
+            if round_to == 'floor':
+                approximation_fn = np.floor
+            elif round_to == 'ceil':
+                approximation_fn = np.ceil
 
-    # TODO: review, might transform all numbers to float64
-    # might use `is_numeric_dtype()`
-    # importing: `from pandas.api.types import is_numeric_dtype`
+            for tmp_df in (df1_common, df2_common):
+                for tmp_col in tmp_df.columns:
+                    if pd.api.types.is_numeric_dtype(tmp_df[tmp_col]):
+                        tmp_df[tmp_col] = tmp_df[tmp_col].apply(approximation_fn)
 
-    if int64_to_float64 is True:
-        # Pass int64 to float64
-        for tmp_df in (df1_cp, df2_cp):
-            for col in tmp_df.columns:
-                if str(tmp_df[col].dtype) in ('int64'):
-                    tmp_df[col] = tmp_df[col].astype('float64')
-            # tmp_df = tmp_df.astype('object')
+        # MARK: ROUND/DTYPES SIMP
+        # if rounding was applied
+        # dtypes simplification, dtypes comparison and testing equality afterwards
+        # *************************************************************************
+        (
+            after_round_and_simp_equality,
+            df1_common,
+            df2_common,
+            common_cols_dtypes_simplified_post_round_equality,
+            common_cols_dtypes_simplified_post_round_metadata,
+        ) = _dtypes_simp_and_eqlty_check(
+            df1=df1_common,
+            df2=df2_common,
+            df1_name=df1_name,
+            df2_name=df2_name,
+            show_all_dtypes=show_all_dtypes,
+            str_io=str_io,
+        )
 
-    # Format as string with rounded decimals
-    # TODO: review, might only round and in the next block transform to decimals
-    if round_to_decimals is not False:
-        df1_cp = df1_cp.apply(pd_format.format_nums, decimals=round_to_decimals)
-        df2_cp = df2_cp.apply(pd_format.format_nums, decimals=round_to_decimals)
+        equality_metadata = {
+            **equality_metadata,
+            'common_cols_dtypes_simplified_post_round_equality': common_cols_dtypes_simplified_post_round_equality,
+            'common_cols_dtypes_simplified_post_round_df': common_cols_dtypes_simplified_post_round_metadata[
+                'dtypes_df'
+            ],
+        }
 
-    if astype_str is True:
-        df1_cp = df1_cp.astype(str)
-        df2_cp = df2_cp.astype(str)
-
-    # MARK: EQUAL W/SPEC SET
-    # If any special settings is enabled
-    #   If all columns and indexes are common, do a complete check
-    #   If only some columns and/or indexes are common, do a common only check
-    # *************************************************************************
-    if any_special_setting_enabled:
-        if all_common_cols_idxs:
-            _print_title(1, 'Equality', 'complete, after special settings', file=str_io)
-            if df1_cp.equals(df2_cp):  # Are the dfs equal?
-                _print_result('🥳 Fully equal', file=str_io)
-                return _returner_for_compare(True, True, equality_metadata, str_io, report)
-            else:
-                _print_result('😡 Not fully equal', file=str_io)
-        else:
-            _print_title(
-                1,
-                'Equality',
-                'comparing common columns and indexes, after special settings',
-                file=str_io,
-            )
-            if df1_cp.loc[idxs_common_list, cols_common_list].equals(
-                df2_cp.loc[idxs_common_list, cols_common_list]
-            ):  # Are the dfs equal?
-                _print_result('🥳 Equal', file=str_io)
-                return _returner_for_compare(True, True, equality_metadata, str_io, report)
-            else:
-                _print_result('😡 Not Equal', file=str_io)
+        if after_round_and_simp_equality is True:
+            return _returner_for_compare(False, True, equality_metadata, str_io, report)
 
     # MARK: COMPARE VALUES
     # Comparing values
     # *************************************************************************
-    _print_title(
-        1,
-        'Comparing values',
-        'Only equal columns and equal indexes',
-        file=str_io,
-    )
-
-    df1_common_subset = df1_cp.loc[idxs_common_list, cols_common_list]
-    df2_common_subset = df2_cp.loc[idxs_common_list, cols_common_list]
-
-    # equal_mask_df = (
-    #     df1_cp.loc[idxs_common_list, cols_in_both] == df2_cp.loc[idxs_common_list, cols_in_both]
-    # )
+    _print_title(1, 'Comparing values', file=str_io)
 
     # The usual predictable equality BUT this outputs False when two 'nan' values are compared
-    equal_mask_normal = df1_common_subset == df2_common_subset
+    equal_mask_normal = df1_common == df2_common
     # There's a workaround to check if both values in each columns are 'nan'
     #  Compare each column to itself, if the result is different the value is 'nan'
     #  If this happens to both columns, that means both columns are 'nan' and their values are equal
     #   see: # https://stackoverflow.com/a/19322739/1071459
-    equal_mask_for_nan = (df1_common_subset != df1_common_subset) & (
-        df2_common_subset != df2_common_subset
-    )
+    equal_mask_for_nan = (df1_common != df1_common) & (df2_common != df2_common)
     # If either mask is True, we consider it to be True
     equal_mask_df = equal_mask_normal | equal_mask_for_nan
 
@@ -1074,7 +1082,7 @@ def compare(
     # Creating a DataFrame where differences where found but with the original values
     # *************************************************************************
 
-    # TODO: REVIEW
+    # TODO: REVIEW This doesn't make sense, the comparison is after values have been changed
 
     diff_original_vals_df = pd.merge(
         df1_cp.loc[diff_rows_list, diff_columns_list],

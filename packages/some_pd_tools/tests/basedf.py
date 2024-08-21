@@ -48,20 +48,20 @@ class BaseDF:
         self._df1_index_plus1 = self._df_index_plus1.copy()
         self._df2_index_plus1 = self._df_index_plus1.copy()
 
-        self._df1_diff_values_col_int_made_str = self._df1_diff_values
+        self._df1_diff_values_col_int_made_str = self._df1_diff_values.copy()
         self._df1_diff_values_col_int_made_str['col_int'] = (
             self._df1_diff_values_col_int_made_str['col_int'].astype(str) + 'endstr'
         )
-        self._df2_diff_values_col_int_made_str = self._df2_diff_values
+        self._df2_diff_values_col_int_made_str = self._df2_diff_values.copy()
         self._df2_diff_values_col_int_made_str['col_int'] = (
             self._df2_diff_values_col_int_made_str['col_int'].astype(str) + 'endstr'
         )
 
         self._df1_as_object_diff_values_col_int_made_str = (
-            self._df1_diff_values_col_int_made_str.astype('object')
+            self._df1_diff_values_col_int_made_str.copy().astype('object')
         )
         self._df2_as_object_diff_values_col_int_made_str = (
-            self._df2_diff_values_col_int_made_str.astype('object')
+            self._df2_diff_values_col_int_made_str.copy().astype('object')
         )
 
         self._df1_name = 'first_df'
