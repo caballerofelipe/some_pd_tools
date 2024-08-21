@@ -609,6 +609,86 @@ def _save_compared_df(
     writer.close()
 
 
+def _dtypes_simp_and_eqlty_check(
+    df1,
+    df2,
+    df1_name,
+    df2_name,
+    show_all_dtypes,
+    str_io,
+):
+    '''This does:
+    - Simplifies dtype for both DataFrames
+    - Compares dtypes (and shows report if changed)
+    - Does an equality check.
+    - Then returns, the returned information is used in the `compare()` flow.
+
+    This was originally part of `compare()` but since it was done more than once, was exported as a function.
+    '''
+    # dtypes simplification
+    _print_title(1, 'Trying to simplify dtypes', file=str_io)
+    df1_original_dtypes = df1.dtypes
+    df2_original_dtypes = df2.dtypes
+    df1 = simplify_dtypes(df1)
+    df2 = simplify_dtypes(df2)
+    if df1.dtypes.equals(df1_original_dtypes):
+        _print_event(1, f'✅ {df1_name}... already simplified', file=str_io)
+    else:
+        _print_event(1, f'😓 {df1_name}... simplified', file=str_io)
+    if df2.dtypes.equals(df2_original_dtypes):
+        _print_event(1, f'✅ {df2_name}... already simplified', file=str_io)
+    else:
+        _print_event(1, f'😓 {df2_name}... simplified', file=str_io)
+
+    changed_dtypes = (
+        df1.dtypes.equals(df1_original_dtypes) is False
+        or df2.dtypes.equals(df2_original_dtypes) is False
+    )
+
+    # dtypes comparison, values needed even if no dtype change happened
+    dtypes_equality, dtypes_metadata = compare_dtypes(
+        df1=df1,
+        df2=df2,
+        df1_name=df1_name,
+        df2_name=df2_name,
+        show_all_dtypes=show_all_dtypes,
+        report=False,  # No report if no dtypes changes were done
+    )
+
+    if changed_dtypes is True:
+        _print_event(1, '😓 dtypes changed', file=str_io)
+        # Show report if dtypes changed
+        print(dtypes_metadata['report'], end='', file=str_io)
+    else:
+        _print_event(1, '✅ No dtypes changed', file=str_io)
+        # No report if no dtypes changes were done
+
+    # Equality testing
+    after_simp_equality = False
+    if changed_dtypes:
+        if dtypes_equality is True:
+            _print_title(1, 'Equality check', 'since dtypes are now equal', file=str_io)
+            if df1.equals(df2):  # Are the dfs equal?
+                _print_result('🥳 Equal', file=str_io)
+                after_simp_equality = True
+                # NOTE: After this point a return should be done
+                # This must be done after calling this function
+            else:
+                _print_result('😡 Not equal', file=str_io)
+                after_simp_equality = False
+        else:
+            _print_title(1, 'Skipping equality check', 'since dtypes are not equal', file=str_io)
+            after_simp_equality = False
+
+    return (
+        after_simp_equality,
+        df1,
+        df2,
+        dtypes_equality,
+        dtypes_metadata,
+    )
+
+
 def _returner_for_compare(
     equality_full: bool,
     equality_partial: bool,
