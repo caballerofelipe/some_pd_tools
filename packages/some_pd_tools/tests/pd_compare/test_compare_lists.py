@@ -86,10 +86,14 @@ def test_equal_lists_no_dups():
     assert list_2_excl_set == set()
     assert list_1_dups_dict == {}
     assert list_2_dups_dict == {}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '✅ Someitems equal')
+    io_predicted_str += _return_print_event(1, '✅ Someitems in common:')
+    io_predicted_str += _return_pprint(1, _sorted({'s', 1, 2}))
     io_predicted_str += _return_print_event(1, '✅ No duplicates someitems')
     assert io_predicted_str == io_out
+    metadata_report = lists_metadata['report']
+    assert io_predicted_str == metadata_report
 
     # No report
     # ************************************
@@ -114,8 +118,10 @@ def test_equal_lists_no_dups():
     assert list_2_excl_set == set()
     assert list_1_dups_dict == {}
     assert list_2_dups_dict == {}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '✅ Someitems equal')
+    io_predicted_str += _return_print_event(1, '✅ Someitems in common:')
+    io_predicted_str += _return_pprint(1, _sorted({'s', 1, 2}))
     io_predicted_str += _return_print_event(1, '✅ No duplicates someitems')
     assert '' == io_out
     metadata_report = lists_metadata['report']
@@ -146,11 +152,13 @@ def test_equal_lists_w_dups():
     assert list_2_excl_set == set()
     assert list_1_dups_dict == {1: 4, 2: 3, 's': 2}
     assert list_2_dups_dict == {1: 4, 2: 3, 's': 2}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '✅ Someitems equal')
     io_predicted_str += _return_print_event(1, '😓 Duplicates someitems (value,count):')
     io_predicted_str += _return_pprint(1, _sorted(list_1_dups_dict))
     assert io_predicted_str == io_out
+    metadata_report = lists_metadata['report']
+    assert io_predicted_str == metadata_report
 
     # No report
     # ************************************
@@ -175,8 +183,13 @@ def test_equal_lists_w_dups():
     assert list_2_excl_set == set()
     assert list_1_dups_dict == {1: 4, 2: 3, 's': 2}
     assert list_2_dups_dict == {1: 4, 2: 3, 's': 2}
-    io_predicted_str = ''
-    assert io_predicted_str == io_out
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
+    io_predicted_str += _return_print_event(1, '✅ Someitems equal')
+    io_predicted_str += _return_print_event(1, '😓 Duplicates someitems (value,count):')
+    io_predicted_str += _return_pprint(1, _sorted(list_1_dups_dict))
+    assert '' == io_out
+    metadata_report = lists_metadata['report']
+    assert io_predicted_str == metadata_report
 
 
 def test_diff_lists_no_dups():
@@ -204,17 +217,17 @@ def test_diff_lists_no_dups():
     assert list_2_excl_set == {3, 4, 5}
     assert list_1_dups_dict == {}
     assert list_2_dups_dict == {}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 3')
-    io_predicted_str += _return_print_event(2, 'list2: 4')
+    io_predicted_str += _return_print_event(2, 'list_1: 3')
+    io_predicted_str += _return_print_event(2, 'list_2: 4')
     io_predicted_str += _return_print_event(1, '✅ Some someitems in common (not shown)')
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems')
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4, 5}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems')
@@ -245,18 +258,18 @@ def test_diff_lists_no_dups():
     assert list_2_excl_set == {3, 4, 5}
     assert list_1_dups_dict == {}
     assert list_2_dups_dict == {}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 3')
-    io_predicted_str += _return_print_event(2, 'list2: 4')
+    io_predicted_str += _return_print_event(2, 'list_1: 3')
+    io_predicted_str += _return_print_event(2, 'list_2: 4')
     io_predicted_str += _return_print_event(1, '✅ Someitems in common:')
     io_predicted_str += _return_pprint(1, ['s'])
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems')
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4, 5}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems')
@@ -287,17 +300,17 @@ def test_diff_lists_no_dups():
     assert list_2_excl_set == {3, 4, 5}
     assert list_1_dups_dict == {}
     assert list_2_dups_dict == {}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 3')
-    io_predicted_str += _return_print_event(2, 'list2: 4')
+    io_predicted_str += _return_print_event(2, 'list_1: 3')
+    io_predicted_str += _return_print_event(2, 'list_2: 4')
     io_predicted_str += _return_print_event(1, '✅ Some someitems in common (not shown)')
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems')
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4, 5}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems')
@@ -328,18 +341,18 @@ def test_diff_lists_no_dups():
     assert list_2_excl_set == {3, 4, 5}
     assert list_1_dups_dict == {}
     assert list_2_dups_dict == {}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 3')
-    io_predicted_str += _return_print_event(2, 'list2: 4')
+    io_predicted_str += _return_print_event(2, 'list_1: 3')
+    io_predicted_str += _return_print_event(2, 'list_2: 4')
     io_predicted_str += _return_print_event(1, '✅ Someitems in common:')
     io_predicted_str += _return_pprint(1, ['s'])
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems')
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4, 5}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems')
@@ -373,13 +386,13 @@ def test_diff_lists_w_dups():
     assert list_2_excl_set == {3, 4}
     assert list_1_dups_dict == {2: 3, 1: 4, 's': 2}
     assert list_2_dups_dict == {4: 2, 's': 3}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 9')
-    io_predicted_str += _return_print_event(2, 'list2: 6')
+    io_predicted_str += _return_print_event(2, 'list_1: 9')
+    io_predicted_str += _return_print_event(2, 'list_2: 6')
     io_predicted_str += _return_print_event(1, '✅ Some someitems in common (not shown)')
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -388,7 +401,7 @@ def test_diff_lists_w_dups():
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems in common:')
     io_predicted_str += _return_pprint(2, ['s'])
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -424,13 +437,13 @@ def test_diff_lists_w_dups():
     assert list_2_excl_set == {3, 4, 's'}
     assert list_1_dups_dict == {2: 3, 1: 4}
     assert list_2_dups_dict == {4: 2, 's': 3}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 7')
-    io_predicted_str += _return_print_event(2, 'list2: 6')
+    io_predicted_str += _return_print_event(2, 'list_1: 7')
+    io_predicted_str += _return_print_event(2, 'list_2: 6')
     io_predicted_str += _return_print_event(1, '😓 No someitems in common')
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -438,7 +451,7 @@ def test_diff_lists_w_dups():
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems exclusive:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems in common')
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4, 's'}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -473,14 +486,14 @@ def test_diff_lists_w_dups():
     assert list_2_excl_set == {3, 4}
     assert list_1_dups_dict == {2: 3, 1: 4, 's': 2}
     assert list_2_dups_dict == {4: 2, 's': 3}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 9')
-    io_predicted_str += _return_print_event(2, 'list2: 6')
+    io_predicted_str += _return_print_event(2, 'list_1: 9')
+    io_predicted_str += _return_print_event(2, 'list_2: 6')
     io_predicted_str += _return_print_event(1, '✅ Someitems in common:')
     io_predicted_str += _return_pprint(1, ['s'])
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -489,7 +502,7 @@ def test_diff_lists_w_dups():
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems in common:')
     io_predicted_str += _return_pprint(2, ['s'])
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -525,13 +538,13 @@ def test_diff_lists_w_dups():
     assert list_2_excl_set == {3, 4, 's'}
     assert list_1_dups_dict == {2: 3, 1: 4}
     assert list_2_dups_dict == {4: 2, 's': 3}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 7')
-    io_predicted_str += _return_print_event(2, 'list2: 6')
+    io_predicted_str += _return_print_event(2, 'list_1: 7')
+    io_predicted_str += _return_print_event(2, 'list_2: 6')
     io_predicted_str += _return_print_event(1, '😓 No someitems in common')
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -539,7 +552,7 @@ def test_diff_lists_w_dups():
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems exclusive:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems in common')
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4, 's'}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -574,13 +587,13 @@ def test_diff_lists_w_dups():
     assert list_2_excl_set == {3, 4}
     assert list_1_dups_dict == {2: 3, 1: 4, 's': 2}
     assert list_2_dups_dict == {4: 2, 's': 3}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 9')
-    io_predicted_str += _return_print_event(2, 'list2: 6')
+    io_predicted_str += _return_print_event(2, 'list_1: 9')
+    io_predicted_str += _return_print_event(2, 'list_2: 6')
     io_predicted_str += _return_print_event(1, '✅ Some someitems in common (not shown)')
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -589,7 +602,7 @@ def test_diff_lists_w_dups():
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems in common:')
     io_predicted_str += _return_pprint(2, ['s'])
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -625,13 +638,13 @@ def test_diff_lists_w_dups():
     assert list_2_excl_set == {3, 4, 's'}
     assert list_1_dups_dict == {2: 3, 1: 4}
     assert list_2_dups_dict == {4: 2, 's': 3}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 7')
-    io_predicted_str += _return_print_event(2, 'list2: 6')
+    io_predicted_str += _return_print_event(2, 'list_1: 7')
+    io_predicted_str += _return_print_event(2, 'list_2: 6')
     io_predicted_str += _return_print_event(1, '😓 No someitems in common')
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -639,7 +652,7 @@ def test_diff_lists_w_dups():
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems exclusive:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems in common')
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4, 's'}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -674,14 +687,14 @@ def test_diff_lists_w_dups():
     assert list_2_excl_set == {3, 4}
     assert list_1_dups_dict == {2: 3, 1: 4, 's': 2}
     assert list_2_dups_dict == {4: 2, 's': 3}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 9')
-    io_predicted_str += _return_print_event(2, 'list2: 6')
+    io_predicted_str += _return_print_event(2, 'list_1: 9')
+    io_predicted_str += _return_print_event(2, 'list_2: 6')
     io_predicted_str += _return_print_event(1, '✅ Someitems in common:')
     io_predicted_str += _return_pprint(1, ['s'])
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -690,7 +703,7 @@ def test_diff_lists_w_dups():
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems in common:')
     io_predicted_str += _return_pprint(2, ['s'])
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -726,13 +739,13 @@ def test_diff_lists_w_dups():
     assert list_2_excl_set == {3, 4, 's'}
     assert list_1_dups_dict == {2: 3, 1: 4}
     assert list_2_dups_dict == {4: 2, 's': 3}
-    io_predicted_str = _return_print_title(1, 'Comparing someitems')
+    io_predicted_str = _return_print_title(1, 'Comparing someitems from [list_1] and [list_2]')
     io_predicted_str += _return_print_event(1, '😓 Someitems not equal')
     io_predicted_str += _return_print_event(1, '😓 Someitems lengths don\'t match')
-    io_predicted_str += _return_print_event(2, 'list1: 7')
-    io_predicted_str += _return_print_event(2, 'list2: 6')
+    io_predicted_str += _return_print_event(2, 'list_1: 7')
+    io_predicted_str += _return_print_event(2, 'list_2: 6')
     io_predicted_str += _return_print_event(1, '😓 No someitems in common')
-    io_predicted_str += _return_print_event(1, 'list1')
+    io_predicted_str += _return_print_event(1, 'list_1')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')
@@ -740,7 +753,7 @@ def test_diff_lists_w_dups():
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems exclusive:')
     io_predicted_str += _return_pprint(2, _sorted({1, 2}))
     io_predicted_str += _return_print_event(2, '✅ No duplicates someitems in common')
-    io_predicted_str += _return_print_event(1, 'list2')
+    io_predicted_str += _return_print_event(1, 'list_2')
     io_predicted_str += _return_print_event(2, '😓 Exclusive someitems:')
     io_predicted_str += _return_pprint(2, _sorted({3, 4, 's'}))
     io_predicted_str += _return_print_event(2, '😓 Duplicates someitems (value,count):')

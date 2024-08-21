@@ -140,8 +140,8 @@ def compare_lists(
     list_1: list,
     list_2: list,
     show_common_items: bool = False,
-    list_1_name: str = 'list1',
-    list_2_name: str = 'list2',
+    list_1_name: str = 'list_1',
+    list_2_name: str = 'list_2',
     type_name: str = 'item',
     type_name_plural: str = 'items',
     report: bool = False,
@@ -166,9 +166,9 @@ def compare_lists(
     show_common_items : bool, optional
         Wether to show common items in both lists in the report.
     list_1_name : str, optional
-        First list name, by default 'list1'.
+        First list name, by default 'list_1'.
     list_2_name : str, optional
-        Second list name, by default 'list2'.
+        Second list name, by default 'list_2'.
     type_name : str, optional
         Type to show in the report, by default 'item'.
     type_name_plural : str, optional
@@ -229,9 +229,16 @@ def compare_lists(
     # Report
     # ************************************
     stream = io.StringIO()
-    _print_title(1, f'Comparing {type_name_plural}', file=stream)
+    _print_title(
+        1, f'Comparing {type_name_plural} from [{list_1_name}] and [{list_2_name}]', file=stream
+    )
     if list_1 == list_2:
         _print_event(1, f'✅ {type_name_plural.capitalize()} equal', file=stream)
+        
+        if show_common_items is True:
+            _print_event(1, f'✅ {type_name_plural.capitalize()} in common:', file=stream)
+            _pprint(1, _sorted(list_common_set), stream=stream)
+
         if len(list_1_dups_dict) == 0:
             _print_event(1, f'✅ No duplicates {type_name_plural}', file=stream)
         else:
@@ -242,7 +249,7 @@ def compare_lists(
 
         # Print length match
         if len(list_1) == len(list_2):
-            _print_event(1, f'✅ {type_name_plural.capitalize()} lengths match', file=stream)
+            _print_event(1, f'✅ {type_name_plural.capitalize()} lengths match ({len(list_1)})', file=stream)
         else:
             _print_event(1, f'😓 {type_name_plural.capitalize()} lengths don\'t match', file=stream)
             lgnd_maxlen = max(len(list_1_name), len(list_2_name))
