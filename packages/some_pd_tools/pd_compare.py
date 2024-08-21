@@ -535,7 +535,14 @@ def simplify_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     -------
     pd.DataFrame
        The DataFrame, with simplified dtypes.
+
+    Raises
+    ------
+    ValueError
+        If df is not of type DataFrame.
     """
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError('df must be of type pd.DataFrame.')
     with pd.option_context('future.no_silent_downcasting', True):
         return (
             df
