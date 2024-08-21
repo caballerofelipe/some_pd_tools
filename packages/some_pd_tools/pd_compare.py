@@ -481,8 +481,8 @@ def compare_dtypes(
                 1,
                 f'|{col_name:<{lgnd_maxlen}}'
                 + f'|{"" if cols_equality[col_idx] else "*":^{equal_tit_maxlen}}'
-                + f'|{str(df1_dtypes.iloc[col_idx]):<{df1types_maxlen}}'
-                + f'|{str(df2_dtypes.iloc[col_idx]):<{df2types_maxlen}}'
+                + f'|{str(df1_dtypes[col_name]):<{df1types_maxlen}}'
+                + f'|{str(df2_dtypes[col_name]):<{df2types_maxlen}}'
                 + '|',
                 file=stream,
             )

@@ -205,7 +205,7 @@ def test_equal_dtypes():
     assert returned[1]['report'] == io_predicted_str
 
 
-def test_diff_dtypes_():
+def test_diff_dtypes():
     bdf = BaseDF()
 
     predicted_dtypes_df = pd.DataFrame(
@@ -318,5 +318,122 @@ def test_diff_dtypes_():
     io_predicted_str += _return_print_plain(1, '|---------|---------|-------|------|')
     assert '' == io_out
     assert returned[0] is False
+    assert returned[1]['dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[1]['report'] == io_predicted_str
+
+
+def test_diff_dtypes_second_only():
+    bdf = BaseDF()
+
+    predicted_dtypes_df = pd.DataFrame(
+        {
+            'different': [False, True, False, False, False],
+            'thedf1': ['float64', 'int64', 'float64', 'object', 'object'],
+            'thedf2': ['float64', 'object', 'float64', 'object', 'object'],
+        },
+        index=['col_float', 'col_int', 'col_nan', 'col_str', 'col_strnan'],
+    )
+
+    # Different dtypes, w report, w show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare_dtypes,
+        bdf.df1,
+        bdf.df2_diff_values_col_int_made_str,
+        df1_name='thedf1',
+        df2_name='thedf2',
+        show_all_dtypes=True,
+        report=True,
+    )
+    io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
+    io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
+    io_predicted_str += _return_print_plain(1, '|----------|---------|-------|-------|')
+    io_predicted_str += _return_print_plain(1, '|column    |different|thedf1 |thedf2 |')
+    io_predicted_str += _return_print_plain(1, '|----------|---------|-------|-------|')
+    io_predicted_str += _return_print_plain(1, '|col_float |         |float64|float64|')
+    io_predicted_str += _return_print_plain(1, '|col_int   |    *    |int64  |object |')
+    io_predicted_str += _return_print_plain(1, '|col_nan   |         |float64|float64|')
+    io_predicted_str += _return_print_plain(1, '|col_str   |         |object |object |')
+    io_predicted_str += _return_print_plain(1, '|col_strnan|         |object |object |')
+    io_predicted_str += _return_print_plain(1, '|----------|---------|-------|-------|')
+    assert io_predicted_str == io_out
+    assert returned[0] is False
+    assert str(returned[1]['dtypes_df']) == str(predicted_dtypes_df)
+    assert returned[1]['dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[1]['report'] == io_predicted_str
+
+    # Different dtypes, w report, no show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare_dtypes,
+        bdf.df1,
+        bdf.df2_diff_values_col_int_made_str,
+        df1_name='thedf1',
+        df2_name='thedf2',
+        show_all_dtypes=False,
+        report=True,
+    )
+    io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
+    io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
+    io_predicted_str += _return_print_plain(1, '|-------|---------|------|------|')
+    io_predicted_str += _return_print_plain(1, '|column |different|thedf1|thedf2|')
+    io_predicted_str += _return_print_plain(1, '|-------|---------|------|------|')
+    io_predicted_str += _return_print_plain(1, '|col_int|    *    |int64 |object|')
+    io_predicted_str += _return_print_plain(1, '|-------|---------|------|------|')
+    assert io_predicted_str == io_out
+    assert returned[0] is False
+    assert str(returned[1]['dtypes_df']) == str(predicted_dtypes_df)
+    assert returned[1]['dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[1]['report'] == io_predicted_str
+
+    # Different dtypes, no report, w show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare_dtypes,
+        bdf.df1,
+        bdf.df2_diff_values_col_int_made_str,
+        df1_name='thedf1',
+        df2_name='thedf2',
+        show_all_dtypes=True,
+        report=False,
+    )
+    io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
+    io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
+    io_predicted_str += _return_print_plain(1, '|----------|---------|-------|-------|')
+    io_predicted_str += _return_print_plain(1, '|column    |different|thedf1 |thedf2 |')
+    io_predicted_str += _return_print_plain(1, '|----------|---------|-------|-------|')
+    io_predicted_str += _return_print_plain(1, '|col_float |         |float64|float64|')
+    io_predicted_str += _return_print_plain(1, '|col_int   |    *    |int64  |object |')
+    io_predicted_str += _return_print_plain(1, '|col_nan   |         |float64|float64|')
+    io_predicted_str += _return_print_plain(1, '|col_str   |         |object |object |')
+    io_predicted_str += _return_print_plain(1, '|col_strnan|         |object |object |')
+    io_predicted_str += _return_print_plain(1, '|----------|---------|-------|-------|')
+    assert '' == io_out
+    assert returned[0] is False
+    assert str(returned[1]['dtypes_df']) == str(predicted_dtypes_df)
+    assert returned[1]['dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[1]['report'] == io_predicted_str
+
+    # Different dtypes, no report, no show common dtypes
+    # ************************************
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare_dtypes,
+        bdf.df1,
+        bdf.df2_diff_values_col_int_made_str,
+        df1_name='thedf1',
+        df2_name='thedf2',
+        show_all_dtypes=False,
+        report=False,
+    )
+    io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
+    io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
+    io_predicted_str += _return_print_plain(1, '|-------|---------|------|------|')
+    io_predicted_str += _return_print_plain(1, '|column |different|thedf1|thedf2|')
+    io_predicted_str += _return_print_plain(1, '|-------|---------|------|------|')
+    io_predicted_str += _return_print_plain(1, '|col_int|    *    |int64 |object|')
+    io_predicted_str += _return_print_plain(1, '|-------|---------|------|------|')
+    assert '' == io_out
+    assert returned[0] is False
+    assert str(returned[1]['dtypes_df']) == str(predicted_dtypes_df)
     assert returned[1]['dtypes_df'].equals(predicted_dtypes_df)
     assert returned[1]['report'] == io_predicted_str
