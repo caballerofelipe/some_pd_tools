@@ -8,7 +8,7 @@ from some_pd_tools import pd_compare
 from ..basedf import BaseDF
 from ..formatting import (
     _fn_ret_and_output,
-    _return_pprint,
+    # _return_pprint,
     _return_print_event,
     # _return_print_plain,
     _return_print_result,
@@ -863,7 +863,7 @@ def test_dtypes_simplification():
     predicted_io += _return_print_event(1, '😓 second_df... simplified')
     predicted_io += _return_print_event(1, '😓 dtypes changed')
 
-    dtypes_equality, dtypes_metadata = pd_compare.compare_dtypes(
+    _, dtypes_metadata = pd_compare.compare_dtypes(
         df1=bdf.df1,
         df2=bdf.df2,
         df1_name=bdf.df1_name,
@@ -897,7 +897,7 @@ def test_dtypes_simplification():
     predicted_io += _return_print_event(1, '😓 second_df... simplified')
     predicted_io += _return_print_event(1, '😓 dtypes changed')
 
-    dtypes_equality, dtypes_metadata = pd_compare.compare_dtypes(
+    _, dtypes_metadata = pd_compare.compare_dtypes(
         df1=bdf.df1,
         df2=bdf.df2,
         df1_name=bdf.df1_name,
@@ -931,7 +931,7 @@ def test_dtypes_simplification():
     predicted_io += _return_print_event(1, '😓 second_df... simplified')
     predicted_io += _return_print_event(1, '😓 dtypes changed')
 
-    dtypes_equality, dtypes_metadata = pd_compare.compare_dtypes(
+    _, dtypes_metadata = pd_compare.compare_dtypes(
         df1=bdf.df1,
         df2=bdf.df2,
         df1_name=bdf.df1_name,
@@ -965,7 +965,7 @@ def test_dtypes_simplification():
     predicted_io += _return_print_event(1, '😓 second_df... simplified')
     predicted_io += _return_print_event(1, '😓 dtypes changed')
 
-    dtypes_equality, dtypes_metadata = pd_compare.compare_dtypes(
+    _, dtypes_metadata = pd_compare.compare_dtypes(
         df1=bdf.df1,
         df2=bdf.df2,
         df1_name=bdf.df1_name,
@@ -999,7 +999,7 @@ def test_dtypes_simplification():
     predicted_io += _return_print_event(1, '😓 second_df... simplified')
     predicted_io += _return_print_event(1, '😓 dtypes changed')
 
-    dtypes_equality, dtypes_metadata = pd_compare.compare_dtypes(
+    _, dtypes_metadata = pd_compare.compare_dtypes(
         df1=bdf.df1,
         df2=bdf.df2,
         df1_name=bdf.df1_name,
@@ -1032,7 +1032,7 @@ def test_dtypes_simplification():
     predicted_io += _return_print_event(1, '😓 second_df... simplified')
     predicted_io += _return_print_event(1, '😓 dtypes changed')
 
-    dtypes_equality, dtypes_metadata = pd_compare.compare_dtypes(
+    _, dtypes_metadata = pd_compare.compare_dtypes(
         df1=bdf.df1,
         df2=bdf.df2,
         df1_name=bdf.df1_name,
@@ -1065,7 +1065,7 @@ def test_dtypes_simplification():
     predicted_io += _return_print_event(1, '😓 second_df... simplified')
     predicted_io += _return_print_event(1, '😓 dtypes changed')
 
-    dtypes_equality, dtypes_metadata = pd_compare.compare_dtypes(
+    _, dtypes_metadata = pd_compare.compare_dtypes(
         df1=bdf.df1,
         df2=bdf.df2,
         df1_name=bdf.df1_name,
@@ -1098,7 +1098,7 @@ def test_dtypes_simplification():
     predicted_io += _return_print_event(1, '😓 second_df... simplified')
     predicted_io += _return_print_event(1, '😓 dtypes changed')
 
-    dtypes_equality, dtypes_metadata = pd_compare.compare_dtypes(
+    _, dtypes_metadata = pd_compare.compare_dtypes(
         df1=bdf.df1,
         df2=bdf.df2,
         df1_name=bdf.df1_name,

@@ -29,6 +29,7 @@ TODO 2024-07-31:
 - IMPORTANT: After (MARK:EQUAL COMMON) all processings must be done using df1_common and df2_common or their equivalent name (these are DataFrames including only common columns and common indexes).
 - For testing, add all parameters for functions calls to avoid problems if default parameters change.
 - Add docstrings.
+- Remove "--disabled=****" from "pylint.args" in settings.json to view possible problems and show no docstring where needed.
 - (Evaluate) Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
 - (Evaluate) Initially the complete equality check should check if both DataFrames are equal (before sorting), then sort them (and inform about the sorting) and then do an equality check again.
     - Or specify in the documentation that this function should be ran when df1.equals(df2) is not enough.
@@ -590,7 +591,7 @@ def _save_compared_df(
     )
 
     # Get the xlsxwriter workbook and worksheet objects.
-    workbook = writer.book
+    # workbook = writer.book
     worksheet = writer.sheets["Sheet1"]
 
     # Get the dimensions of the DataFrame.
@@ -1082,7 +1083,7 @@ def compare(
     # MARK: EXCEL
     # Saving to Excel
     # *************************************************************************
-    if path != None:
+    if path is not None:
         _save_compared_df(
             joined_df,
             diff_rows=diff_rows_list,
