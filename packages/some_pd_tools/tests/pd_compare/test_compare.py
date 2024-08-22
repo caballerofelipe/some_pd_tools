@@ -181,7 +181,7 @@ def test_equality_full() -> None:
     assert returned[2] == equality_metadata_predicted
     assert io_out == report_predicted
 
-    # Equal Indexes, equal Dataframes, all duplicated (two instances of each)
+    # Equal Indexes, equal DataFrames, all duplicated (two instances of each)
     # This only works because `df1_cp.equals(df2_cp)` is True in the beginning
     # This assumes there are no column duplicates (checked previously)
     # ************************************
@@ -407,11 +407,11 @@ def test_duplicates_abort() -> None:
 
 def test_cols_review() -> None:
     bdf = BaseDF()
-    df1_colset = set(bdf.df1_extra_col.columns)
-    df2_colset = set(bdf.df2_extra_col.columns)
-    cols_common_set = df1_colset.intersection(df2_colset)
-    cols_df1_excl_set = df1_colset - cols_common_set
-    cols_df2_excl_set = df2_colset - cols_common_set
+    df1_col_set = set(bdf.df1_extra_col.columns)
+    df2_col_set = set(bdf.df2_extra_col.columns)
+    cols_common_set = df1_col_set.intersection(df2_col_set)
+    cols_df1_excl_set = df1_col_set - cols_common_set
+    cols_df2_excl_set = df2_col_set - cols_common_set
 
     compare_lists_ret_show_common = pd_compare.compare_lists(
         list_1=list(bdf.df1_extra_col.columns),
@@ -479,11 +479,11 @@ def test_cols_review() -> None:
 
 def test_idxs_review() -> None:
     bdf = BaseDF()
-    df1_idxset = set(bdf.df1.index)
-    df2_idxset = set(bdf.df2_index_plus1.index)
-    idxs_common_set = df1_idxset.intersection(df2_idxset)
-    idxs_df1_excl_set = df1_idxset - idxs_common_set
-    idxs_df2_excl_set = df2_idxset - idxs_common_set
+    df1_idx_set = set(bdf.df1.index)
+    df2_idx_set = set(bdf.df2_index_plus1.index)
+    idxs_common_set = df1_idx_set.intersection(df2_idx_set)
+    idxs_df1_excl_set = df1_idx_set - idxs_common_set
+    idxs_df2_excl_set = df2_idx_set - idxs_common_set
 
     compare_lists_ret_show_common = pd_compare.compare_lists(
         list_1=list(bdf.df1.index),
@@ -991,8 +991,6 @@ def test_dtypes_simplification():
     assert '' == io_out
     assert predicted_io in returned[2]['report']
 
-    # ASDASDASDASDASDASDASDASDASDASD
-
     # Same columns, different dtypes, report, not show_all_dtypes, simplification tried, not equality
     # ************************************
     predicted_io = _return_print_title(1, 'Since dtypes are different, will try to simplify')
@@ -1176,8 +1174,6 @@ def test_round_to_report():
     predicted_io = _return_print_title(1, 'Rounding [round_to=floor]')
     assert predicted_io in io_out
     assert predicted_io in returned[2]['report']
-
-    # ASDFASDF
 
     # round_to=0, report
     # ************************************
