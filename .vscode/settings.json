@@ -12,5 +12,22 @@
     },
     "autoDocstring": {
         "docstringFormat": "numpy"
-    }
+    },
+    "cSpell.words": [
+        "astype",
+        "autofilter",
+        "autofit",
+        "docstrings",
+        "downcasting",
+        "dtype",
+        "dtypes",
+        "dups",
+        "eqlty",
+        "idxs",
+        "lgnd",
+        "lsuffix",
+        "processings",
+        "rsuffix",
+        "xlsxwriter"
+    ]
 }

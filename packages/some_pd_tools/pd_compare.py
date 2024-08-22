@@ -20,7 +20,7 @@ _ = '''
 TODO 2024-07-31:
 - Move `simplify_dtypes()` to pd_format?
 - Change the ROUND_TO part to use a function inside `pd_format` instead of inline processing, only the rounding part, avoid post processing.
-- `compare()` should return three equalities and a metadict.
+- `compare()` should return three equalities and a metadata dict.
     - equalities:
         - fully_equal True if df1.equals(df2)
         - equal_w_special_settings True if after applying special settings df1.equals(df2)
@@ -28,7 +28,7 @@ TODO 2024-07-31:
 - Add parameter to save report to file.
 - IMPORTANT: After (MARK:EQUAL COMMON) all processings must be done using df1_common and df2_common or their equivalent name (these are DataFrames including only common columns and common indexes).
 - For testing, add all parameters for functions calls to avoid problems if default parameters change.
-- Add doctrings.
+- Add docstrings.
 - (Evaluate) Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
 - (Evaluate) Initially the complete equality check should check if both DataFrames are equal (before sorting), then sort them (and inform about the sorting) and then do an equality check again.
     - Or specify in the documentation that this function should be ran when df1.equals(df2) is not enough.
@@ -562,7 +562,7 @@ def _save_compared_df(
     joined_df: pd.DataFrame, diff_rows, all_diff_cols, path: str, fixed_cols: list
 ):
     # Different columns with different rows
-    df_tosave = joined_df.loc[
+    df_to_save = joined_df.loc[
         diff_rows,
         [*fixed_cols, *all_diff_cols],
     ].copy()
@@ -571,7 +571,7 @@ def _save_compared_df(
         if pd.api.types.is_datetime64_any_dtype(joined_df[col]):
             joined_df[col] = joined_df[col].dt.strftime('%Y-%m-%d %H:%M:%S')
 
-    # df_tosave.to_excel(f'tmp_comparison_{now_str()}.xlsx', freeze_panes=(1, 6))
+    # df_to_save.to_excel(f'tmp_comparison_{now_str()}.xlsx', freeze_panes=(1, 6))
 
     # From https://xlsxwriter.readthedocs.io/example_pandas_autofilter.html
 
@@ -581,9 +581,9 @@ def _save_compared_df(
     show_index = True
     add_if_show_index = 1 if show_index is True else 0
 
-    # Convert the dataframe to an XlsxWriter Excel object. We also turn off the
-    # index column at the left of the output dataframe.
-    df_tosave.to_excel(
+    # Convert the DataFrame to an XlsxWriter Excel object. We also turn off the
+    # index column at the left of the output DataFrame.
+    df_to_save.to_excel(
         writer,
         sheet_name="Sheet1",
         index=show_index,
@@ -593,8 +593,8 @@ def _save_compared_df(
     workbook = writer.book
     worksheet = writer.sheets["Sheet1"]
 
-    # Get the dimensions of the dataframe.
-    (max_row, max_col) = df_tosave.shape
+    # Get the dimensions of the DataFrame.
+    (max_row, max_col) = df_to_save.shape
 
     # # Make the columns wider for clarity.
     # worksheet.set_column(0, max_col, 12)
