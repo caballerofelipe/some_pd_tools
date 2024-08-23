@@ -1,141 +1,19 @@
 import io
-import pprint
-import re
-import textwrap
 from collections import Counter
 from contextlib import redirect_stdout
 
-import numpy as np
 import pandas as pd
+
+from . import pd_format
+from . import _report_formatting as f
 
 __all__ = [
     'compare',
     'compare_lists',
     'compare_dtypes',
-    'simplify_dtypes',
 ]
 
-# MARK: TODO
-_ = '''
-TODO 2024-07-31:
-- Move `simplify_dtypes()` to pd_format?
-- Change the ROUND_TO part to use a function inside `pd_format` instead of inline processing, only the rounding part, avoid post processing.
-- `compare()` should return three equalities and a metadata dict.
-    - equalities:
-        - fully_equal True if df1.equals(df2)
-        - equal_w_special_settings True if after applying special settings df1.equals(df2)
-        - common_cols_idx_equal True if all is equal in common columns and indexes
-- Add parameter to save report to file.
-- IMPORTANT: After (MARK:EQUAL COMMON) all processings must be done using df1_common and df2_common or their equivalent name (these are DataFrames including only common columns and common indexes).
-- For testing, add all parameters for functions calls to avoid problems if default parameters change.
-- Add docstrings.
-- Remove "--disabled=****" from "pylint.args" in settings.json to view possible problems and show no docstring where needed.
-- (Evaluate) Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.
-- (Evaluate) Initially the complete equality check should check if both DataFrames are equal (before sorting), then sort them (and inform about the sorting) and then do an equality check again.
-    - Or specify in the documentation that this function should be ran when df1.equals(df2) is not enough.
-- (Evaluate) Instead of metadata being a dict, maybe it should be a list and in each position of the list is what has been done and the metadata generated, so maybe dicts inside the list position.
-- (Evaluate) When using the original DataFrames, not the ones copied, be aware that the columns on the copies where sorted. Check if this is a problem somehow.
-
-To check for a good structure:
-- Add functions for where large code is done to keep code cleaner.
-- Populate metadata while advancing, if a return is done, test metadata with pytest.
-- Check that all shown list are sorted lists and not sets or other data types.
-- Add documentation for all functions in README.md.
-- Comparing functions should return equality (True/False) and metadata dict, including the report.
-'''
-
-
-def _sorted(obj):
-    if isinstance(obj, dict):
-        return sorted(obj.items(), key=lambda item: str(item[0]))
-    if isinstance(obj, set) or isinstance(obj, list):
-        return sorted(obj, key=lambda item: str(item))
-    raise ValueError(f'_sorted not implemented for type:{type(obj)}')
-
-
-def _fill(
-    txt,
-    initial_indent,
-    subsequent_indent,
-    width=100,
-    expand_tabs=False,
-    replace_whitespace=False,
-    drop_whitespace=False,
-):
-    return textwrap.fill(
-        txt,
-        initial_indent=initial_indent,
-        subsequent_indent=subsequent_indent,
-        width=width,
-        expand_tabs=expand_tabs,
-        replace_whitespace=replace_whitespace,
-        drop_whitespace=drop_whitespace,
-    )
-
-
-def _print_title(
-    level: int,
-    title: str,
-    subtitle: str = None,
-    file: io.StringIO = None,
-) -> None:
-    print('————————————————————', file=file)
-    title_ii = f'{"#" * level} '
-    title_si = f'{" " * level} '
-    print(_fill(title, initial_indent=title_ii, subsequent_indent=title_si), file=file)
-    if subtitle is not None:
-        sub_ii = f'{" " * level} '
-        subtitle_si = f'{" " * level} '
-        print(
-            _fill(f'({subtitle})', initial_indent=sub_ii, subsequent_indent=subtitle_si), file=file
-        )
-
-
-def _return_result(result: str):
-    return f'<<< {result} >>>'
-
-
-def _print_result(
-    result: str,
-    file: io.StringIO = None,
-) -> None:
-    print(
-        _fill(_return_result(result=result), initial_indent='', subsequent_indent='    '),
-        file=file,
-    )
-
-
-def _print_event(
-    level: int,
-    event: str,
-    file: io.StringIO = None,
-) -> None:
-    event_ii = f'{"  "*(level-1)}> '
-    event_si = f'{"  "*(level-1)}  '
-    print(
-        _fill(event, initial_indent=event_ii, subsequent_indent=event_si),
-        file=file,
-    )
-
-
-def _print_plain(
-    level: int,
-    txt: str,
-    file: io.StringIO = None,
-) -> None:
-    level_str = '  ' * (level - 1)
-    txt_ii = f'{level_str}  '
-    txt_si = f'{level_str}  '
-    print(_fill(txt, initial_indent=txt_ii, subsequent_indent=txt_si), file=file)
-
-
-def _pprint(level: int, obj: object, stream: io.StringIO = None) -> None:
-    level_str = f'{"  " * (level - 1)}  '
-    _stream = io.StringIO()
-    pprint.pprint(obj, indent=1, width=100 - len(level_str), compact=True, stream=_stream)
-    to_print = level_str + _stream.getvalue()
-    to_print = re.sub('\n.+', f'\n{level_str}', to_print)
-    print(to_print, end='', file=stream)
+# TODO: review TODO.md
 
 
 def compare_lists(
@@ -231,43 +109,45 @@ def compare_lists(
     # Report
     # ************************************
     stream = io.StringIO()
-    _print_title(
+    f.print_title(
         1, f'Comparing {type_name_plural} from [{list_1_name}] and [{list_2_name}]', file=stream
     )
     if list_1 == list_2:
-        _print_event(1, f'✅ {type_name_plural.capitalize()} equal', file=stream)
+        f.print_event(1, f'✅ {type_name_plural.capitalize()} equal', file=stream)
 
         if show_common_items is True:
-            _print_event(1, f'✅ {type_name_plural.capitalize()} in common:', file=stream)
-            _pprint(1, _sorted(list_common_set), stream=stream)
+            f.print_event(1, f'✅ {type_name_plural.capitalize()} in common:', file=stream)
+            f.pprint_wrap(1, pd_format.obj_as_sorted_list(list_common_set), stream=stream)
 
         if len(list_1_dups_dict) == 0:
-            _print_event(1, f'✅ No duplicates {type_name_plural}', file=stream)
+            f.print_event(1, f'✅ No duplicates {type_name_plural}', file=stream)
         else:
-            _print_event(1, f'😓 Duplicates {type_name_plural} (value,count):', file=stream)
-            _pprint(1, _sorted(list_1_dups_dict), stream=stream)
+            f.print_event(1, f'😓 Duplicates {type_name_plural} (value,count):', file=stream)
+            f.pprint_wrap(1, pd_format.obj_as_sorted_list(list_1_dups_dict), stream=stream)
     else:
-        _print_event(1, f'😓 {type_name_plural.capitalize()} not equal', file=stream)
+        f.print_event(1, f'😓 {type_name_plural.capitalize()} not equal', file=stream)
 
         # Print length match
         if len(list_1) == len(list_2):
-            _print_event(
+            f.print_event(
                 1, f'✅ {type_name_plural.capitalize()} lengths match ({len(list_1)})', file=stream
             )
         else:
-            _print_event(1, f'😓 {type_name_plural.capitalize()} lengths don\'t match', file=stream)
+            f.print_event(
+                1, f'😓 {type_name_plural.capitalize()} lengths don\'t match', file=stream
+            )
             lgnd_maxlen = max(len(list_1_name), len(list_2_name))
-            _print_event(2, f'{list_1_name:<{lgnd_maxlen}}: {len(list_1)}', file=stream)
-            _print_event(2, f'{list_2_name:<{lgnd_maxlen}}: {len(list_2)}', file=stream)
+            f.print_event(2, f'{list_1_name:<{lgnd_maxlen}}: {len(list_1)}', file=stream)
+            f.print_event(2, f'{list_2_name:<{lgnd_maxlen}}: {len(list_2)}', file=stream)
 
         if len(list_common_set) > 0:
             if show_common_items is True:
-                _print_event(1, f'✅ {type_name_plural.capitalize()} in common:', file=stream)
-                _pprint(1, _sorted(list_common_set), stream=stream)
+                f.print_event(1, f'✅ {type_name_plural.capitalize()} in common:', file=stream)
+                f.pprint_wrap(1, pd_format.obj_as_sorted_list(list_common_set), stream=stream)
             else:
-                _print_event(1, f'✅ Some {type_name_plural} in common (not shown)', file=stream)
+                f.print_event(1, f'✅ Some {type_name_plural} in common (not shown)', file=stream)
         else:
-            _print_event(1, f'😓 No {type_name_plural} in common', file=stream)
+            f.print_event(1, f'😓 No {type_name_plural} in common', file=stream)
 
         # Print specifics for each list
         for name, excl_items_set, dups_dict, dups_excl_set, dups_common_set in (
@@ -286,32 +166,32 @@ def compare_lists(
                 list_2_dups_common_set,
             ),
         ):
-            _print_event(1, f'{name}', file=stream)  # List name
+            f.print_event(1, f'{name}', file=stream)  # List name
             # Print exclusive items
             if len(excl_items_set) == 0:
-                _print_event(2, f'✅ No exclusive {type_name_plural}', file=stream)
+                f.print_event(2, f'✅ No exclusive {type_name_plural}', file=stream)
             else:
-                _print_event(2, f'😓 Exclusive {type_name_plural}:', file=stream)
-                _pprint(2, _sorted(excl_items_set), stream=stream)
+                f.print_event(2, f'😓 Exclusive {type_name_plural}:', file=stream)
+                f.pprint_wrap(2, pd_format.obj_as_sorted_list(excl_items_set), stream=stream)
             # Print duplicates
             if len(dups_dict) == 0:
-                _print_event(2, f'✅ No duplicates {type_name_plural}', file=stream)
+                f.print_event(2, f'✅ No duplicates {type_name_plural}', file=stream)
             else:
                 # Print value and the number of times duplicated
-                _print_event(2, f'😓 Duplicates {type_name_plural} (value,count):', file=stream)
-                _pprint(2, _sorted(dups_dict), stream=stream)
+                f.print_event(2, f'😓 Duplicates {type_name_plural} (value,count):', file=stream)
+                f.pprint_wrap(2, pd_format.obj_as_sorted_list(dups_dict), stream=stream)
                 # Print duplicates exclusive items, value list only
                 if len(dups_excl_set) == 0:
-                    _print_event(2, f'✅ No duplicates {type_name_plural} exclusive', file=stream)
+                    f.print_event(2, f'✅ No duplicates {type_name_plural} exclusive', file=stream)
                 else:
-                    _print_event(2, f'😓 Duplicates {type_name_plural} exclusive:', file=stream)
-                    _pprint(2, _sorted(dups_excl_set), stream=stream)
+                    f.print_event(2, f'😓 Duplicates {type_name_plural} exclusive:', file=stream)
+                    f.pprint_wrap(2, pd_format.obj_as_sorted_list(dups_excl_set), stream=stream)
                 # Print duplicates in common items, value list only
                 if len(dups_common_set) == 0:
-                    _print_event(2, f'✅ No duplicates {type_name_plural} in common', file=stream)
+                    f.print_event(2, f'✅ No duplicates {type_name_plural} in common', file=stream)
                 else:
-                    _print_event(2, f'😓 Duplicates {type_name_plural} in common:', file=stream)
-                    _pprint(2, _sorted(dups_common_set), stream=stream)
+                    f.print_event(2, f'😓 Duplicates {type_name_plural} in common:', file=stream)
+                    f.pprint_wrap(2, pd_format.obj_as_sorted_list(dups_common_set), stream=stream)
 
     if report is True:
         print(stream.getvalue(), end='')
@@ -431,11 +311,11 @@ def compare_dtypes(
     # Report
     # ************************************
     stream = io.StringIO()
-    _print_title(1, 'Comparing column dtypes', file=stream)
+    f.print_title(1, 'Comparing column dtypes', file=stream)
     if cols_equal_dtypes_mask.all(axis=None):
-        _print_event(1, '✅ Columns have equal dtypes', file=stream)
+        f.print_event(1, '✅ Columns have equal dtypes', file=stream)
     else:
-        _print_event(1, '😓 Columns have different dtypes', file=stream)
+        f.print_event(1, '😓 Columns have different dtypes', file=stream)
     if not cols_equal_dtypes_mask.all(axis=None) or show_all_dtypes is True:
         # <Formatting computations>
         if show_all_dtypes is True:
@@ -459,21 +339,21 @@ def compare_dtypes(
         df2types_maxlen = max(df2types_col_len)
         # </Formatting computations>
         # Initial bar
-        _print_plain(
+        f.print_plain(
             1,
             f'|{"-"*lgnd_maxlen}|{"-"*equal_tit_maxlen}|{"-"*df1types_maxlen}'
             + f'|{"-"*df2types_maxlen}|',
             file=stream,
         )
         # Legend
-        _print_plain(
+        f.print_plain(
             1,
             f'|{legend:<{lgnd_maxlen}}|{equal_title}|{df1_name:<{df1types_maxlen}}'
             + f'|{df2_name:<{df2types_maxlen}}|',
             file=stream,
         )
         # Middle bar
-        _print_plain(
+        f.print_plain(
             1,
             f'|{"-"*lgnd_maxlen}|{"-"*equal_tit_maxlen}|{"-"*df1types_maxlen}'
             + f'|{"-"*df2types_maxlen}|',
@@ -481,7 +361,7 @@ def compare_dtypes(
         )
         # Data
         for col_idx, col_name in enumerate(cols_to_show):
-            _print_plain(
+            f.print_plain(
                 1,
                 f'|{col_name:<{lgnd_maxlen}}'
                 + f'|{"" if cols_equality[col_idx] else "*":^{equal_tit_maxlen}}'
@@ -491,7 +371,7 @@ def compare_dtypes(
                 file=stream,
             )
         # Final bar
-        _print_plain(
+        f.print_plain(
             1,
             f'|{"-"*lgnd_maxlen}|{"-"*equal_tit_maxlen}|{"-"*df1types_maxlen}'
             + f'|{"-"*df2types_maxlen}|',
@@ -523,40 +403,6 @@ def compare_dtypes(
         'dtypes_df': dtypes_df,
         'report': stream.getvalue(),
     }
-
-
-def simplify_dtypes(df: pd.DataFrame) -> pd.DataFrame:
-    """Allows to simplify dtypes, for instance, pass from float64 to int64 if no decimals are present.
-
-    Doesn't convert to a dtype that supports pd.NA, like `DataFrame.convert_dtypes()` although it uses it. See https://github.com/pandas-dev/pandas/issues/58543#issuecomment-2101240339 . It might create a performance impact but this hasn't been tested.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        The DataFrame to dtypes simplify.
-
-    Returns
-    -------
-    pd.DataFrame
-       The DataFrame, with simplified dtypes.
-
-    Raises
-    ------
-    ValueError
-        If df is not of type DataFrame.
-    """
-    if not isinstance(df, pd.DataFrame):
-        raise ValueError('df must be of type pd.DataFrame.')
-    with pd.option_context('future.no_silent_downcasting', True):
-        return (
-            df
-            # See https://github.com/pandas-dev/pandas/issues/58543#issuecomment-2101240339
-            .astype('object')
-            .convert_dtypes()
-            .astype('object')
-            .replace(pd.NA, float('nan'))
-            .infer_objects()
-        )
 
 
 def _save_compared_df(
@@ -630,19 +476,19 @@ def _dtypes_simp_and_eqlty_check(
     This was originally part of `compare()` but since it was done more than once, was exported as a function.
     '''
     # dtypes simplification
-    _print_title(1, 'Trying to simplify dtypes', file=str_io)
+    f.print_title(1, 'Trying to simplify dtypes', file=str_io)
     df1_original_dtypes = df1.dtypes
     df2_original_dtypes = df2.dtypes
-    df1 = simplify_dtypes(df1)
-    df2 = simplify_dtypes(df2)
+    df1 = pd_format.simplify_dtypes(df1)
+    df2 = pd_format.simplify_dtypes(df2)
     if df1.dtypes.equals(df1_original_dtypes):
-        _print_event(1, f'✅ {df1_name}... already simplified', file=str_io)
+        f.print_event(1, f'✅ {df1_name}... already simplified', file=str_io)
     else:
-        _print_event(1, f'😓 {df1_name}... simplified', file=str_io)
+        f.print_event(1, f'😓 {df1_name}... simplified', file=str_io)
     if df2.dtypes.equals(df2_original_dtypes):
-        _print_event(1, f'✅ {df2_name}... already simplified', file=str_io)
+        f.print_event(1, f'✅ {df2_name}... already simplified', file=str_io)
     else:
-        _print_event(1, f'😓 {df2_name}... simplified', file=str_io)
+        f.print_event(1, f'😓 {df2_name}... simplified', file=str_io)
 
     changed_dtypes = (
         df1.dtypes.equals(df1_original_dtypes) is False
@@ -660,28 +506,28 @@ def _dtypes_simp_and_eqlty_check(
     )
 
     if changed_dtypes is True:
-        _print_event(1, '😓 dtypes changed', file=str_io)
+        f.print_event(1, '😓 dtypes changed', file=str_io)
         # Show report if dtypes changed
         print(dtypes_metadata['report'], end='', file=str_io)
     else:
-        _print_event(1, '✅ No dtypes changed', file=str_io)
+        f.print_event(1, '✅ No dtypes changed', file=str_io)
         # No report if no dtypes changes were done
 
     # Equality testing
     after_simp_equality = False
     if changed_dtypes:
         if dtypes_equality is True:
-            _print_title(1, 'Equality check', 'since dtypes are now equal', file=str_io)
+            f.print_title(1, 'Equality check', 'since dtypes are now equal', file=str_io)
             if df1.equals(df2):  # Are the dfs equal?
-                _print_result('🥳 Equal', file=str_io)
+                f.print_result('🥳 Equal', file=str_io)
                 after_simp_equality = True
                 # NOTE: After this point a return should be done
                 # This must be done after calling this function
             else:
-                _print_result('😡 Not equal', file=str_io)
+                f.print_result('😡 Not equal', file=str_io)
                 after_simp_equality = False
         else:
-            _print_title(1, 'Skipping equality check', 'since dtypes are not equal', file=str_io)
+            f.print_title(1, 'Skipping equality check', 'since dtypes are not equal', file=str_io)
             after_simp_equality = False
 
     return (
@@ -735,7 +581,7 @@ def compare(
     if round_to is not None and (
         isinstance(round_to, bool)
         or (isinstance(round_to, int) and round_to < 0)
-        or (isinstance(round_to, str) and round_to != 'ceil' and round_to != 'floor')
+        or (isinstance(round_to, str) and round_to not in ('floor', 'ceil', 'trunc'))
         or (not isinstance(round_to, int) and not isinstance(round_to, str))
     ):
         raise ValueError(
@@ -776,12 +622,12 @@ def compare(
     # MARK: EQLTY FULL
     # Check if both DataFrames are fully equal using Pandas function
     # *************************************************************************
-    _print_title(1, 'Equality check', 'full', file=str_io)
+    f.print_title(1, 'Equality check', 'full', file=str_io)
     if df1_cp.equals(df2_cp):  # Are the dfs equal?
-        _print_result('🥳 Equal', file=str_io)
+        f.print_result('🥳 Equal', file=str_io)
         return _returner_for_compare(True, True, equality_metadata, str_io, report)
     else:
-        _print_result('😡 Not equal', file=str_io)
+        f.print_result('😡 Not equal', file=str_io)
 
     # MARK: COMPARE COLUMNS
     # Compare columns, show report if `report==True`
@@ -825,11 +671,11 @@ def compare(
         'cols_df1_dups_common_dict': cols_df1_dups_common_dict,
         'cols_df2_dups_common_dict': cols_df2_dups_common_dict,
     }
-    cols_common_list = _sorted(cols_common_set)
+    cols_common_list = pd_format.obj_as_sorted_list(cols_common_set)
     if len(cols_df1_dups_common_dict) > 0 or len(cols_df2_dups_common_dict) > 0:
         error = '🛑 Duplicate common columns found. Only common non duplicates columns allowed, stopping compare and returning. Either change the columns\' names or compare only one of the duplicates columns at a time. Review the returned metadata (indexes \'cols_df1_dups_common_dict\' and \'cols_df1_dups_common_dict\'.)'
         tmp_stream = io.StringIO()
-        _print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
+        f.print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
         return _returner_for_compare(False, False, equality_metadata, str_io, report)
@@ -876,11 +722,11 @@ def compare(
         'idxs_df1_dups_common_dict': idxs_df1_dups_common_dict,
         'idxs_df2_dups_common_dict': idxs_df2_dups_common_dict,
     }
-    idxs_common_list = _sorted(idxs_common_set)
+    idxs_common_list = pd_format.obj_as_sorted_list(idxs_common_set)
     if len(idxs_df1_dups_common_dict) > 0 or len(idxs_df2_dups_common_dict) > 0:
         error = '🛑 Duplicate common indexes found. Only common non duplicates indexes allowed, stopping compare and returning. Either change the indexes\' names or compare only one of the duplicates indexes at a time. Review the returned metadata (indexes \'idxs_df1_dups_common_dict\' and \'idxs_df1_dups_common_dict\'.)'
         tmp_stream = io.StringIO()
-        _print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
+        f.print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
         return _returner_for_compare(False, False, equality_metadata, str_io, report)
@@ -889,7 +735,7 @@ def compare(
     # Only taking into consideration common columns and indexes
     # Check if both DataFrames are fully equal using Pandas function
     # *************************************************************************
-    _print_title(1, 'Checking common columns and indexes', file=str_io)
+    f.print_title(1, 'Checking common columns and indexes', file=str_io)
     are_all_cols_and_idxs_common = (
         len(cols_df1_excl_set) == 0
         and len(cols_df2_excl_set) == 0
@@ -905,20 +751,20 @@ def compare(
 
     # Do both DataFrames have no exclusive columns and indexes?
     if are_all_cols_and_idxs_common:
-        _print_event(1, '✅ Columns and indexes are equal in both DataFrames', file=str_io)
+        f.print_event(1, '✅ Columns and indexes are equal in both DataFrames', file=str_io)
     else:
-        _print_event(1, '😓 Columns and indexes are not equal in both DataFrames', file=str_io)
-        _print_event(
+        f.print_event(1, '😓 Columns and indexes are not equal in both DataFrames', file=str_io)
+        f.print_event(
             1, '😈 From this point on, comparing only common columns and indexes', file=str_io
         )
 
         # Equality check for common columns and indexes
-        _print_title(1, 'Equality check', 'for common columns and indexes', file=str_io)
+        f.print_title(1, 'Equality check', 'for common columns and indexes', file=str_io)
         if df1_common.equals(df2_common):  # Are the dfs equal?
-            _print_result('🥳 Equal', file=str_io)
+            f.print_result('🥳 Equal', file=str_io)
             return _returner_for_compare(False, True, equality_metadata, str_io, report)
         else:
-            _print_result('😡 Not equal', file=str_io)
+            f.print_result('😡 Not equal', file=str_io)
 
     # MARK: DTYPES COMP
     # dtypes comparison
@@ -942,7 +788,7 @@ def compare(
     # dtypes simplification, dtypes comparison and testing equality afterwards
     # *************************************************************************
     if common_cols_dtypes_equality is False:
-        _print_title(1, 'Since dtypes are different, will try to simplify', file=str_io)
+        f.print_title(1, 'Since dtypes are different, will try to simplify', file=str_io)
         (
             after_simp_equality,
             df1_common,
@@ -971,22 +817,9 @@ def compare(
     # Rounding numeric columns.
     # *************************************************************************
     if round_to is not None:
-        _print_title(1, f'Rounding [round_to={round_to}]', file=str_io)
-        # No additional validation needed
-        # in the beginning an error is raised if round_to doesn't comply
-        if isinstance(round_to, int):
-            df1_common = df1_common.round(round_to)
-            df2_common = df2_common.round(round_to)
-        if round_to == 'floor' or round_to == 'ceil':
-            if round_to == 'floor':
-                approximation_fn = np.floor
-            elif round_to == 'ceil':
-                approximation_fn = np.ceil
-
-            for tmp_df in (df1_common, df2_common):
-                for tmp_col in tmp_df.columns:
-                    if pd.api.types.is_numeric_dtype(tmp_df[tmp_col]):
-                        tmp_df[tmp_col] = tmp_df[tmp_col].apply(approximation_fn)
+        f.print_title(1, f'Rounding [round_to={round_to}]', file=str_io)
+        df1_common = pd_format.approximate(df1_common, round_to=round_to)
+        df2_common = pd_format.approximate(df2_common, round_to=round_to)
 
         # MARK: ROUND/DTYPES SIMP
         # if rounding was applied
@@ -1021,7 +854,7 @@ def compare(
     # MARK: COMPARE VALUES
     # Comparing values
     # *************************************************************************
-    _print_title(1, 'Comparing values', file=str_io)
+    f.print_title(1, 'Comparing values', file=str_io)
 
     # The usual predictable equality BUT this outputs False when two 'nan' values are compared
     equal_mask_normal = df1_common == df2_common
@@ -1034,16 +867,16 @@ def compare(
     equal_mask_df = equal_mask_normal | equal_mask_for_nan
 
     if equal_mask_df.all(axis=None):
-        _print_result('🥸 Equal values', file=str_io)
+        f.print_result('🥸 Equal values', file=str_io)
         return _returner_for_compare(False, True, equality_metadata, str_io, report)
 
     diff_columns_list = list(equal_mask_df.columns[~(equal_mask_df.all(axis=0))].sort_values())
-    _print_event(1, f'😓 Not equal columns (count[{len(diff_columns_list)}]):', file=str_io)
-    _pprint(1, _sorted(diff_columns_list), stream=str_io)
+    f.print_event(1, f'😓 Not equal columns (count[{len(diff_columns_list)}]):', file=str_io)
+    f.pprint_wrap(1, pd_format.obj_as_sorted_list(diff_columns_list), stream=str_io)
 
     diff_rows_list = list(equal_mask_df.index[~equal_mask_df.all(axis=1)].sort_values())
-    _print_event(1, f'😓 Not equal rows (count[{len(diff_rows_list)}]):', file=str_io)
-    _pprint(1, _sorted(diff_rows_list), stream=str_io)
+    f.print_event(1, f'😓 Not equal rows (count[{len(diff_rows_list)}]):', file=str_io)
+    f.pprint_wrap(1, pd_format.obj_as_sorted_list(diff_rows_list), stream=str_io)
 
     # MARK: JOINED DF
     # Creating joined_df

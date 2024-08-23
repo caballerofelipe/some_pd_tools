@@ -5,10 +5,10 @@ class BaseDF:
     def __init__(self) -> None:
         df_original = pd.DataFrame(
             {
-                'col_int': [1, 2, 3, 4],
-                'col_float': [3.3333333333, 4.4444444444, 5.5555555555, 6.6666666666],
-                'col_str': ['a', 'b', 'c', '4.4444444444'],
-                'col_nan': [float('nan'), float('nan'), float('nan'), float('nan')],
+                'col_int': [1000, -2000, 3000, -4000000],
+                'col_float': [-3333.3333333333, 4444.4444444444, -5555.5555555555, 6666.6666666666],
+                'col_str': ['a', 'b', 'c', '4444.4444444444'],
+                'col_nan': [float('nan'), float('nan'), float('nan'), 8888.8888],
                 'col_strnan': ['d', 'e', 'f', float('nan')],
                 'col_df1extra': [5, 6, 7, 'i'],
                 'col_df2extra': ['j', 'k', 'l', 45],

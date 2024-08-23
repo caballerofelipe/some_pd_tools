@@ -1,6 +1,8 @@
 # some_pd_tools
 Some Pandas tools like compare and number formatting.
 
+**Note**: This package was developed and tested using Python 3.11.9. Might not work in previous versions.
+
 # Install
 ```shell
 pip install some-pd-tools
