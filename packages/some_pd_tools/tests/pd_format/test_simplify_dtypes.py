@@ -9,8 +9,6 @@ from ..basedf import BaseDF
 
 def test_wrong_types():
     """Test if wrong parameters type raises Exception."""
-    # df of wrong type
-    # ************************************
     with pytest.raises(
         ValueError,
         match=re.escape('df must be of type pd.DataFrame.'),

@@ -14,7 +14,9 @@ __all__ = [
 
 
 def obj_as_sorted_list(obj: object) -> list:
-    """Return an object as a sorted list. Not implemented for "every" object, only the ones needed in this project: dict, set and list. Raises exception if none of these types of objects are tried to be transformed.
+    """Return an object as a sorted list. Uses `str()` to transform keys to string, so for instance sorting (1,2,12) will sort to: (1,12,2).
+
+    Note: Not implemented for "every" object, only the ones needed in this project: dict, set, tuple and list. Raises exception if none of these types of objects are tried to be transformed.
 
     Parameters
     ----------
@@ -33,16 +35,24 @@ def obj_as_sorted_list(obj: object) -> list:
     """
     if isinstance(obj, dict):
         return sorted(obj.items(), key=lambda item: str(item[0]))
-    if isinstance(obj, set) or isinstance(obj, list):
+    if isinstance(obj, set) or isinstance(obj, list) or isinstance(obj, tuple):
         return sorted(obj, key=lambda item: str(item))
-    
-    raise ValueError(f'Function not implemented for type:{type(obj)}.')
+
+    raise ValueError(f'Function not implemented for type: {type(obj)}.')
 
 
-def _series_modify_separators(
-    ser: pd.Series, thousands_sep: str = ',', decimals_sep: str = '.'
+def _series_number_separators(
+    ser: pd.Series,
+    precision: int = 6,
+    thousands_sep: str = ',',
+    decimals_sep: str = '.',
 ) -> pd.Series:
-    """Transform a Series adding a thousands separator and optionally modifying it and the decimals separator.
+    """Transform a Series adding a thousands separator. Optionally modifies the thousands and decimals separator.
+
+    Important (1): This transforms a numeric series to dtype 'object' and each cell is a string.
+
+    Important (2): For floats, this uses String Formatting Operations. The formatting is like this: `f'{x:,f}'` and from the documentation: "The precision determines the number of significant digits before and after the decimal point and defaults to 6." So keep in mind that this will round to 6 digits. If you need a different precision use the precision parameter.
+    See: https://docs.python.org/2/library/stdtypes.html#string-formatting-operations .
 
     See https://stackoverflow.com/a/69190425/1071459 .
 
@@ -50,6 +60,8 @@ def _series_modify_separators(
     ----------
     ser : pd.Series
         The Series where the numbers are to be changed.
+    precision : int
+        The rounding precision.
     thousands_sep : str, optional
         Thousands separator, by default ','.
     decimals_sep : str, optional
@@ -90,11 +102,9 @@ def _series_modify_separators(
     ):
         raise ValueError("`thousands_sep` and `decimals_sep` cannot be numbers.")
     regex = r'[-|\d|E|e]+'
-    if bool(re.search(regex, str(thousands_sep))) or bool(
-        re.search(regex, str(decimals_sep))
-    ):
+    if bool(re.search(regex, str(thousands_sep))) or bool(re.search(regex, str(decimals_sep))):
         raise ValueError(
-            "`thousands_sep` and `decimals_sep` cannot include any digits (0-9), '-', 'E' or 'e' to avoid confusions."
+            "`thousands_sep` and `decimals_sep` cannot include the following: digits (0-9), '-', 'E' or 'e'; to avoid confusions."
         )
 
     ser_cp = ser.copy()
@@ -103,14 +113,14 @@ def _series_modify_separators(
     if pd.api.types.is_numeric_dtype(ser_cp):
 
         if pd.api.types.is_float_dtype(ser_cp):
-            ser_cp = ser_cp.map(lambda x: f'{x:,f}')
+            ser_cp = ser_cp.apply(lambda x: f'{x:,.{precision}f}')
         elif pd.api.types.is_integer_dtype(ser_cp):
-            ser_cp = ser_cp.map(lambda x: f'{x:,d}')
+            ser_cp = ser_cp.apply(lambda x: f'{x:,d}')
 
         # Don't do any additional transformation if not necessary
         if thousands_sep != ',' or decimals_sep != '.':
             thousands_sep_placeholder = '?' if decimals_sep != '?' else '^'
-            ser_cp = ser_cp.map(
+            ser_cp = ser_cp.apply(
                 lambda x: x.replace(',', thousands_sep_placeholder)
                 .replace('.', decimals_sep)
                 .replace(thousands_sep_placeholder, thousands_sep)
@@ -119,9 +129,14 @@ def _series_modify_separators(
 
 
 def number_separators(
-    df: pd.DataFrame | pd.Series, thousands_sep=',', decimals_sep='.'
+    df: pd.DataFrame | pd.Series, precision: int = 6, thousands_sep=',', decimals_sep='.'
 ) -> pd.DataFrame | pd.Series:
     """Transform a DataFrame or Series adding a thousands separator and optionally modifying it and the decimals separator.
+
+    Important (1): This transforms a numeric series to dtype 'object' and each cell is a string.
+
+    Important (2): For floats, this uses String Formatting Operations. The formatting is like this: `f'{x:,f}'` and from the documentation: "The precision determines the number of significant digits before and after the decimal point and defaults to 6." So keep in mind that this will round to 6 digits. If you need a different precision use the precision parameter.
+    See: https://docs.python.org/2/library/stdtypes.html#string-formatting-operations .
 
     Parameters
     ----------
@@ -147,11 +162,16 @@ def number_separators(
 
     if isinstance(df, pd.DataFrame):
         return df.apply(
-            _series_modify_separators, thousands_sep=thousands_sep, decimals_sep=decimals_sep
+            _series_number_separators,
+            precision=precision,
+            thousands_sep=thousands_sep,
+            decimals_sep=decimals_sep,
         )
 
     if isinstance(df, pd.Series):
-        return _series_modify_separators(df, thousands_sep=thousands_sep, decimals_sep=decimals_sep)
+        return _series_number_separators(
+            df, precision=precision, thousands_sep=thousands_sep, decimals_sep=decimals_sep
+        )
 
 
 def approximate(
@@ -180,8 +200,13 @@ def approximate(
     Raises
     ------
     ValueError
+        '`df` must be of type pd.DataFrame.'
+    ValueError
         round_to must be one of None, a positive integer or a string ('floor', 'ceil', 'trunc').
     """
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError('`df` must be of type pd.DataFrame.')
+
     # Nothing needs to be done
     if round_to is None:
         return df
