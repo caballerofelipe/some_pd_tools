@@ -419,6 +419,13 @@ def compare(
 
         if after_simp_equality is True:
             return _returner_for_compare(False, True, equality_metadata, str_io, report)
+    else:
+        f.print_title(
+            1,
+            'Skipping equality check',
+            'since dtypes are equal, previous equality check sufficient',
+            file=str_io,
+        )
 
     # MARK: ROUND_TO
     # Rounding numeric columns.
@@ -460,8 +467,17 @@ def compare(
 
     # MARK: COMPARE VALUES
     # Comparing values
+    #
+    # No equality check needed as one was done above when trying to simplify dtypes
+    # and if no simplification was done, that means that dtypes are equal
+    # and the previous equality check was sufficient
     # *************************************************************************
-    f.print_title(1, 'Comparing values', file=str_io)
+    f.print_title(
+        1,
+        'Comparing values',
+        'from this point on, all values cannot be equal.',
+        file=str_io,
+    )
 
     # The usual predictable equality BUT this outputs False when two 'nan' values are compared
     equal_mask_normal = df1_common == df2_common
@@ -472,10 +488,6 @@ def compare(
     equal_mask_for_nan = (df1_common != df1_common) & (df2_common != df2_common)
     # If either mask is True, we consider it to be True
     equal_mask_df = equal_mask_normal | equal_mask_for_nan
-
-    if equal_mask_df.all(axis=None):
-        f.print_result('🥸 Equal values', file=str_io)
-        return _returner_for_compare(False, True, equality_metadata, str_io, report)
 
     diff_columns_list = list(equal_mask_df.columns[~(equal_mask_df.all(axis=0))].sort_values())
     f.print_event(1, f'😓 Not equal columns (count[{len(diff_columns_list)}]):', file=str_io)
