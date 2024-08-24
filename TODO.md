@@ -1,10 +1,10 @@
 # TODO
+- Add parameter to save report to file.
 - `compare()` should return three equalities and a metadata dict.
     - equalities:
         - fully_equal True if df1.equals(df2)
         - equal_w_special_settings True if after applying special settings df1.equals(df2)
         - common_cols_idx_equal True if all is equal in common columns and indexes
-- Add parameter to save report to file.
 - IMPORTANT: After (MARK:EQUAL COMMON) all processings must be done using df1_common and df2_common or their equivalent name (these are DataFrames including only common columns and common indexes).
 - For testing, add all parameters for functions calls to avoid problems if default parameters change.
 - Add docstrings.
