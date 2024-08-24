@@ -6,6 +6,7 @@ from .. import pd_format
 from . import report_formatting as f
 from .compare_dtypes import compare_dtypes
 from .compare_lists import compare_lists
+from .compute_equality_df import compute_equality_df
 
 __all__ = [
     'compare',
@@ -479,23 +480,17 @@ def compare(
         file=str_io,
     )
 
-    # The usual predictable equality BUT this outputs False when two 'nan' values are compared
-    equal_mask_normal = df1_common == df2_common
-    # There's a workaround to check if both values in each columns are 'nan'
-    #  Compare each column to itself, if the result is different the value is 'nan'
-    #  If this happens to both columns, that means both columns are 'nan' and their values are equal
-    #   see: # https://stackoverflow.com/a/19322739/1071459
-    equal_mask_for_nan = (df1_common != df1_common) & (df2_common != df2_common)
-    # If either mask is True, we consider it to be True
-    equal_mask_df = equal_mask_normal | equal_mask_for_nan
+    equality_df = compute_equality_df(df1_common, df2_common)
 
-    diff_columns_list = list(equal_mask_df.columns[~(equal_mask_df.all(axis=0))].sort_values())
-    f.print_event(1, f'😓 Not equal columns (count[{len(diff_columns_list)}]):', file=str_io)
-    f.pprint_wrap(1, pd_format.obj_as_sorted_list(diff_columns_list), stream=str_io)
+    diff_cols_list = list(equality_df.columns[~(equality_df.all(axis=0))])
+    diff_cols_list_sorted = pd_format.obj_as_sorted_list(diff_cols_list)
+    f.print_event(1, f'😓 Not equal columns (count[{len(diff_cols_list_sorted)}]):', file=str_io)
+    f.pprint_wrap(1, pd_format.obj_as_sorted_list(diff_cols_list_sorted), stream=str_io)
 
-    diff_rows_list = list(equal_mask_df.index[~equal_mask_df.all(axis=1)].sort_values())
-    f.print_event(1, f'😓 Not equal rows (count[{len(diff_rows_list)}]):', file=str_io)
-    f.pprint_wrap(1, pd_format.obj_as_sorted_list(diff_rows_list), stream=str_io)
+    diff_rows_list = list(equality_df.index[~equality_df.all(axis=1)])
+    diff_rows_list_sorted = pd_format.obj_as_sorted_list(diff_rows_list)
+    f.print_event(1, f'😓 Not equal rows (count[{len(diff_rows_list_sorted)}]):', file=str_io)
+    f.pprint_wrap(1, pd_format.obj_as_sorted_list(diff_rows_list_sorted), stream=str_io)
 
     # MARK: JOINED DF
     # Creating joined_df
@@ -508,11 +503,11 @@ def compare(
     joined_df = df1_cp[[*fixed_cols]].join(joined_df)
 
     # Create a new column with suffix '_diff' to explicitly show if there's a difference
-    new_diff_columns = [f'{col}_diff' for col in diff_columns_list]
+    new_diff_columns = [f'{col}_diff' for col in diff_cols_list_sorted]
     joined_df[new_diff_columns] = ''  # The new diff columns are empty
 
     # Add the word 'diff' where a difference exists
-    for col in diff_columns_list:
+    for col in diff_cols_list_sorted:
         # TODO: This equality must check for nan equality
         diff_rows_for_col_mask = joined_df[f'{col}_{df1_name}'] != joined_df[f'{col}_{df2_name}']
         joined_df.loc[diff_rows_for_col_mask, f'{col}_diff'] = 'diff'
@@ -524,13 +519,13 @@ def compare(
 
     # TODO: review, might be able to remove `cols_diff = [*diff_columns]`
 
-    cols_diff = [*diff_columns_list]
+    cols_diff = [*diff_cols_list_sorted]
     df1_cols_diff = [f'{c}_{df1_name}' for c in cols_diff]
     df2_cols_diff = [f'{c}_{df2_name}' for c in cols_diff]
     show_diff_cols = [f'{c}_diff' for c in cols_diff]
     cols_diff_from_1_2_show_diff = zip(df1_cols_diff, df2_cols_diff, show_diff_cols)
     all_diff_cols = [item for tup in cols_diff_from_1_2_show_diff for item in tup]
-    diff_df = joined_df.loc[diff_rows_list, all_diff_cols]
+    diff_df = joined_df.loc[diff_rows_list_sorted, all_diff_cols]
 
     # MARK: EXCEL
     # Saving to Excel
@@ -538,7 +533,7 @@ def compare(
     if path is not None:
         _save_compared_df(
             joined_df,
-            diff_rows=diff_rows_list,
+            diff_rows=diff_rows_list_sorted,
             all_diff_cols=all_diff_cols,
             path=path,
             fixed_cols=fixed_cols,
@@ -548,9 +543,9 @@ def compare(
     equality_metadata = {
         **equality_metadata,
         'joined_df': joined_df,
-        'equal_mask_df': equal_mask_df,
+        'equal_mask_df': equality_df,
         'diff_df': diff_df,
-        'diff_columns': diff_columns_list,
-        'diff_rows': diff_rows_list,
+        'diff_columns': diff_cols_list_sorted,
+        'diff_rows': diff_rows_list_sorted,
     }
     return _returner_for_compare(False, False, equality_metadata, str_io, report)
