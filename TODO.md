@@ -1,6 +1,4 @@
 # TODO
-- Move `simplify_dtypes()` to pd_format?
-- Change the ROUND_TO part to use a function inside `pd_format` instead of inline processing, only the rounding part, avoid post processing.
 - `compare()` should return three equalities and a metadata dict.
     - equalities:
         - fully_equal True if df1.equals(df2)

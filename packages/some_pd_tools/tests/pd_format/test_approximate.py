@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import pytest
 
-from some_pd_tools import pd_format, pd_compare
+from some_pd_tools import pd_format
 
 from ..basedf import BaseDF
 
