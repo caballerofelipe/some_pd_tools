@@ -17,7 +17,7 @@ from ..formatting import (
 )
 
 
-def test_wrong_types():
+def test_exceptions():
     bdf = BaseDF()
 
     # df1 or df2 are not of type pd.DataFrame
@@ -63,6 +63,19 @@ def test_wrong_types():
         )
 
     # df1_name or df2_name are not of type str
+    # ************************************
+    with pytest.raises(
+        ValueError,
+        match=re.escape('df1_name and df2_name must be different.'),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,  # .
+            df2=bdf.df2,  # .
+            df1_name=bdf.df1_name,  # .
+            df2_name=bdf.df1_name,  # .
+        )
+
+    # round_to wrong values
     # ************************************
     with pytest.raises(
         ValueError,

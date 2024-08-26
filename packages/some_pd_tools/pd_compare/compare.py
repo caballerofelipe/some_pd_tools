@@ -186,6 +186,8 @@ def compare(
         raise ValueError('df1 and df2 must be of type pd.DataFrame.')
     if not isinstance(df1_name, str) or not isinstance(df2_name, str):
         raise ValueError('df1_name and df2_name must be of type str.')
+    if df1_name == df2_name:
+        raise ValueError('df1_name and df2_name must be different.')
     if round_to is not None and (
         isinstance(round_to, bool)
         or (isinstance(round_to, int) and round_to < 0)
