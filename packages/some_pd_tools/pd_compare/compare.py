@@ -181,6 +181,7 @@ def compare(
         `.sort_index(axis=0).sort_index(axis=1)`
     - Duplicate indexes and columns are not allowed, UNLESS `if df1_cp.equals(df2_cp)` is True, which means everything is equal.
     - When returning, if an equality is returned, use the functions to get to the point where equality was obtained.
+    - fixed_cols must exist in both DataFrames, if not, an exception is raised.
     '''
     if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
         raise ValueError('df1 and df2 must be of type pd.DataFrame.')
@@ -202,6 +203,20 @@ def compare(
     # https://pylint.readthedocs.io/en/latest/user_guide/messages/warning/dangerous-default-value.html
     if fixed_cols is None:
         fixed_cols = []
+    if not (set(fixed_cols) <= set(df1.columns)):
+        fixed_cols_not_present_sorted_list = pd_format.obj_as_sorted_list(
+            set(fixed_cols) - set(df1.columns)
+        )
+        raise ValueError(
+            f'The following fixed_cols are not present in df1(df1_name={df1_name}): {fixed_cols_not_present_sorted_list}.'
+        )
+    if not (set(fixed_cols) <= set(df2.columns)):
+        fixed_cols_not_present_sorted_list = pd_format.obj_as_sorted_list(
+            set(fixed_cols) - set(df2.columns)
+        )
+        raise ValueError(
+            f'The following fixed_cols are not present in df2(df2_name={df2_name}): {fixed_cols_not_present_sorted_list}.'
+        )
 
     # MARK: io.StringIO
     str_io = io.StringIO()

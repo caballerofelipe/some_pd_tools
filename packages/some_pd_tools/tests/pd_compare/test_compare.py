@@ -118,6 +118,34 @@ def test_exceptions():
             df1=bdf.df1, df2=bdf.df2, df1_name=bdf.df1_name, df2_name=bdf.df2_name, round_to=1.2
         )
 
+    # fixed_cols must be part of both DataFrames
+    # ************************************
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            f"The following fixed_cols are not present in df1(df1_name={bdf.df1_name}): ['col_df2extra']."
+        ),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2_extra_col,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            fixed_cols=['col_df2extra']
+        )
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            f"The following fixed_cols are not present in df2(df2_name={bdf.df2_name}): ['col_df1extra']."
+        ),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1_extra_col,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            fixed_cols=['col_df1extra']
+        )
 
 def test_equality_full() -> None:
     bdf = BaseDF()
