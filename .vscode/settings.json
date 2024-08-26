@@ -25,6 +25,7 @@
         "dups",
         "endstr",
         "eqlty",
+        "fillna",
         "idxs",
         "lgnd",
         "lsuffix",
@@ -35,6 +36,7 @@
         "someitems",
         "strnan",
         "substr",
+        "swaplevel",
         "thedf",
         "xlsxwriter"
     ]
