@@ -241,8 +241,8 @@ def compare(
     # MARK: COPY
     # Copy DataFrames to avoid making any changes to them
     # *************************************************************************
-    df1_cp = pd.DataFrame(df1).sort_index(axis=0).sort_index(axis=1).copy()
-    df2_cp = pd.DataFrame(df2).sort_index(axis=0).sort_index(axis=1).copy()
+    df1_cp = pd.DataFrame(df1).sort_index(axis=0).sort_index(axis=1)
+    df2_cp = pd.DataFrame(df2).sort_index(axis=0).sort_index(axis=1)
 
     # MARK: EQLTY FULL
     # Check if both DataFrames are fully equal using Pandas function
@@ -285,10 +285,13 @@ def compare(
         val: count for val, count in cols_df2_dups_dict.items() if val in cols_common_set
     }
 
+    cols_common_list_sorted = pd_format.obj_as_sorted_list(cols_common_set)
+
     equality_metadata = {
         **equality_metadata,
         'cols_compare_equality': cols_compare_equality,
         'cols_common_set': cols_common_set,
+        'cols_common_list_sorted': cols_common_list_sorted,
         'cols_df1_excl_set': cols_df1_excl_set,
         'cols_df2_excl_set': cols_df2_excl_set,
         'cols_df1_dups_dict': cols_df1_dups_dict,
@@ -296,7 +299,7 @@ def compare(
         'cols_df1_dups_common_dict': cols_df1_dups_common_dict,
         'cols_df2_dups_common_dict': cols_df2_dups_common_dict,
     }
-    cols_common_list = pd_format.obj_as_sorted_list(cols_common_set)
+
     if len(cols_df1_dups_common_dict) > 0 or len(cols_df2_dups_common_dict) > 0:
         error = '🛑 Duplicate common columns found. Only common non duplicates columns allowed, stopping compare and returning. Either change the columns\' names or compare only one of the duplicates columns at a time. Review the returned metadata (indexes \'cols_df1_dups_common_dict\' and \'cols_df1_dups_common_dict\'.)'
         tmp_stream = io.StringIO()
@@ -336,10 +339,13 @@ def compare(
         val: count for val, count in idxs_df2_dups_dict.items() if val in idxs_common_set
     }
 
+    idxs_common_list_sorted = pd_format.obj_as_sorted_list(idxs_common_set)
+
     equality_metadata = {
         **equality_metadata,
         'idxs_compare_equality': idxs_compare_equality,
         'idxs_common_set': idxs_common_set,
+        'idxs_common_list_sorted': idxs_common_list_sorted,
         'idxs_df1_excl_set': idxs_df1_excl_set,
         'idxs_df2_excl_set': idxs_df2_excl_set,
         'idxs_df1_dups_dict': idxs_df1_dups_dict,
@@ -347,7 +353,7 @@ def compare(
         'idxs_df1_dups_common_dict': idxs_df1_dups_common_dict,
         'idxs_df2_dups_common_dict': idxs_df2_dups_common_dict,
     }
-    idxs_common_list = pd_format.obj_as_sorted_list(idxs_common_set)
+
     if len(idxs_df1_dups_common_dict) > 0 or len(idxs_df2_dups_common_dict) > 0:
         error = '🛑 Duplicate common indexes found. Only common non duplicates indexes allowed, stopping compare and returning. Either change the indexes\' names or compare only one of the duplicates indexes at a time. Review the returned metadata (indexes \'idxs_df1_dups_common_dict\' and \'idxs_df1_dups_common_dict\'.)'
         tmp_stream = io.StringIO()
@@ -371,8 +377,13 @@ def compare(
     # If both DataFrames have the same columns and indexes,
     # df{1,2}_common is indeed equal to df{1,2}_cp
     # but to avoid duplicating code, df{1,2}_common is used from this point on
-    df1_common = df1_cp.loc[idxs_common_list, cols_common_list]
-    df2_common = df2_cp.loc[idxs_common_list, cols_common_list]
+    df1_common = df1_cp.loc[idxs_common_list_sorted, cols_common_list_sorted]
+    df2_common = df2_cp.loc[idxs_common_list_sorted, cols_common_list_sorted]
+    equality_metadata = {
+        **equality_metadata,
+        'df1_common': df1_common,
+        'df2_common': df2_common,
+    }
 
     # Do both DataFrames have no exclusive columns and indexes?
     if are_all_cols_and_idxs_common:
@@ -441,7 +452,7 @@ def compare(
         f.print_title(
             1,
             'Skipping equality check',
-            'since dtypes are equal, previous equality check sufficient',
+            'since dtypes are equal, previous equality check is sufficient',
             file=str_io,
         )
 

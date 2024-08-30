@@ -147,6 +147,7 @@ def test_exceptions():
             fixed_cols=['col_df1extra']
         )
 
+
 def test_equality_full() -> None:
     bdf = BaseDF()
 
@@ -226,8 +227,8 @@ def test_equality_full() -> None:
     # This only works because `df1_cp.equals(df2_cp)` is True in the beginning
     # This assumes there are no column duplicates (checked previously)
     # ************************************
-    df1 = bdf.df1[[*bdf.df1.columns, *bdf.df1.columns]]
-    df2 = bdf.df2[[*bdf.df2.columns, *bdf.df2.columns]]
+    df1 = bdf.df1.loc[[*bdf.df1.index, *bdf.df1.index]]
+    df2 = bdf.df2.loc[[*bdf.df2.index, *bdf.df2.index]]
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare,
         df1=df1,
