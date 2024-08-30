@@ -18,6 +18,7 @@
         "autofilter",
         "autofit",
         "basedf",
+        "colindex",
         "docstrings",
         "downcasting",
         "dtype",
