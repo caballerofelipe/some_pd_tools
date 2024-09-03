@@ -1,4 +1,5 @@
 import io
+import pathlib
 
 import pandas as pd
 
@@ -14,19 +15,18 @@ __all__ = [
 
 
 def _save_compared_df(
-    joined_df: pd.DataFrame, diff_rows, all_diff_cols, path: str, fixed_cols: list
+    df: pd.DataFrame,
+    path: str,
+    freeze_on_colindex: list,
+    datetime_rpl_str: str,
 ):
-    # Different columns with different rows
-    df_to_save = joined_df.loc[
-        diff_rows,
-        [*fixed_cols, *all_diff_cols],
-    ].copy()
+    if datetime_rpl_str != '':
+        for col in df.columns:
+            if pd.api.types.is_datetime64_any_dtype(df[col]):
+                df[col] = df[col].dt.strftime(datetime_rpl_str)
 
-    for col in joined_df.columns:
-        if pd.api.types.is_datetime64_any_dtype(joined_df[col]):
-            joined_df[col] = joined_df[col].dt.strftime('%Y-%m-%d %H:%M:%S')
-
-    # df_to_save.to_excel(f'tmp_comparison_{now_str()}.xlsx', freeze_panes=(1, 6))
+    # If needed directly save to Excel from Pandas
+    # df.to_excel(f'tmp_comparison_{now_str()}.xlsx', freeze_panes=(1, 6))
 
     # From https://xlsxwriter.readthedocs.io/example_pandas_autofilter.html
 
@@ -38,7 +38,7 @@ def _save_compared_df(
 
     # Convert the DataFrame to an XlsxWriter Excel object. We also turn off the
     # index column at the left of the output DataFrame.
-    df_to_save.to_excel(
+    df.to_excel(
         writer,
         sheet_name="Sheet1",
         index=show_index,
@@ -49,16 +49,16 @@ def _save_compared_df(
     worksheet = writer.sheets["Sheet1"]
 
     # Get the dimensions of the DataFrame.
-    (max_row, max_col) = df_to_save.shape
+    (max_row, max_col) = df.shape
 
     # # Make the columns wider for clarity.
     # worksheet.set_column(0, max_col, 12)
 
     # Set the autofilter.
-    worksheet.autofilter(0, 0, max_row, max_col)
+    worksheet.autofilter(1, 1, max_row, max_col)
 
     # From https://xlsxwriter.readthedocs.io/example_panes.html
-    worksheet.freeze_panes(1, len(fixed_cols) + add_if_show_index)
+    worksheet.freeze_panes(2, freeze_on_colindex + add_if_show_index)
 
     # From https://stackoverflow.com/a/75120836/1071459
     worksheet.autofit()
@@ -170,19 +170,59 @@ def compare(
     show_common_cols: bool = False,
     show_common_idxs: bool = False,
     show_all_dtypes: bool = False,
-    path: str = None,
-    fixed_cols: list = None,
+    xls_path: str = None,
+    xls_overwrite: bool = False,
+    xls_compare_str_equal: str = '',
+    xls_compare_str_diff: str = '*_diff_*',
+    xls_fixed_cols: list = None,
+    xls_datetime_rpl: str = '%Y-%m-%d %H:%M:%S',
 ):
     '''
     Some notes for documenting:
     - The whole goal of this function is to find differences in DataFrames, once they are found to be equal, the comparison stops.
+    - This function is meant to be called interactively, possibly using Jupyter. It isn't meant to be run as a verification function, although it can be used like that, than might not be advised depending on the specific situation. The function will return a tuple of 3. In the returned tuple:
+        - The first element will return True if everything is equal in both DataFrame, this uses df1.equals(df2) but using the sorted columns and indexes.
+        - The second element will return True if after some modification in both DataFrames everything is equal. This check happens after several points in the comparison process.
+        - The third element will return metadata. This metadata depends on where in the function it was returned. The metadata is returned if both DataFrames are equal, after some transformation. Or it is returned at the end of the function. The metadata values should be obtained with `.get()` since metadata is a dict and the key might not exist at a given point when returned.
     - df1 and df2 are transformed into DataFrames before any comparing
     - The order of columns and indexes are not taken into account. Columns and indexes are sorted using
         `.sort_index(axis=0).sort_index(axis=1)`
     - Duplicate indexes and columns are not allowed, UNLESS `if df1_cp.equals(df2_cp)` is True, which means everything is equal.
     - When returning, if an equality is returned, use the functions to get to the point where equality was obtained.
     - fixed_cols must exist in both DataFrames, if not, an exception is raised.
+    - Examples:
+        - Returned Metadata: Using metadata, examples. Notation: when wanting to use `joined_df`, either do `metadata['joined_df']` or previously save that to a `joined_df` variable like this: `joined_df = metadata['joined_df']`.
+        - To see only different columns and rows, do `joined_df.loc[rows_diff_list_sorted, cols_diff_list_sorted]`.
+        - To see only equal columns and rows, do `joined_df.loc[rows_equal_list_sorted, cols_equal_list_sorted]`.
+    - joined_df is returned to allow to see the differences of both DataFrames in one DataFrame. This new DataFrame only takes into account the rows and columns (indexes and columns) that are common to the two DataFrames to be compared. Its structure is as follows:
+        - It has a column MultiIndex. The first level represent the name of the given column. The second level represents the values. Read on to understand the whole structure.
+        - Every column is sorted by its name as the first index. The second index has three columns:
+            - The first and second columns correspond to the DataFrames' name provided by `df1_name` and `df2_name` (or their default values).
+            - The third column named 'difference' states wether the column is different or not by a boolean True or False.
+    - The Excel created by path is similar to joined_df. This Excel file is useful to have a look at the data and play with it without having to program to do so. It differs in the following:
+        - If used, `xls_fixed_cols`, creates a set of fixed columns in the beginning of the Excel file. These columns are fixed like when using 'Freeze panes' on Excel directly.
+        - Because of the MultiIndex, there are 3 rows at the top, 2 of those are the first and second index. The third row is empty but could be used to the index name (rows' name).
+        - The second row has a filter (or AutoFilter).
+        - This function's parameters `xls_compare_str_equal` and `xls_compare_str_diff` can configure how differences are shown. The default for `xls_compare_str_equal` is an empty string and the default for `xls_compare_str_diff` is a '*_diff_*' string which makes it easy to use Find in Excel to locate differences. These parameters can be any string according to the user's needs.
     '''
+    equality_metadata = {
+        'params': {
+            'df1': df1,
+            'df2': df2,
+            'df1_name': df1_name,
+            'df2_name': df2_name,
+            'round_to': round_to,
+            'report': report,
+            'show_common_cols': show_common_cols,
+            'show_common_idxs': show_common_idxs,
+            'show_all_dtypes': show_all_dtypes,
+            'xls_path': xls_path,
+            'xls_compare_str_equal': xls_compare_str_equal,
+            'xls_compare_str_diff': xls_compare_str_diff,
+            'xls_fixed_cols': xls_fixed_cols,
+        }
+    }
+
     if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
         raise ValueError('df1 and df2 must be of type pd.DataFrame.')
     if not isinstance(df1_name, str) or not isinstance(df2_name, str):
@@ -199,44 +239,45 @@ def compare(
             "round_to must be None, a positive integer or a string (either 'floor' or 'ceil')."
         )
 
-    # Used to avoid dangerous default value
-    # https://pylint.readthedocs.io/en/latest/user_guide/messages/warning/dangerous-default-value.html
-    if fixed_cols is None:
-        fixed_cols = []
-    if not (set(fixed_cols) <= set(df1.columns)):
-        fixed_cols_not_present_sorted_list = pd_format.obj_as_sorted_list(
-            set(fixed_cols) - set(df1.columns)
-        )
-        raise ValueError(
-            f'The following fixed_cols are not present in df1(df1_name={df1_name}): {fixed_cols_not_present_sorted_list}.'
-        )
-    if not (set(fixed_cols) <= set(df2.columns)):
-        fixed_cols_not_present_sorted_list = pd_format.obj_as_sorted_list(
-            set(fixed_cols) - set(df2.columns)
-        )
-        raise ValueError(
-            f'The following fixed_cols are not present in df2(df2_name={df2_name}): {fixed_cols_not_present_sorted_list}.'
-        )
+    if xls_path is not None:
+        if not isinstance(xls_path, str):
+            raise ValueError('xls_path must be of type str.')
+        the_Path = pathlib.Path(xls_path)
+        if the_Path.is_dir():
+            raise ValueError(f'xls_path [{xls_path}] cannot be a directory.')
+        if xls_overwrite is False and the_Path.is_file():
+            raise ValueError(f'xls_path [{xls_path}] exists but xls_overwrite is False.')
+
+        if not isinstance(xls_compare_str_equal, str):
+            raise ValueError('xls_compare_str_equal must be of type str.')
+        if not isinstance(xls_compare_str_diff, str):
+            raise ValueError('xls_compare_str_diff must be of type str.')
+
+        # Used to avoid dangerous default value
+        # https://pylint.readthedocs.io/en/latest/user_guide/messages/warning/dangerous-default-value.html
+        if xls_fixed_cols is None:
+            xls_fixed_cols = []
+
+        if not (set(xls_fixed_cols) <= set(df1.columns)):
+            fixed_cols_not_present_sorted_list = pd_format.obj_as_sorted_list(
+                set(xls_fixed_cols) - set(df1.columns)
+            )
+            raise ValueError(
+                f'The following fixed_cols are not present in df1(df1_name={df1_name}): {fixed_cols_not_present_sorted_list}.'
+            )
+        if not (set(xls_fixed_cols) <= set(df2.columns)):
+            fixed_cols_not_present_sorted_list = pd_format.obj_as_sorted_list(
+                set(xls_fixed_cols) - set(df2.columns)
+            )
+            raise ValueError(
+                f'The following fixed_cols are not present in df2(df2_name={df2_name}): {fixed_cols_not_present_sorted_list}.'
+            )
+
+        if not isinstance(xls_datetime_rpl, str):
+            raise ValueError('xls_datetime_rpl must be of type str.')
 
     # MARK: io.StringIO
     str_io = io.StringIO()
-    # str_io = sys.stdout
-
-    equality_metadata = {
-        'params': {
-            'df1': df1,
-            'df2': df2,
-            'df1_name': df1_name,
-            'df2_name': df2_name,
-            'round_to': round_to,
-            'report': report,
-            'show_common_cols': show_common_cols,
-            'show_common_idxs': show_common_idxs,
-            'show_all_dtypes': show_all_dtypes,
-            'path': path,
-            'fixed_cols': fixed_cols,
-        }
-    }
 
     # MARK: COPY
     # Copy DataFrames to avoid making any changes to them
@@ -504,76 +545,114 @@ def compare(
     f.print_title(
         1,
         'Comparing values',
-        'from this point on, all values cannot be equal.',
+        'from this point on, the DataFrames must have at least one different cell',
         file=str_io,
     )
 
     equality_df = compute_equality_df(df1_common, df2_common)
 
-    diff_cols_list = list(equality_df.columns[~(equality_df.all(axis=0))])
-    diff_cols_list_sorted = pd_format.obj_as_sorted_list(diff_cols_list)
-    f.print_event(1, f'😓 Not equal columns (count[{len(diff_cols_list_sorted)}]):', file=str_io)
-    f.pprint_wrap(1, pd_format.obj_as_sorted_list(diff_cols_list_sorted), stream=str_io)
+    cols_equal_list = list(equality_df.columns[(equality_df.all(axis=0))])
+    cols_equal_list_sorted = pd_format.obj_as_sorted_list(cols_equal_list)
+    rows_equal_list = list(equality_df.index[equality_df.all(axis=1)])
+    rows_equal_list_sorted = pd_format.obj_as_sorted_list(rows_equal_list)
 
-    diff_rows_list = list(equality_df.index[~equality_df.all(axis=1)])
-    diff_rows_list_sorted = pd_format.obj_as_sorted_list(diff_rows_list)
-    f.print_event(1, f'😓 Not equal rows (count[{len(diff_rows_list_sorted)}]):', file=str_io)
-    f.pprint_wrap(1, pd_format.obj_as_sorted_list(diff_rows_list_sorted), stream=str_io)
+    cols_diff_list = list(equality_df.columns[~(equality_df.all(axis=0))])
+    cols_diff_list_sorted = pd_format.obj_as_sorted_list(cols_diff_list)
+    f.print_event(1, f'😓 Not equal columns (count={len(cols_diff_list_sorted)}):', file=str_io)
+    f.pprint_wrap(1, pd_format.obj_as_sorted_list(cols_diff_list_sorted), stream=str_io)
+
+    rows_diff_list = list(equality_df.index[~equality_df.all(axis=1)])
+    rows_diff_list_sorted = pd_format.obj_as_sorted_list(rows_diff_list)
+    f.print_event(1, f'😓 Not equal rows (count={len(rows_diff_list_sorted)}):', file=str_io)
+    f.pprint_wrap(1, pd_format.obj_as_sorted_list(rows_diff_list_sorted), stream=str_io)
+
+    equality_metadata = {
+        **equality_metadata,
+        'equality_df': equality_df,
+        'cols_equal_list_sorted': cols_equal_list_sorted,
+        'rows_equal_list_sorted': rows_equal_list_sorted,
+        'cols_diff_list_sorted': cols_diff_list_sorted,
+        'rows_diff_list_sorted': rows_diff_list_sorted,
+    }
 
     # MARK: JOINED DF
     # Creating joined_df
     # *************************************************************************
+    with pd.option_context('future.no_silent_downcasting', True):
+        only_diff_df = pd.DataFrame().reindex_like(equality_df).fillna(False).astype('bool')
+    only_diff_df[~equality_df] = True
+
+    # See https://stackoverflow.com/a/61105984/1071459
     joined_df = (
-        df1_cp[cols_common_list]
-        #
-        .join(df2_cp[cols_common_list], lsuffix=f'_{df1_name}', rsuffix=f'_{df2_name}')
+        pd.concat(
+            (df1_common, df2_common, only_diff_df), axis=1, keys=(df1_name, df2_name, 'different')
+        )
+        .swaplevel(axis=1)
+        .sort_index(axis=1, level=0, sort_remaining=False)
     )
-    joined_df = df1_cp[[*fixed_cols]].join(joined_df)
 
-    # Create a new column with suffix '_diff' to explicitly show if there's a difference
-    new_diff_columns = [f'{col}_diff' for col in diff_cols_list_sorted]
-    joined_df[new_diff_columns] = ''  # The new diff columns are empty
-
-    # Add the word 'diff' where a difference exists
-    for col in diff_cols_list_sorted:
-        # TODO: This equality must check for nan equality
-        diff_rows_for_col_mask = joined_df[f'{col}_{df1_name}'] != joined_df[f'{col}_{df2_name}']
-        joined_df.loc[diff_rows_for_col_mask, f'{col}_diff'] = 'diff'
-
-    # MARK: DF W/DIFF ROWS/COLS
-    # Create a DataFrame containing the union of different rows and different columns,
-    # including the diff columns.
-    # *************************************************************************
-
-    # TODO: review, might be able to remove `cols_diff = [*diff_columns]`
-
-    cols_diff = [*diff_cols_list_sorted]
-    df1_cols_diff = [f'{c}_{df1_name}' for c in cols_diff]
-    df2_cols_diff = [f'{c}_{df2_name}' for c in cols_diff]
-    show_diff_cols = [f'{c}_diff' for c in cols_diff]
-    cols_diff_from_1_2_show_diff = zip(df1_cols_diff, df2_cols_diff, show_diff_cols)
-    all_diff_cols = [item for tup in cols_diff_from_1_2_show_diff for item in tup]
-    diff_df = joined_df.loc[diff_rows_list_sorted, all_diff_cols]
+    equality_metadata = {
+        **equality_metadata,
+        'joined_df': joined_df,
+    }
 
     # MARK: EXCEL
     # Saving to Excel
     # *************************************************************************
-    if path is not None:
-        _save_compared_df(
-            joined_df,
-            diff_rows=diff_rows_list_sorted,
-            all_diff_cols=all_diff_cols,
-            path=path,
-            fixed_cols=fixed_cols,
+    if xls_path is not None:
+        # Add level to DataFrame, see https://datascientyst.com/add-level-index-pandas-dataframe/
+        df1_fixed_cols_added_level = pd.concat(
+            [df1_common.loc[idxs_common_list_sorted, xls_fixed_cols]],
+            keys=[df1_name],
+            axis=1,
+        )
+        df2_fixed_cols_added_level = pd.concat(
+            [df2_common.loc[idxs_common_list_sorted, xls_fixed_cols]],
+            keys=[df2_name],
+            axis=1,
         )
 
+        fixed_cols_df = (
+            pd.merge(
+                df1_fixed_cols_added_level,
+                df2_fixed_cols_added_level,
+                left_index=True,
+                right_index=True,
+            )
+            .swaplevel(axis=1)[xls_fixed_cols]
+            .rename(mapper=lambda x: f'{x} (fixed_cols)', axis='columns', level=0)
+        )
+
+        # Create a DataFrame with the equal (`xls_compare_str_equal`) or different (`xls_compare_str_diff`) string
+        only_diff_for_excel_df = (
+            pd.DataFrame().reindex_like(equality_df).fillna(xls_compare_str_equal)
+        )
+        only_diff_for_excel_df[~equality_df] = xls_compare_str_diff
+
+        # See https://stackoverflow.com/a/61105984/1071459
+        joined_for_excel_df = (
+            pd.concat(
+                (df1_common, df2_common, only_diff_for_excel_df),
+                axis=1,
+                keys=(df1_name, df2_name, 'different'),
+            )
+            .swaplevel(axis=1)
+            .sort_index(axis=1, level=0, sort_remaining=False)
+        )
+
+        xls_df = pd.merge(fixed_cols_df, joined_for_excel_df, left_index=True, right_index=True)
+        freeze_on_colindex = len(fixed_cols_df.columns)
+        _save_compared_df(
+            xls_df,
+            path=xls_path,
+            freeze_on_colindex=freeze_on_colindex,
+            datetime_rpl_str=xls_datetime_rpl,
+        )
+
+        equality_metadata = {
+            **equality_metadata,
+            'xls_path': xls_path,
+        }
+
     # MARK: RETURN
-    equality_metadata = {
-        **equality_metadata,
-        'joined_df': joined_df,
-        'equal_mask_df': equality_df,
-        'diff_df': diff_df,
-        'diff_columns': diff_cols_list_sorted,
-        'diff_rows': diff_rows_list_sorted,
-    }
     return _returner_for_compare(False, False, equality_metadata, str_io, report)

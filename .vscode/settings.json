@@ -19,6 +19,7 @@
         "autofit",
         "basedf",
         "colindex",
+        "deleteme",
         "docstrings",
         "downcasting",
         "dtype",
@@ -39,6 +40,7 @@
         "substr",
         "swaplevel",
         "thedf",
+        "unexisting",
         "xlsxwriter"
     ]
 }

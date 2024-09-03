@@ -8,7 +8,8 @@
 - IMPORTANT: After (MARK:EQUAL COMMON) all processings must be done using df1_common and df2_common or their equivalent name (these are DataFrames including only common columns and common indexes).
 - For testing, add all parameters for functions calls to avoid problems if default parameters change.
 - Add docstrings.
-- Remove "--disabled=****" from "pylint.args" in settings.json to view possible problems and show no docstring where needed.
+- Remove "--disabled=(...)" from "pylint.args" in settings.json to view possible problems and show no docstring where needed.
+- Review used emojis.
 
 # Evaluate
 - (Evaluate) Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.

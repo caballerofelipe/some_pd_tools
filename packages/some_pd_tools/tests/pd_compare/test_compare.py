@@ -1,4 +1,8 @@
+import math
+import os
+import random
 import re
+from datetime import datetime as dt
 
 import pandas as pd
 import pytest
@@ -8,7 +12,7 @@ from some_pd_tools import pd_compare
 from ..basedf import BaseDF
 from ..formatting import (
     _fn_ret_and_output,
-    # _return_pprint,
+    _return_pprint,
     _return_print_event,
     # _return_print_plain,
     _return_print_result,
@@ -131,7 +135,17 @@ def test_exceptions():
             df2=bdf.df2_extra_col,
             df1_name=bdf.df1_name,
             df2_name=bdf.df2_name,
-            fixed_cols=['col_df2extra']
+            round_to=None,
+            report=True,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path='tmp_deleteme.xls',
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=['col_df2extra'],
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
         )
     with pytest.raises(
         ValueError,
@@ -144,7 +158,243 @@ def test_exceptions():
             df2=bdf.df2,
             df1_name=bdf.df1_name,
             df2_name=bdf.df2_name,
-            fixed_cols=['col_df1extra']
+            round_to=None,
+            report=True,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path='tmp_deleteme.xls',
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=['col_df1extra'],
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+
+
+def test_xls_exceptions():
+    bdf = BaseDF()
+
+    # xls_path is not string
+    # ************************************
+    with pytest.raises(
+        ValueError,
+        match=re.escape('xls_path must be of type str.'),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report=True,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path=12,
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=None,
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+
+    # xls_path is a directory
+    # ************************************
+    while True:
+        dirname = (
+            'tmpdir_'
+            + dt.now().strftime('%Y-%m-%d_%H-%M-%S')
+            + str(math.floor(random.random() * 1_000_000_000_000))
+        )
+        if not os.path.exists(dirname):
+            break
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    else:
+        raise ValueError('Directory exists.')
+    with pytest.raises(
+        ValueError,
+        match=re.escape(f'xls_path [{dirname}] cannot be a directory.'),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report=True,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path=dirname,
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=None,
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+    os.rmdir(dirname)
+
+    # overwriting a file but overwrite is False
+    # ************************************
+    while True:
+        filename = (
+            'tmpfile_'
+            + dt.now().strftime('%Y-%m-%d_%H-%M-%S')
+            + str(math.floor(random.random() * 1_000_000_000_000))
+        )
+        if not os.path.exists(filename):
+            break
+    if not os.path.exists(filename):
+        open(filename, 'a', encoding='utf-8').close()
+    else:
+        raise ValueError('File exists.')
+    with pytest.raises(
+        ValueError,
+        match=re.escape(f'xls_path [{filename}] exists but xls_overwrite is False.'),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report=True,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path=filename,
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=None,
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+    os.remove(filename)
+
+    # xls_compare_str_equal is not string
+    # ************************************
+    with pytest.raises(
+        ValueError,
+        match=re.escape('xls_compare_str_equal must be of type str.'),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report=True,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path='__deleteme__.xlsx',
+            xls_overwrite=False,
+            xls_compare_str_equal=1,
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=None,
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+
+    # xls_compare_str_diff is not string
+    # ************************************
+    with pytest.raises(
+        ValueError,
+        match=re.escape('xls_compare_str_diff must be of type str.'),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report=True,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path='__deleteme__.xlsx',
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff=1,
+            xls_fixed_cols=None,
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+
+    # Unexisting xls_fixed_cols column in df1
+    # ************************************
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            f"The following fixed_cols are not present in df1(df1_name={bdf.df1_name}): ['not_existing_col', 'x_not_existing_col']."
+        ),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report=True,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path='__deleteme__.xlsx',
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=['x_not_existing_col', 'not_existing_col'],
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+
+    # Unexisting xls_fixed_cols column in df2
+    # ************************************
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            f"The following fixed_cols are not present in df2(df2_name={bdf.df2_name}): ['col_df1extra']."
+        ),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1_extra_col,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report=True,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path='__deleteme__.xlsx',
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=['col_df1extra'],
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+
+    # xls_datetime_rpl is not string
+    # ************************************
+    with pytest.raises(
+        ValueError,
+        match=re.escape('xls_datetime_rpl must be of type str.'),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report=True,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path='__deleteme__.xlsx',
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=None,
+            xls_datetime_rpl=1,
         )
 
 
@@ -178,8 +428,10 @@ def test_equality_full() -> None:
             'show_common_cols': False,
             'show_common_idxs': False,
             'show_all_dtypes': False,
-            'path': None,
-            'fixed_cols': [],
+            'xls_path': None,
+            'xls_compare_str_equal': '',
+            'xls_compare_str_diff': '*_diff_*',
+            'xls_fixed_cols': None,
         },
         'report': report_predicted,
     }
@@ -213,8 +465,10 @@ def test_equality_full() -> None:
             'show_common_cols': False,
             'show_common_idxs': False,
             'show_all_dtypes': False,
-            'path': None,
-            'fixed_cols': [],
+            'xls_path': None,
+            'xls_compare_str_equal': '',
+            'xls_compare_str_diff': '*_diff_*',
+            'xls_fixed_cols': None,
         },
         'report': report_predicted,
     }
@@ -247,8 +501,10 @@ def test_equality_full() -> None:
             'show_common_cols': False,
             'show_common_idxs': False,
             'show_all_dtypes': False,
-            'path': None,
-            'fixed_cols': [],
+            'xls_path': None,
+            'xls_compare_str_equal': '',
+            'xls_compare_str_diff': '*_diff_*',
+            'xls_fixed_cols': None,
         },
         'report': report_predicted,
     }
@@ -1264,3 +1520,111 @@ def test_round_to_report():
     predicted_io = _return_print_title(1, 'Rounding [round_to=floor]')
     assert '' == io_out
     assert predicted_io in returned[2]['report']
+
+
+def test_compare_values_report():
+    bdf = BaseDF()
+
+    predicted_io = _return_print_title(
+        1,
+        'Comparing values',
+        'from this point on, the DataFrames must have at least one different cell',
+    )
+    predicted_io += _return_print_event(1, '😓 Not equal columns (count=4):')
+    predicted_io += _return_pprint(1, ['col_float', 'col_int', 'col_str', 'col_strnan'])
+    predicted_io += _return_print_event(1, '😓 Not equal rows (count=3):')
+    predicted_io += _return_pprint(1, [0, 1, 2])
+
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare,
+        df1=bdf.df1,
+        df2=bdf.df2_diff_values,
+        df1_name=bdf.df1_name,
+        df2_name=bdf.df2_name,
+        round_to=None,
+        report=True,
+        show_common_cols=False,
+        show_common_idxs=False,
+        show_all_dtypes=False,
+        xls_path=None,
+        xls_overwrite=False,
+        xls_compare_str_equal='',
+        xls_compare_str_diff='*_diff_*',
+        xls_fixed_cols=None,
+        xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+    )
+    assert predicted_io in io_out
+    assert predicted_io in returned[2]['report']
+
+
+def test_after_compare_values_metadata():
+    bdf = BaseDF()
+    expected_eqlty_df = pd.DataFrame(
+        {
+            'col_float': [False, False, False, True],
+            'col_int': [False, False, False, True],
+            'col_nan': [True, True, True, True],
+            'col_str': [False, False, False, True],
+            'col_strnan': [False, False, False, True],
+        }
+    )
+    returned, io_out = _fn_ret_and_output(
+        pd_compare.compare,
+        df1=bdf.df1,
+        df2=bdf.df2_diff_values,
+        df1_name=bdf.df1_name,
+        df2_name=bdf.df2_name,
+        round_to=None,
+        report=True,
+        show_common_cols=False,
+        show_common_idxs=False,
+        show_all_dtypes=False,
+        xls_path=None,
+        xls_overwrite=False,
+        xls_compare_str_equal='',
+        xls_compare_str_diff='*_diff_*',
+        xls_fixed_cols=None,
+        xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+    )
+    metadata = returned[2]
+    # Equality check
+    assert str(expected_eqlty_df) == str(metadata['equality_df'])
+    assert expected_eqlty_df.equals(metadata['equality_df'])
+
+    # Equal columns/rows check
+    assert ['col_nan'] == metadata['cols_equal_list_sorted']
+    assert [3] == metadata['rows_equal_list_sorted']
+
+    # Different columns/rows check
+    assert ['col_float', 'col_int', 'col_str', 'col_strnan'] == metadata['cols_diff_list_sorted']
+    assert [0, 1, 2] == metadata['rows_diff_list_sorted']
+
+    # Expected joined_df
+    _df1 = bdf.df1
+    _df2 = bdf.df2_diff_values
+    tuples = list(
+        zip(
+            [
+                *(['col_float'] * 3),
+                *(['col_int'] * 3),
+                *(['col_nan'] * 3),
+                *(['col_str'] * 3),
+                *(['col_strnan'] * 3),
+            ],
+            ['first_df', 'second_df', 'different'] * 5,
+        )
+    )
+    multi_index = pd.MultiIndex.from_tuples(tuples)
+
+    data = []
+    for i in range(4):
+        data_row = []
+        for col_name in ['col_float', 'col_int', 'col_nan', 'col_str', 'col_strnan']:
+            data_row.append(_df1.loc[i, col_name])
+            data_row.append(_df2.loc[i, col_name])
+            data_row.append(~expected_eqlty_df.loc[i, col_name])  # Toggle bools with '~' (tilde)
+        data.append(data_row)
+    expected_joined_df = pd.DataFrame(data, columns=multi_index)
+
+    assert str(expected_joined_df) == str(metadata['joined_df'])
+    assert expected_joined_df.equals(metadata['joined_df'])
