@@ -192,7 +192,7 @@ def compare(
         - The first element will return True if everything is equal in both DataFrame, this uses df1.equals(df2) but using the sorted columns and indexes.
         - The second element will return True if after some modification in both DataFrames everything is equal. This check happens after several points in the comparison process.
         - The third element will return metadata. This metadata depends on where in the function it was returned. The metadata is returned if both DataFrames are equal, after some transformation. Or it is returned at the end of the function. The metadata values should be obtained with `.get()` since metadata is a dict and the key might not exist at a given point when returned.
-    - df1 and df2 are transformed into DataFrames before any comparing
+    - This function should be ran when df1.equals(df2) is False. It initially sorts the columns and rows of both DataFrames to do all comparisons.
     - The order of columns and indexes are not taken into account. Columns and indexes are sorted using
         `.sort_index(axis=0).sort_index(axis=1)`
     - Duplicate indexes and columns are not allowed, UNLESS `if df1_cp.equals(df2_cp)` is True, which means everything is equal.
@@ -450,7 +450,7 @@ def compare(
             report_file_path=report_file_path,
         )
 
-    # MARK: EQLTY 4COMMON
+    # MARK: EQLTY 4 COMMON
     # Only taking into consideration common columns and indexes
     # Check if both DataFrames are fully equal using Pandas function
     # *************************************************************************
