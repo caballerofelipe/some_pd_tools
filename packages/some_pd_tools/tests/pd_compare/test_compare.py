@@ -21,7 +21,7 @@ from ..formatting import (
 )
 
 
-def test_exceptions():
+def test_df_exceptions():
     bdf = BaseDF()
 
     # df1 or df2 are not of type pd.DataFrame
@@ -79,6 +79,118 @@ def test_exceptions():
             df2_name=bdf.df1_name,  # .
         )
 
+
+def test_report_file_exceptions():
+    bdf = BaseDF()
+
+    # report_file_path is not string
+    # ************************************
+    with pytest.raises(
+        ValueError,
+        match=re.escape('report_file_path must be of type None or str'),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report_print=True,
+            report_file_path=12,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path=None,
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=None,
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+
+    # report_file_path is a directory
+    # ************************************
+    while True:
+        dirname = (
+            'tmpdir_'
+            + dt.now().strftime('%Y-%m-%d_%H-%M-%S')
+            + str(math.floor(random.random() * 1_000_000_000_000))
+        )
+        if not os.path.exists(dirname):
+            break
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    else:
+        raise ValueError('Directory exists.')
+    with pytest.raises(
+        ValueError,
+        match=re.escape(f'report_file_path [{dirname}] cannot be a directory.'),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report_print=True,
+            report_file_path=dirname,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path=None,
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=None,
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+    os.rmdir(dirname)
+
+    # report_file_path exists but overwrite is False
+    # ************************************
+    while True:
+        filename = (
+            'tmpfile_'
+            + dt.now().strftime('%Y-%m-%d_%H-%M-%S')
+            + str(math.floor(random.random() * 1_000_000_000_000))
+        )
+        if not os.path.exists(filename):
+            break
+    if not os.path.exists(filename):
+        open(filename, 'a', encoding='utf-8').close()
+    else:
+        raise ValueError('File exists.')
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            f'report_file_path [{filename}] exists but report_file_overwrite is False.'
+        ),
+    ):
+        pd_compare.compare(
+            df1=bdf.df1,
+            df2=bdf.df2,
+            df1_name=bdf.df1_name,
+            df2_name=bdf.df2_name,
+            round_to=None,
+            report_print=True,
+            report_file_path=filename,
+            report_file_overwrite=False,
+            show_common_cols=False,
+            show_common_idxs=False,
+            show_all_dtypes=False,
+            xls_path=None,
+            xls_overwrite=False,
+            xls_compare_str_equal='',
+            xls_compare_str_diff='*_diff_*',
+            xls_fixed_cols=None,
+            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+        )
+    os.remove(filename)
+
+
+def test_round_to_exceptions():
+    bdf = BaseDF()
+
     # round_to wrong values
     # ************************************
     with pytest.raises(
@@ -122,55 +234,6 @@ def test_exceptions():
             df1=bdf.df1, df2=bdf.df2, df1_name=bdf.df1_name, df2_name=bdf.df2_name, round_to=1.2
         )
 
-    # fixed_cols must be part of both DataFrames
-    # ************************************
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            f"The following fixed_cols are not present in df1(df1_name={bdf.df1_name}): ['col_df2extra']."
-        ),
-    ):
-        pd_compare.compare(
-            df1=bdf.df1,
-            df2=bdf.df2_extra_col,
-            df1_name=bdf.df1_name,
-            df2_name=bdf.df2_name,
-            round_to=None,
-            report=True,
-            show_common_cols=False,
-            show_common_idxs=False,
-            show_all_dtypes=False,
-            xls_path='tmp_deleteme.xls',
-            xls_overwrite=False,
-            xls_compare_str_equal='',
-            xls_compare_str_diff='*_diff_*',
-            xls_fixed_cols=['col_df2extra'],
-            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
-        )
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            f"The following fixed_cols are not present in df2(df2_name={bdf.df2_name}): ['col_df1extra']."
-        ),
-    ):
-        pd_compare.compare(
-            df1=bdf.df1_extra_col,
-            df2=bdf.df2,
-            df1_name=bdf.df1_name,
-            df2_name=bdf.df2_name,
-            round_to=None,
-            report=True,
-            show_common_cols=False,
-            show_common_idxs=False,
-            show_all_dtypes=False,
-            xls_path='tmp_deleteme.xls',
-            xls_overwrite=False,
-            xls_compare_str_equal='',
-            xls_compare_str_diff='*_diff_*',
-            xls_fixed_cols=['col_df1extra'],
-            xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
-        )
-
 
 def test_xls_exceptions():
     bdf = BaseDF()
@@ -187,7 +250,7 @@ def test_xls_exceptions():
             df1_name=bdf.df1_name,
             df2_name=bdf.df2_name,
             round_to=None,
-            report=True,
+            report_print=True,
             show_common_cols=False,
             show_common_idxs=False,
             show_all_dtypes=False,
@@ -223,7 +286,7 @@ def test_xls_exceptions():
             df1_name=bdf.df1_name,
             df2_name=bdf.df2_name,
             round_to=None,
-            report=True,
+            report_print=True,
             show_common_cols=False,
             show_common_idxs=False,
             show_all_dtypes=False,
@@ -260,7 +323,7 @@ def test_xls_exceptions():
             df1_name=bdf.df1_name,
             df2_name=bdf.df2_name,
             round_to=None,
-            report=True,
+            report_print=True,
             show_common_cols=False,
             show_common_idxs=False,
             show_all_dtypes=False,
@@ -285,7 +348,7 @@ def test_xls_exceptions():
             df1_name=bdf.df1_name,
             df2_name=bdf.df2_name,
             round_to=None,
-            report=True,
+            report_print=True,
             show_common_cols=False,
             show_common_idxs=False,
             show_all_dtypes=False,
@@ -309,7 +372,7 @@ def test_xls_exceptions():
             df1_name=bdf.df1_name,
             df2_name=bdf.df2_name,
             round_to=None,
-            report=True,
+            report_print=True,
             show_common_cols=False,
             show_common_idxs=False,
             show_all_dtypes=False,
@@ -335,7 +398,7 @@ def test_xls_exceptions():
             df1_name=bdf.df1_name,
             df2_name=bdf.df2_name,
             round_to=None,
-            report=True,
+            report_print=True,
             show_common_cols=False,
             show_common_idxs=False,
             show_all_dtypes=False,
@@ -361,7 +424,7 @@ def test_xls_exceptions():
             df1_name=bdf.df1_name,
             df2_name=bdf.df2_name,
             round_to=None,
-            report=True,
+            report_print=True,
             show_common_cols=False,
             show_common_idxs=False,
             show_all_dtypes=False,
@@ -385,7 +448,7 @@ def test_xls_exceptions():
             df1_name=bdf.df1_name,
             df2_name=bdf.df2_name,
             round_to=None,
-            report=True,
+            report_print=True,
             show_common_cols=False,
             show_common_idxs=False,
             show_all_dtypes=False,
@@ -424,14 +487,18 @@ def test_equality_full() -> None:
             'df1_name': bdf.df1_name,
             'df2_name': bdf.df2_name,
             'round_to': None,
-            'report': True,
+            'report_print': True,
+            'report_file_path': None,
+            'report_file_overwrite': False,
             'show_common_cols': False,
             'show_common_idxs': False,
             'show_all_dtypes': False,
             'xls_path': None,
+            'xls_overwrite': False,
             'xls_compare_str_equal': '',
             'xls_compare_str_diff': '*_diff_*',
             'xls_fixed_cols': None,
+            'xls_datetime_rpl': '%Y-%m-%d %H:%M:%S',
         },
         'report': report_predicted,
     }
@@ -461,14 +528,18 @@ def test_equality_full() -> None:
             'df1_name': bdf.df1_name,
             'df2_name': bdf.df2_name,
             'round_to': None,
-            'report': True,
+            'report_print': True,
+            'report_file_path': None,
+            'report_file_overwrite': False,
             'show_common_cols': False,
             'show_common_idxs': False,
             'show_all_dtypes': False,
             'xls_path': None,
+            'xls_overwrite': False,
             'xls_compare_str_equal': '',
             'xls_compare_str_diff': '*_diff_*',
             'xls_fixed_cols': None,
+            'xls_datetime_rpl': '%Y-%m-%d %H:%M:%S',
         },
         'report': report_predicted,
     }
@@ -497,14 +568,18 @@ def test_equality_full() -> None:
             'df1_name': bdf.df1_name,
             'df2_name': bdf.df2_name,
             'round_to': None,
-            'report': True,
+            'report_print': True,
+            'report_file_path': None,
+            'report_file_overwrite': False,
             'show_common_cols': False,
             'show_common_idxs': False,
             'show_all_dtypes': False,
             'xls_path': None,
+            'xls_overwrite': False,
             'xls_compare_str_equal': '',
             'xls_compare_str_diff': '*_diff_*',
             'xls_fixed_cols': None,
+            'xls_datetime_rpl': '%Y-%m-%d %H:%M:%S',
         },
         'report': report_predicted,
     }
@@ -737,7 +812,7 @@ def test_cols_review() -> None:
         df1=bdf.df1_extra_col,
         df2=bdf.df2_extra_col,
         show_common_cols=True,
-        report=True,
+        report_print=True,
     )
     io_predicted_printed_substr = compare_lists_ret_show_common[1]['report']
     equality_metadata = returned[2]
@@ -759,7 +834,7 @@ def test_cols_review() -> None:
         df1=bdf.df1_extra_col,
         df2=bdf.df2_extra_col,
         show_common_cols=False,
-        report=True,
+        report_print=True,
     )
     equality_metadata = returned[2]
     assert returned[0] is False
@@ -809,7 +884,7 @@ def test_idxs_review() -> None:
         df1=bdf.df1,
         df2=bdf.df2_index_plus1,
         show_common_idxs=True,
-        report=True,
+        report_print=True,
     )
     io_predicted_printed_substr = compare_lists_ret_show_common[1]['report']
     equality_metadata = returned[2]
@@ -831,7 +906,7 @@ def test_idxs_review() -> None:
         df1=bdf.df1,
         df2=bdf.df2_index_plus1,
         show_common_idxs=False,
-        report=True,
+        report_print=True,
     )
     equality_metadata = returned[2]
     assert returned[0] is False
@@ -862,7 +937,7 @@ def test_cols_idxs_report_and_compare() -> None:
         df1=bdf.df1,
         df2=bdf.df2_as_object,
         show_common_idxs=False,
-        report=True,
+        report_print=True,
     )
     assert report_portion_predicted in io_out
 
@@ -885,7 +960,7 @@ def test_cols_idxs_report_and_compare() -> None:
         df1=bdf.df1_extra_col,
         df2=bdf.df2_extra_col,
         show_common_idxs=False,
-        report=True,
+        report_print=True,
     )
     assert report_portion_predicted in io_out
     assert returned[0] is False
@@ -910,7 +985,7 @@ def test_cols_idxs_report_and_compare() -> None:
         df1=bdf.df1,
         df2=bdf.df2_extra_col_diff_values,
         show_common_idxs=False,
-        report=True,
+        report_print=True,
     )
     assert report_portion_predicted in io_out
     assert returned[0] is False
@@ -936,7 +1011,7 @@ def test_dtypes_equal_review() -> None:
         df1=bdf.df1_extra_col,
         df2=bdf.df2_extra_col_diff_values,
         show_all_dtypes=True,
-        report=True,
+        report_print=True,
     )
     compare_dtypes_ret = pd_compare.compare_dtypes(
         bdf.df1,
@@ -959,7 +1034,7 @@ def test_dtypes_equal_review() -> None:
         df1=bdf.df1_extra_col,
         df2=bdf.df2_extra_col_diff_values,
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     compare_dtypes_ret = pd_compare.compare_dtypes(
         bdf.df1,
@@ -982,7 +1057,7 @@ def test_dtypes_equal_review() -> None:
         df1=bdf.df1_extra_col,
         df2=bdf.df2_extra_col_diff_values,
         show_all_dtypes=True,
-        report=False,
+        report_print=False,
     )
     compare_dtypes_ret = pd_compare.compare_dtypes(
         bdf.df1,
@@ -1005,7 +1080,7 @@ def test_dtypes_equal_review() -> None:
         df1=bdf.df1_extra_col,
         df2=bdf.df2_extra_col_diff_values,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     compare_dtypes_ret = pd_compare.compare_dtypes(
         bdf.df1,
@@ -1040,7 +1115,7 @@ def test_dtypes_diff_review() -> None:
         df1=bdf.df1,
         df2=bdf.df2_as_object,
         show_all_dtypes=True,
-        report=True,
+        report_print=True,
     )
     compare_dtypes_ret = pd_compare.compare_dtypes(
         bdf.df1,
@@ -1062,7 +1137,7 @@ def test_dtypes_diff_review() -> None:
         df1=bdf.df1,
         df2=bdf.df2_as_object,
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     compare_dtypes_ret = pd_compare.compare_dtypes(
         bdf.df1,
@@ -1084,7 +1159,7 @@ def test_dtypes_diff_review() -> None:
         df1=bdf.df1,
         df2=bdf.df2_as_object,
         show_all_dtypes=True,
-        report=False,
+        report_print=False,
     )
     compare_dtypes_ret = pd_compare.compare_dtypes(
         bdf.df1,
@@ -1106,7 +1181,7 @@ def test_dtypes_diff_review() -> None:
         df1=bdf.df1,
         df2=bdf.df2_as_object,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     compare_dtypes_ret = pd_compare.compare_dtypes(
         bdf.df1,
@@ -1134,7 +1209,7 @@ def test_dtypes_simplification():
         df1=bdf.df1,
         df2=bdf.df2_diff_values,
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     assert wrong_predicted_io not in io_out
     assert wrong_predicted_io not in returned[2]['report']
@@ -1148,7 +1223,7 @@ def test_dtypes_simplification():
         df1=bdf.df1,
         df2=bdf.df2_diff_values,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     assert '' == io_out
     assert wrong_predicted_io not in returned[2]['report']
@@ -1167,7 +1242,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
 
     predicted_io += dtypes_metadata['report']
@@ -1180,7 +1255,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     assert returned[0] is False
     assert returned[1] is True
@@ -1201,7 +1276,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=True,
-        report=False,
+        report_print=False,
     )
 
     predicted_io += dtypes_metadata['report']
@@ -1214,7 +1289,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=True,
-        report=True,
+        report_print=True,
     )
     assert returned[0] is False
     assert returned[1] is True
@@ -1235,7 +1310,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
 
     predicted_io += dtypes_metadata['report']
@@ -1248,7 +1323,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     assert returned[0] is False
     assert returned[1] is True
@@ -1269,7 +1344,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=True,
-        report=False,
+        report_print=False,
     )
 
     predicted_io += dtypes_metadata['report']
@@ -1282,7 +1357,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=True,
-        report=False,
+        report_print=False,
     )
     assert returned[0] is False
     assert returned[1] is True
@@ -1303,7 +1378,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
 
     predicted_io += dtypes_metadata['report']
@@ -1316,7 +1391,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     assert returned[0] is False
     assert predicted_io in io_out
@@ -1336,7 +1411,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
 
     predicted_io += dtypes_metadata['report']
@@ -1349,7 +1424,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     assert returned[0] is False
     assert predicted_io in io_out
@@ -1369,7 +1444,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
 
     predicted_io += dtypes_metadata['report']
@@ -1382,7 +1457,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     assert returned[0] is False
     assert '' == io_out
@@ -1402,7 +1477,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
 
     predicted_io += dtypes_metadata['report']
@@ -1415,7 +1490,7 @@ def test_dtypes_simplification():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     assert returned[0] is False
     assert '' == io_out
@@ -1435,7 +1510,7 @@ def test_round_to_report():
         df2_name=bdf.df2_name,
         round_to=0,
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     predicted_io = _return_print_title(1, 'Rounding [round_to=0]')
     assert predicted_io in io_out
@@ -1451,7 +1526,7 @@ def test_round_to_report():
         df2_name=bdf.df2_name,
         round_to='ceil',
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     predicted_io = _return_print_title(1, 'Rounding [round_to=ceil]')
     assert predicted_io in io_out
@@ -1467,7 +1542,7 @@ def test_round_to_report():
         df2_name=bdf.df2_name,
         round_to='floor',
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     predicted_io = _return_print_title(1, 'Rounding [round_to=floor]')
     assert predicted_io in io_out
@@ -1483,7 +1558,7 @@ def test_round_to_report():
         df2_name=bdf.df2_name,
         round_to=0,
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     predicted_io = _return_print_title(1, 'Rounding [round_to=0]')
     assert '' == io_out
@@ -1499,7 +1574,7 @@ def test_round_to_report():
         df2_name=bdf.df2_name,
         round_to='ceil',
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     predicted_io = _return_print_title(1, 'Rounding [round_to=ceil]')
     assert '' == io_out
@@ -1515,7 +1590,7 @@ def test_round_to_report():
         df2_name=bdf.df2_name,
         round_to='floor',
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     predicted_io = _return_print_title(1, 'Rounding [round_to=floor]')
     assert '' == io_out
@@ -1542,7 +1617,7 @@ def test_compare_values_report():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         round_to=None,
-        report=True,
+        report_print=True,
         show_common_cols=False,
         show_common_idxs=False,
         show_all_dtypes=False,
@@ -1575,7 +1650,7 @@ def test_after_compare_values_metadata():
         df1_name=bdf.df1_name,
         df2_name=bdf.df2_name,
         round_to=None,
-        report=True,
+        report_print=True,
         show_common_cols=False,
         show_common_idxs=False,
         show_all_dtypes=False,

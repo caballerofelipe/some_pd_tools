@@ -72,7 +72,7 @@ def test_equal_lists_no_dups():
         show_common_items=True,
         type_name='someitem',
         type_name_plural='someitems',
-        report=True,
+        report_print=True,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -104,7 +104,7 @@ def test_equal_lists_no_dups():
         show_common_items=True,
         type_name='someitem',
         type_name_plural='someitems',
-        report=False,
+        report_print=False,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -138,7 +138,7 @@ def test_equal_lists_w_dups():
         show_common_items=False,
         type_name='someitem',
         type_name_plural='someitems',
-        report=True,
+        report_print=True,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -169,7 +169,7 @@ def test_equal_lists_w_dups():
         show_common_items=False,
         type_name='someitem',
         type_name_plural='someitems',
-        report=False,
+        report_print=False,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -203,7 +203,7 @@ def test_diff_lists_no_dups():
         show_common_items=False,
         type_name='someitem',
         type_name_plural='someitems',
-        report=True,
+        report_print=True,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -244,7 +244,7 @@ def test_diff_lists_no_dups():
         show_common_items=True,
         type_name='someitem',
         type_name_plural='someitems',
-        report=True,
+        report_print=True,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -286,7 +286,7 @@ def test_diff_lists_no_dups():
         show_common_items=False,
         type_name='someitem',
         type_name_plural='someitems',
-        report=False,
+        report_print=False,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -327,7 +327,7 @@ def test_diff_lists_no_dups():
         show_common_items=True,
         type_name='someitem',
         type_name_plural='someitems',
-        report=False,
+        report_print=False,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -372,7 +372,7 @@ def test_diff_lists_w_dups():
         show_common_items=False,
         type_name='someitem',
         type_name_plural='someitems',
-        report=True,
+        report_print=True,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -423,7 +423,7 @@ def test_diff_lists_w_dups():
         show_common_items=False,
         type_name='someitem',
         type_name_plural='someitems',
-        report=True,
+        report_print=True,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -472,7 +472,7 @@ def test_diff_lists_w_dups():
         show_common_items=True,
         type_name='someitem',
         type_name_plural='someitems',
-        report=True,
+        report_print=True,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -524,7 +524,7 @@ def test_diff_lists_w_dups():
         show_common_items=True,
         type_name='someitem',
         type_name_plural='someitems',
-        report=True,
+        report_print=True,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -573,7 +573,7 @@ def test_diff_lists_w_dups():
         show_common_items=False,
         type_name='someitem',
         type_name_plural='someitems',
-        report=False,
+        report_print=False,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -624,7 +624,7 @@ def test_diff_lists_w_dups():
         show_common_items=False,
         type_name='someitem',
         type_name_plural='someitems',
-        report=False,
+        report_print=False,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -673,7 +673,7 @@ def test_diff_lists_w_dups():
         show_common_items=True,
         type_name='someitem',
         type_name_plural='someitems',
-        report=False,
+        report_print=False,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']
@@ -725,7 +725,7 @@ def test_diff_lists_w_dups():
         show_common_items=True,
         type_name='someitem',
         type_name_plural='someitems',
-        report=False,
+        report_print=False,
     )
     lists_comp, lists_metadata = returned
     list_common_set = lists_metadata['list_common_set']

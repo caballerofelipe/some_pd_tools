@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 
-def _save_compared_df(
+def _save_excel(
     df: pd.DataFrame,
     path: str,
     freeze_on_colindex: list,
@@ -110,7 +110,7 @@ def _dtypes_simp_and_eqlty_check(
         df1_name=df1_name,
         df2_name=df2_name,
         show_all_dtypes=show_all_dtypes,
-        report=False,  # No report if no dtypes changes were done
+        report_print=False,  # No report if no dtypes changes were done
     )
 
     if changed_dtypes is True:
@@ -152,11 +152,17 @@ def _returner_for_compare(
     equality_partial: bool,
     equality_metadata: dict,
     str_io: io.StringIO,
-    report: bool,
+    report_print: bool,
+    report_file_path,
 ) -> tuple[bool, bool, dict]:
     equality_metadata = {**equality_metadata, 'report': str_io.getvalue()}
-    if report is True:
+    if report_print is True:
         print(str_io.getvalue(), end='')
+    # No verification of report_file_path and report_file_overwrite params
+    # this was done in `compare()` as this function is not meant to be called by itself
+    if report_file_path is not None:
+        with open(report_file_path, 'w', encoding='utf-8') as report_file:
+            report_file.write(str_io.getvalue())
     return [equality_full, equality_partial, equality_metadata]
 
 
@@ -166,15 +172,17 @@ def compare(
     df1_name: str = 'df1',
     df2_name: str = 'df2',
     round_to: None | int | str = None,
-    report: bool = True,
+    report_print: bool = True,
+    report_file_path: None | str = None,
+    report_file_overwrite: bool = False,
     show_common_cols: bool = False,
     show_common_idxs: bool = False,
     show_all_dtypes: bool = False,
-    xls_path: str = None,
+    xls_path: None | str = None,
     xls_overwrite: bool = False,
     xls_compare_str_equal: str = '',
     xls_compare_str_diff: str = '*_diff_*',
-    xls_fixed_cols: list = None,
+    xls_fixed_cols: None | list = None,
     xls_datetime_rpl: str = '%Y-%m-%d %H:%M:%S',
 ):
     '''
@@ -212,23 +220,29 @@ def compare(
             'df1_name': df1_name,
             'df2_name': df2_name,
             'round_to': round_to,
-            'report': report,
+            'report_print': report_print,
+            'report_file_path': report_file_path,
+            'report_file_overwrite': report_file_overwrite,
             'show_common_cols': show_common_cols,
             'show_common_idxs': show_common_idxs,
             'show_all_dtypes': show_all_dtypes,
             'xls_path': xls_path,
+            'xls_overwrite': xls_overwrite,
             'xls_compare_str_equal': xls_compare_str_equal,
             'xls_compare_str_diff': xls_compare_str_diff,
             'xls_fixed_cols': xls_fixed_cols,
+            'xls_datetime_rpl': xls_datetime_rpl,
         }
     }
 
     if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
         raise ValueError('df1 and df2 must be of type pd.DataFrame.')
+
     if not isinstance(df1_name, str) or not isinstance(df2_name, str):
         raise ValueError('df1_name and df2_name must be of type str.')
     if df1_name == df2_name:
         raise ValueError('df1_name and df2_name must be different.')
+
     if round_to is not None and (
         isinstance(round_to, bool)
         or (isinstance(round_to, int) and round_to < 0)
@@ -238,6 +252,20 @@ def compare(
         raise ValueError(
             "round_to must be None, a positive integer or a string (either 'floor' or 'ceil')."
         )
+
+    if not isinstance(report_print, bool):
+        raise ValueError('report_print must be of type bool.')
+
+    if report_file_path is not None:
+        if not isinstance(report_file_path, str):
+            raise ValueError('report_file_path must be of type None or str')
+        the_Path = pathlib.Path(report_file_path)
+        if the_Path.is_dir():
+            raise ValueError(f'report_file_path [{report_file_path}] cannot be a directory.')
+        if report_file_overwrite is False and the_Path.is_file():
+            raise ValueError(
+                f'report_file_path [{report_file_path}] exists but report_file_overwrite is False.'
+            )
 
     if xls_path is not None:
         if not isinstance(xls_path, str):
@@ -258,14 +286,14 @@ def compare(
         if xls_fixed_cols is None:
             xls_fixed_cols = []
 
-        if not (set(xls_fixed_cols) <= set(df1.columns)):
+        if not set(xls_fixed_cols) <= set(df1.columns):
             fixed_cols_not_present_sorted_list = pd_format.obj_as_sorted_list(
                 set(xls_fixed_cols) - set(df1.columns)
             )
             raise ValueError(
                 f'The following fixed_cols are not present in df1(df1_name={df1_name}): {fixed_cols_not_present_sorted_list}.'
             )
-        if not (set(xls_fixed_cols) <= set(df2.columns)):
+        if not set(xls_fixed_cols) <= set(df2.columns):
             fixed_cols_not_present_sorted_list = pd_format.obj_as_sorted_list(
                 set(xls_fixed_cols) - set(df2.columns)
             )
@@ -291,13 +319,19 @@ def compare(
     f.print_title(1, 'Equality check', 'full', file=str_io)
     if df1_cp.equals(df2_cp):  # Are the dfs equal?
         f.print_result('🥳 Equal', file=str_io)
-        return _returner_for_compare(True, True, equality_metadata, str_io, report)
+        return _returner_for_compare(
+            equality_full=True,
+            equality_partial=True,
+            equality_metadata=equality_metadata,
+            str_io=str_io,
+            report_print=report_print,
+            report_file_path=report_file_path,
+        )
     else:
         f.print_result('😡 Not equal', file=str_io)
 
     # MARK: COMPARE COLUMNS
-    # Compare columns, show report if `report==True`
-    # and get common columns, extra columns for each DF
+    # Compare columns and get common columns, extra columns for each DF
     # *************************************************************************
     cols_compare_equality, cols_compare_metadata = compare_lists(
         list_1=list(df1_cp.columns),
@@ -307,7 +341,7 @@ def compare(
         list_2_name=df2_name,
         type_name='column',
         type_name_plural='columns',
-        report=False,
+        report_print=False,
     )
 
     print(cols_compare_metadata['report'], end='', file=str_io)
@@ -347,11 +381,17 @@ def compare(
         f.print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
-        return _returner_for_compare(False, False, equality_metadata, str_io, report)
+        return _returner_for_compare(
+            equality_full=False,
+            equality_partial=False,
+            equality_metadata=equality_metadata,
+            str_io=str_io,
+            report_print=report_print,
+            report_file_path=report_file_path,
+        )
 
     # MARK: COMPARE INDEXES
-    # Compare indexes, show report if `report==True`
-    # and get common indexes, extra indexes for each DF
+    # Compare indexes and get common indexes, extra indexes for each DF
     # *************************************************************************
     idxs_compare_equality, idxs_compare_metadata = compare_lists(
         list_1=list(df1_cp.index),
@@ -361,7 +401,7 @@ def compare(
         list_2_name=df2_name,
         type_name='index',
         type_name_plural='indexes',
-        report=False,
+        report_print=False,
     )
 
     print(idxs_compare_metadata['report'], end='', file=str_io)
@@ -401,7 +441,14 @@ def compare(
         f.print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
         equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
-        return _returner_for_compare(False, False, equality_metadata, str_io, report)
+        return _returner_for_compare(
+            equality_full=False,
+            equality_partial=False,
+            equality_metadata=equality_metadata,
+            str_io=str_io,
+            report_print=report_print,
+            report_file_path=report_file_path,
+        )
 
     # MARK: EQLTY 4COMMON
     # Only taking into consideration common columns and indexes
@@ -439,7 +486,14 @@ def compare(
         f.print_title(1, 'Equality check', 'for common columns and indexes', file=str_io)
         if df1_common.equals(df2_common):  # Are the dfs equal?
             f.print_result('🥳 Equal', file=str_io)
-            return _returner_for_compare(False, True, equality_metadata, str_io, report)
+            return _returner_for_compare(
+                equality_full=False,
+                equality_partial=True,
+                equality_metadata=equality_metadata,
+                str_io=str_io,
+                report_print=report_print,
+                report_file_path=report_file_path,
+            )
         else:
             f.print_result('😡 Not equal', file=str_io)
 
@@ -452,7 +506,7 @@ def compare(
         df1_name=df1_name,
         df2_name=df2_name,
         show_all_dtypes=show_all_dtypes,
-        report=False,
+        report_print=False,
     )
     print(common_cols_dtypes_metadata['report'], end='', file=str_io)
     equality_metadata = {
@@ -488,7 +542,14 @@ def compare(
         }
 
         if after_simp_equality is True:
-            return _returner_for_compare(False, True, equality_metadata, str_io, report)
+            return _returner_for_compare(
+                equality_full=False,
+                equality_partial=True,
+                equality_metadata=equality_metadata,
+                str_io=str_io,
+                report_print=report_print,
+                report_file_path=report_file_path,
+            )
     else:
         f.print_title(
             1,
@@ -533,7 +594,14 @@ def compare(
         }
 
         if after_round_and_simp_equality is True:
-            return _returner_for_compare(False, True, equality_metadata, str_io, report)
+            return _returner_for_compare(
+                equality_full=False,
+                equality_partial=True,
+                equality_metadata=equality_metadata,
+                str_io=str_io,
+                report_print=report_print,
+                report_file_path=report_file_path,
+            )
 
     # MARK: COMPARE VALUES
     # Comparing values
@@ -642,7 +710,7 @@ def compare(
 
         xls_df = pd.merge(fixed_cols_df, joined_for_excel_df, left_index=True, right_index=True)
         freeze_on_colindex = len(fixed_cols_df.columns)
-        _save_compared_df(
+        _save_excel(
             xls_df,
             path=xls_path,
             freeze_on_colindex=freeze_on_colindex,
@@ -655,4 +723,11 @@ def compare(
         }
 
     # MARK: RETURN
-    return _returner_for_compare(False, False, equality_metadata, str_io, report)
+    return _returner_for_compare(
+        equality_full=False,
+        equality_partial=False,
+        equality_metadata=equality_metadata,
+        str_io=str_io,
+        report_print=report_print,
+        report_file_path=report_file_path,
+    )

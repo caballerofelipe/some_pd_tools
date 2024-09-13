@@ -1,15 +1,14 @@
 # TODO
-- Add parameter to save report to file.
-- `compare()` should return three equalities and a metadata dict.
+- [ ] IMPORTANT: After (MARK:EQUAL COMMON) all processings must be done using df1_common and df2_common or their equivalent name (these are DataFrames including only common columns and common indexes).
+- [ ] For testing, add all parameters for functions calls to avoid problems if default parameters change.
+- [ ] Add docstrings.
+- [ ] Remove "--disabled=(...)" from "pylint.args" in settings.json to view possible problems and show no docstring where needed.
+- [ ] Review used emojis.
+- [ ] `compare()` should return three equalities and a metadata dict.
     - equalities:
         - fully_equal True if df1.equals(df2)
         - equal_w_special_settings True if after applying special settings df1.equals(df2)
         - common_cols_idx_equal True if all is equal in common columns and indexes
-- IMPORTANT: After (MARK:EQUAL COMMON) all processings must be done using df1_common and df2_common or their equivalent name (these are DataFrames including only common columns and common indexes).
-- For testing, add all parameters for functions calls to avoid problems if default parameters change.
-- Add docstrings.
-- Remove "--disabled=(...)" from "pylint.args" in settings.json to view possible problems and show no docstring where needed.
-- Review used emojis.
 
 # Evaluate
 - (Evaluate) Think if maybe a parameter should exist to do an ordered copy or not (columns and indexes) in `compare()`.

@@ -123,7 +123,7 @@ def test_equal_dtypes():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=True,
-        report=True,
+        report_print=True,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '✅ Columns have equal dtypes')
@@ -150,7 +150,7 @@ def test_equal_dtypes():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '✅ Columns have equal dtypes')
@@ -168,7 +168,7 @@ def test_equal_dtypes():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=True,
-        report=False,
+        report_print=False,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '✅ Columns have equal dtypes')
@@ -195,7 +195,7 @@ def test_equal_dtypes():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '✅ Columns have equal dtypes')
@@ -226,7 +226,7 @@ def test_diff_dtypes():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=True,
-        report=True,
+        report_print=True,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
@@ -253,7 +253,7 @@ def test_diff_dtypes():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
@@ -278,7 +278,7 @@ def test_diff_dtypes():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=True,
-        report=False,
+        report_print=False,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
@@ -305,7 +305,7 @@ def test_diff_dtypes():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
@@ -343,7 +343,7 @@ def test_diff_dtypes_second_only():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=True,
-        report=True,
+        report_print=True,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
@@ -371,7 +371,7 @@ def test_diff_dtypes_second_only():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=False,
-        report=True,
+        report_print=True,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
@@ -395,7 +395,7 @@ def test_diff_dtypes_second_only():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=True,
-        report=False,
+        report_print=False,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')
@@ -423,7 +423,7 @@ def test_diff_dtypes_second_only():
         df1_name='thedf1',
         df2_name='thedf2',
         show_all_dtypes=False,
-        report=False,
+        report_print=False,
     )
     io_predicted_str = _return_print_title(1, 'Comparing column dtypes')
     io_predicted_str += _return_print_event(1, '😓 Columns have different dtypes')

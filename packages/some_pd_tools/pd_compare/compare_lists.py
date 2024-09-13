@@ -13,7 +13,7 @@ def compare_lists(
     list_2_name: str = 'list_2',
     type_name: str = 'item',
     type_name_plural: str = 'items',
-    report: bool = False,
+    report_print: bool = False,
 ) -> tuple[bool, dict]:
     """Compares two lists, can show a report.
 
@@ -42,7 +42,7 @@ def compare_lists(
         Type to show in the report, by default 'item'.
     type_name_plural : str, optional
         Plural of type to show in the report, by default 'items'.
-    report : bool, optional
+    report_print : bool, optional
         Whether to show the report, by default False.
 
     Returns
@@ -182,7 +182,7 @@ def compare_lists(
                     f.print_event(2, f'😓 Duplicates {type_name_plural} in common:', file=stream)
                     f.pprint_wrap(2, pd_format.obj_as_sorted_list(dups_common_set), stream=stream)
 
-    if report is True:
+    if report_print is True:
         print(stream.getvalue(), end='')
 
     # Return

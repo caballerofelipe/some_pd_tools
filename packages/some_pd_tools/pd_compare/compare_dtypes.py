@@ -12,7 +12,7 @@ def compare_dtypes(
     df2: pd.DataFrame,
     df1_name: str = 'df1',
     df2_name: str = 'df2',
-    report: bool = False,
+    report_print: bool = False,
     show_all_dtypes=False,
 ) -> tuple[bool, dict]:
     """Compare dtypes for columns in two DataFrames.
@@ -44,7 +44,7 @@ def compare_dtypes(
         The name to show for the first DataFrame, by default 'df1'.
     df2_name : str, optional
         The name to show for the second DataFrame, by default 'df2'.
-    report : bool, optional
+    report_print : bool, optional
         Whether to show the comparison report, by default False
     show_all_dtypes : bool, optional
         Whether to show the columns that have the same dtype in the report, by default False.
@@ -87,7 +87,7 @@ def compare_dtypes(
             list_2_name=df2_name,
             type_name='column',
             type_name_plural='columns',
-            report=True,
+            report_print=True,
         )
     # Lists aren't equal, raise Exception with the report using `compare_lists()`
     if not lists_equal:
@@ -177,7 +177,7 @@ def compare_dtypes(
             file=stream,
         )
 
-    if report is True:
+    if report_print is True:
         print(stream.getvalue(), end='')
 
     # Return
