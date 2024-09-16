@@ -380,7 +380,7 @@ def compare(
         tmp_stream = io.StringIO()
         f.print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
-        equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
+        equality_metadata = {**equality_metadata, 'error': error}
         return _returner_for_compare(
             equality_full=False,
             equality_partial=False,
@@ -440,7 +440,7 @@ def compare(
         tmp_stream = io.StringIO()
         f.print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
-        equality_metadata = {**equality_metadata, 'error': tmp_stream.getvalue()}
+        equality_metadata = {**equality_metadata, 'error': error}
         return _returner_for_compare(
             equality_full=False,
             equality_partial=False,
