@@ -155,14 +155,21 @@ def _returner_for_compare(
     report_print: bool,
     report_file_path,
 ) -> tuple[bool, bool, dict]:
-    equality_metadata = {**equality_metadata, 'report': str_io.getvalue()}
+    f.print_title(
+        1,
+        title='Returning',
+        subtitle=f'{equality_full}[equality_full], {equality_partial}[equality_partial], dict[equality_metadata]',
+        file=str_io,
+    )
+    report = str_io.getvalue()
+    equality_metadata = {**equality_metadata, 'report': report}
     if report_print is True:
-        print(str_io.getvalue(), end='')
+        print(report, end='')
     # No verification of report_file_path and report_file_overwrite params
     # this was done in `compare()` as this function is not meant to be called by itself
     if report_file_path is not None:
         with open(report_file_path, 'w', encoding='utf-8') as report_file:
-            report_file.write(str_io.getvalue())
+            report_file.write(report)
     return [equality_full, equality_partial, equality_metadata]
 
 
@@ -321,7 +328,7 @@ def compare(
         f.print_result('🥳 Equal', file=str_io)
         return _returner_for_compare(
             equality_full=True,
-            equality_partial=True,
+            equality_partial=False,
             equality_metadata=equality_metadata,
             str_io=str_io,
             report_print=report_print,
