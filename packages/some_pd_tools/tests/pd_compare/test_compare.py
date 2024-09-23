@@ -466,6 +466,9 @@ def test_equality_full() -> None:
 
     report_predicted = _return_print_title(1, 'Equality check', 'full')
     report_predicted += _return_print_result('🥳 Equal')
+    report_predicted += _return_print_title(
+        1, 'Returning', 'True[equality_full], False[equality_partial], dict[equality_metadata]'
+    )
 
     # Equal DataFrames
     # ************************************
@@ -500,10 +503,12 @@ def test_equality_full() -> None:
             'xls_fixed_cols': None,
             'xls_datetime_rpl': '%Y-%m-%d %H:%M:%S',
         },
+        'variables': {},
         'report': report_predicted,
     }
     assert returned[0] is True
-    assert returned[1] is True
+    assert returned[1] is False
+    print(returned[2])
     assert returned[2] == equality_metadata_predicted
     assert io_out == report_predicted
 
@@ -541,10 +546,11 @@ def test_equality_full() -> None:
             'xls_fixed_cols': None,
             'xls_datetime_rpl': '%Y-%m-%d %H:%M:%S',
         },
+        'variables':{},
         'report': report_predicted,
     }
     assert returned[0] is True
-    assert returned[1] is True
+    assert returned[1] is False
     assert returned[2] == equality_metadata_predicted
     assert io_out == report_predicted
 
@@ -581,10 +587,11 @@ def test_equality_full() -> None:
             'xls_fixed_cols': None,
             'xls_datetime_rpl': '%Y-%m-%d %H:%M:%S',
         },
+        'variables':{},
         'report': report_predicted,
     }
     assert returned[0] is True
-    assert returned[1] is True
+    assert returned[1] is False
     assert returned[2] == equality_metadata_predicted
     assert io_out == report_predicted
 
@@ -664,24 +671,24 @@ def test_duplicates_abort() -> None:
     assert returned[0] is False
     assert returned[1] is False
     equality_metadata = returned[2]
-    assert equality_metadata.get('cols_common_set') == set(bdf.df1.columns)
-    assert equality_metadata.get('cols_df1_excl_set') == set(bdf.df1_extra_col.columns) - set(
+    assert equality_metadata['variables'].get('cols_common_set') == set(bdf.df1.columns)
+    assert equality_metadata['variables'].get('cols_df1_excl_set') == set(bdf.df1_extra_col.columns) - set(
         bdf.df1.columns
     )
-    assert equality_metadata.get('cols_df2_excl_set') == set(bdf.df2_extra_col.columns) - set(
+    assert equality_metadata['variables'].get('cols_df2_excl_set') == set(bdf.df2_extra_col.columns) - set(
         bdf.df2.columns
     )
-    assert equality_metadata.get('cols_df1_dups_dict') == {
+    assert equality_metadata['variables'].get('cols_df1_dups_dict') == {
         col: 2 for col in bdf.df1_extra_col.columns
     }
-    assert equality_metadata.get('cols_df2_dups_dict') == {
+    assert equality_metadata['variables'].get('cols_df2_dups_dict') == {
         col: 2 for col in bdf.df2_extra_col.columns
     }
-    assert equality_metadata.get('cols_df1_dups_common_dict') == {col: 2 for col in bdf.df1.columns}
-    assert equality_metadata.get('cols_df2_dups_common_dict') == {col: 2 for col in bdf.df2.columns}
+    assert equality_metadata['variables'].get('cols_df1_dups_common_dict') == {col: 2 for col in bdf.df1.columns}
+    assert equality_metadata['variables'].get('cols_df2_dups_common_dict') == {col: 2 for col in bdf.df2.columns}
     error = '🛑 Duplicate common columns found. Only common non duplicates columns allowed, stopping compare and returning. Either change the columns\' names or compare only one of the duplicates columns at a time. Review the returned metadata (indexes \'cols_df1_dups_common_dict\' and \'cols_df1_dups_common_dict\'.)'
     assert _return_print_event(1, error) in io_out
-    assert equality_metadata.get('error') == _return_print_event(1, error)
+    assert equality_metadata['variables'].get('error') == error
 
     # Extra Columns, all duplicated (two instances df1, three instances of df2)
     # ************************************
@@ -697,23 +704,23 @@ def test_duplicates_abort() -> None:
     assert returned[0] is False
     assert returned[1] is False
     equality_metadata = returned[2]
-    assert equality_metadata.get('cols_common_set') == set(bdf.df1.columns)
-    assert equality_metadata.get('cols_df1_excl_set') == set(bdf.df1_extra_col.columns) - set(
+    assert equality_metadata['variables'].get('cols_common_set') == set(bdf.df1.columns)
+    assert equality_metadata['variables'].get('cols_df1_excl_set') == set(bdf.df1_extra_col.columns) - set(
         bdf.df1.columns
     )
-    assert equality_metadata.get('cols_df2_excl_set') == set(bdf.df2_extra_col.columns) - set(
+    assert equality_metadata['variables'].get('cols_df2_excl_set') == set(bdf.df2_extra_col.columns) - set(
         bdf.df2.columns
     )
-    assert equality_metadata.get('cols_df1_dups_dict') == {
+    assert equality_metadata['variables'].get('cols_df1_dups_dict') == {
         col: 2 for col in bdf.df1_extra_col.columns
     }
-    assert equality_metadata.get('cols_df2_dups_dict') == {
+    assert equality_metadata['variables'].get('cols_df2_dups_dict') == {
         col: 3 for col in bdf.df2_extra_col.columns
     }
-    assert equality_metadata.get('cols_df1_dups_common_dict') == {col: 2 for col in bdf.df1.columns}
-    assert equality_metadata.get('cols_df2_dups_common_dict') == {col: 3 for col in bdf.df2.columns}
+    assert equality_metadata['variables'].get('cols_df1_dups_common_dict') == {col: 2 for col in bdf.df1.columns}
+    assert equality_metadata['variables'].get('cols_df2_dups_common_dict') == {col: 3 for col in bdf.df2.columns}
     error = '🛑 Duplicate common columns found. Only common non duplicates columns allowed, stopping compare and returning. Either change the columns\' names or compare only one of the duplicates columns at a time. Review the returned metadata (indexes \'cols_df1_dups_common_dict\' and \'cols_df1_dups_common_dict\'.)'
-    assert equality_metadata.get('error') == _return_print_event(1, error)
+    assert equality_metadata['variables'].get('error') == error
 
     # Extra Indexes, all duplicated (two instances of each)
     # df1 duplicated indexes are [0,1,2]
@@ -729,22 +736,22 @@ def test_duplicates_abort() -> None:
     assert returned[0] is False
     assert returned[1] is False
     equality_metadata = returned[2]
-    assert equality_metadata.get('cols_common_set') == set(bdf.df1.columns)
-    assert equality_metadata.get('cols_df1_excl_set') == set()
-    assert equality_metadata.get('cols_df2_excl_set') == set()
-    assert equality_metadata.get('cols_df1_dups_dict') == {}
-    assert equality_metadata.get('cols_df2_dups_dict') == {}
-    assert equality_metadata.get('cols_df1_dups_common_dict') == {}
-    assert equality_metadata.get('cols_df2_dups_common_dict') == {}
-    assert equality_metadata.get('idxs_common_set') == set([1, 2])
-    assert equality_metadata.get('idxs_df1_excl_set') == set([0])
-    assert equality_metadata.get('idxs_df2_excl_set') == set([3])
-    assert equality_metadata.get('idxs_df1_dups_dict') == {idx: 2 for idx in [0, 1, 2]}
-    assert equality_metadata.get('idxs_df2_dups_dict') == {idx: 2 for idx in [1, 2, 3]}
-    assert equality_metadata.get('idxs_df1_dups_common_dict') == {idx: 2 for idx in [1, 2]}
-    assert equality_metadata.get('idxs_df2_dups_common_dict') == {idx: 2 for idx in [1, 2]}
+    assert equality_metadata['variables'].get('cols_common_set') == set(bdf.df1.columns)
+    assert equality_metadata['variables'].get('cols_df1_excl_set') == set()
+    assert equality_metadata['variables'].get('cols_df2_excl_set') == set()
+    assert equality_metadata['variables'].get('cols_df1_dups_dict') == {}
+    assert equality_metadata['variables'].get('cols_df2_dups_dict') == {}
+    assert equality_metadata['variables'].get('cols_df1_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('cols_df2_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('idxs_common_set') == set([1, 2])
+    assert equality_metadata['variables'].get('idxs_df1_excl_set') == set([0])
+    assert equality_metadata['variables'].get('idxs_df2_excl_set') == set([3])
+    assert equality_metadata['variables'].get('idxs_df1_dups_dict') == {idx: 2 for idx in [0, 1, 2]}
+    assert equality_metadata['variables'].get('idxs_df2_dups_dict') == {idx: 2 for idx in [1, 2, 3]}
+    assert equality_metadata['variables'].get('idxs_df1_dups_common_dict') == {idx: 2 for idx in [1, 2]}
+    assert equality_metadata['variables'].get('idxs_df2_dups_common_dict') == {idx: 2 for idx in [1, 2]}
     error = '🛑 Duplicate common indexes found. Only common non duplicates indexes allowed, stopping compare and returning. Either change the indexes\' names or compare only one of the duplicates indexes at a time. Review the returned metadata (indexes \'idxs_df1_dups_common_dict\' and \'idxs_df1_dups_common_dict\'.)'
-    assert equality_metadata.get('error') == _return_print_event(1, error)
+    assert equality_metadata['variables'].get('error') == error
 
     # Extra Indexes, all duplicated (two instances df1, three instances of df2)
     # df1 duplicated indexes are [0,1,2]
@@ -760,22 +767,22 @@ def test_duplicates_abort() -> None:
     assert returned[0] is False
     assert returned[1] is False
     equality_metadata = returned[2]
-    assert equality_metadata.get('cols_common_set') == set(bdf.df1.columns)
-    assert equality_metadata.get('cols_df1_excl_set') == set()
-    assert equality_metadata.get('cols_df2_excl_set') == set()
-    assert equality_metadata.get('cols_df1_dups_dict') == {}
-    assert equality_metadata.get('cols_df2_dups_dict') == {}
-    assert equality_metadata.get('cols_df1_dups_common_dict') == {}
-    assert equality_metadata.get('cols_df2_dups_common_dict') == {}
-    assert equality_metadata.get('idxs_common_set') == set([1, 2])
-    assert equality_metadata.get('idxs_df1_excl_set') == set([0])
-    assert equality_metadata.get('idxs_df2_excl_set') == set([3])
-    assert equality_metadata.get('idxs_df1_dups_dict') == {idx: 2 for idx in [0, 1, 2]}
-    assert equality_metadata.get('idxs_df2_dups_dict') == {idx: 3 for idx in [1, 2, 3]}
-    assert equality_metadata.get('idxs_df1_dups_common_dict') == {idx: 2 for idx in [1, 2]}
-    assert equality_metadata.get('idxs_df2_dups_common_dict') == {idx: 3 for idx in [1, 2]}
+    assert equality_metadata['variables'].get('cols_common_set') == set(bdf.df1.columns)
+    assert equality_metadata['variables'].get('cols_df1_excl_set') == set()
+    assert equality_metadata['variables'].get('cols_df2_excl_set') == set()
+    assert equality_metadata['variables'].get('cols_df1_dups_dict') == {}
+    assert equality_metadata['variables'].get('cols_df2_dups_dict') == {}
+    assert equality_metadata['variables'].get('cols_df1_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('cols_df2_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('idxs_common_set') == set([1, 2])
+    assert equality_metadata['variables'].get('idxs_df1_excl_set') == set([0])
+    assert equality_metadata['variables'].get('idxs_df2_excl_set') == set([3])
+    assert equality_metadata['variables'].get('idxs_df1_dups_dict') == {idx: 2 for idx in [0, 1, 2]}
+    assert equality_metadata['variables'].get('idxs_df2_dups_dict') == {idx: 3 for idx in [1, 2, 3]}
+    assert equality_metadata['variables'].get('idxs_df1_dups_common_dict') == {idx: 2 for idx in [1, 2]}
+    assert equality_metadata['variables'].get('idxs_df2_dups_common_dict') == {idx: 3 for idx in [1, 2]}
     error = '🛑 Duplicate common indexes found. Only common non duplicates indexes allowed, stopping compare and returning. Either change the indexes\' names or compare only one of the duplicates indexes at a time. Review the returned metadata (indexes \'idxs_df1_dups_common_dict\' and \'idxs_df1_dups_common_dict\'.)'
-    assert equality_metadata.get('error') == _return_print_event(1, error)
+    assert equality_metadata['variables'].get('error') == error
 
 
 def test_cols_review() -> None:
@@ -819,13 +826,13 @@ def test_cols_review() -> None:
     assert returned[0] is False
     assert io_predicted_printed_substr in io_out
     assert io_predicted_printed_substr in equality_metadata.get('report')
-    assert equality_metadata.get('cols_common_set') == cols_common_set
-    assert equality_metadata.get('cols_df1_excl_set') == cols_df1_excl_set
-    assert equality_metadata.get('cols_df2_excl_set') == cols_df2_excl_set
-    assert equality_metadata.get('cols_df1_dups_dict') == {}
-    assert equality_metadata.get('cols_df2_dups_dict') == {}
-    assert equality_metadata.get('cols_df1_dups_common_dict') == {}
-    assert equality_metadata.get('cols_df2_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('cols_common_set') == cols_common_set
+    assert equality_metadata['variables'].get('cols_df1_excl_set') == cols_df1_excl_set
+    assert equality_metadata['variables'].get('cols_df2_excl_set') == cols_df2_excl_set
+    assert equality_metadata['variables'].get('cols_df1_dups_dict') == {}
+    assert equality_metadata['variables'].get('cols_df2_dups_dict') == {}
+    assert equality_metadata['variables'].get('cols_df1_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('cols_df2_dups_common_dict') == {}
 
     # Column metadata returned NOT showing common columns
     # ************************************
@@ -841,13 +848,13 @@ def test_cols_review() -> None:
     assert compare_lists_ret_show_common[1]['report'] not in io_out
     assert compare_lists_ret_no_show_common[1]['report'] in equality_metadata.get('report')
     assert compare_lists_ret_show_common[1]['report'] not in equality_metadata.get('report')
-    assert equality_metadata.get('cols_common_set') == cols_common_set
-    assert equality_metadata.get('cols_df1_excl_set') == cols_df1_excl_set
-    assert equality_metadata.get('cols_df2_excl_set') == cols_df2_excl_set
-    assert equality_metadata.get('cols_df1_dups_dict') == {}
-    assert equality_metadata.get('cols_df2_dups_dict') == {}
-    assert equality_metadata.get('cols_df1_dups_common_dict') == {}
-    assert equality_metadata.get('cols_df2_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('cols_common_set') == cols_common_set
+    assert equality_metadata['variables'].get('cols_df1_excl_set') == cols_df1_excl_set
+    assert equality_metadata['variables'].get('cols_df2_excl_set') == cols_df2_excl_set
+    assert equality_metadata['variables'].get('cols_df1_dups_dict') == {}
+    assert equality_metadata['variables'].get('cols_df2_dups_dict') == {}
+    assert equality_metadata['variables'].get('cols_df1_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('cols_df2_dups_common_dict') == {}
 
 
 def test_idxs_review() -> None:
@@ -891,13 +898,13 @@ def test_idxs_review() -> None:
     assert returned[0] is False
     assert io_predicted_printed_substr in io_out
     assert io_predicted_printed_substr in equality_metadata.get('report')
-    assert equality_metadata.get('idxs_common_set') == idxs_common_set
-    assert equality_metadata.get('idxs_df1_excl_set') == idxs_df1_excl_set
-    assert equality_metadata.get('idxs_df2_excl_set') == idxs_df2_excl_set
-    assert equality_metadata.get('idxs_df1_dups_dict') == {}
-    assert equality_metadata.get('idxs_df2_dups_dict') == {}
-    assert equality_metadata.get('idxs_df1_dups_common_dict') == {}
-    assert equality_metadata.get('idxs_df2_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('idxs_common_set') == idxs_common_set
+    assert equality_metadata['variables'].get('idxs_df1_excl_set') == idxs_df1_excl_set
+    assert equality_metadata['variables'].get('idxs_df2_excl_set') == idxs_df2_excl_set
+    assert equality_metadata['variables'].get('idxs_df1_dups_dict') == {}
+    assert equality_metadata['variables'].get('idxs_df2_dups_dict') == {}
+    assert equality_metadata['variables'].get('idxs_df1_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('idxs_df2_dups_common_dict') == {}
 
     # Index metadata returned NOT showing common indexes
     # ************************************
@@ -913,13 +920,13 @@ def test_idxs_review() -> None:
     assert compare_lists_ret_show_common[1]['report'] not in io_out
     assert compare_lists_ret_no_show_common[1]['report'] in equality_metadata.get('report')
     assert compare_lists_ret_show_common[1]['report'] not in equality_metadata.get('report')
-    assert equality_metadata.get('idxs_common_set') == idxs_common_set
-    assert equality_metadata.get('idxs_df1_excl_set') == idxs_df1_excl_set
-    assert equality_metadata.get('idxs_df2_excl_set') == idxs_df2_excl_set
-    assert equality_metadata.get('idxs_df1_dups_dict') == {}
-    assert equality_metadata.get('idxs_df2_dups_dict') == {}
-    assert equality_metadata.get('idxs_df1_dups_common_dict') == {}
-    assert equality_metadata.get('idxs_df2_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('idxs_common_set') == idxs_common_set
+    assert equality_metadata['variables'].get('idxs_df1_excl_set') == idxs_df1_excl_set
+    assert equality_metadata['variables'].get('idxs_df2_excl_set') == idxs_df2_excl_set
+    assert equality_metadata['variables'].get('idxs_df1_dups_dict') == {}
+    assert equality_metadata['variables'].get('idxs_df2_dups_dict') == {}
+    assert equality_metadata['variables'].get('idxs_df1_dups_common_dict') == {}
+    assert equality_metadata['variables'].get('idxs_df2_dups_common_dict') == {}
 
 
 def test_cols_idxs_report_and_compare() -> None:
@@ -930,7 +937,7 @@ def test_cols_idxs_report_and_compare() -> None:
     # ************************************
     report_portion_predicted = predicted_title
     report_portion_predicted += _return_print_event(
-        1, '✅ Columns and indexes are equal in both DataFrames'
+        1, '✅ Columns and indexes are equal in the two DataFrames'
     )
     returned, io_out = _fn_ret_and_output(
         pd_compare.compare,
@@ -946,7 +953,7 @@ def test_cols_idxs_report_and_compare() -> None:
     # ************************************
     report_portion_predicted = predicted_title
     report_portion_predicted += _return_print_event(
-        1, '😓 Columns and indexes are not equal in both DataFrames'
+        1, '😓 Columns and indexes are not equal in the two DataFrames'
     )
     report_portion_predicted += _return_print_event(
         1, '😈 From this point on, comparing only common columns and indexes'
@@ -971,7 +978,7 @@ def test_cols_idxs_report_and_compare() -> None:
     # ************************************
     report_portion_predicted = predicted_title
     report_portion_predicted += _return_print_event(
-        1, '😓 Columns and indexes are not equal in both DataFrames'
+        1, '😓 Columns and indexes are not equal in the two DataFrames'
     )
     report_portion_predicted += _return_print_event(
         1, '😈 From this point on, comparing only common columns and indexes'
@@ -1023,8 +1030,8 @@ def test_dtypes_equal_review() -> None:
     assert returned[0] is False
     assert compare_dtypes_ret[1]['report'] in io_out
     assert compare_dtypes_ret[1]['report'] in returned[2]['report']
-    assert returned[2]['common_cols_dtypes_equality'] is True
-    assert returned[2]['common_cols_dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[2]['variables']['common_cols_dtypes_equality'] is True
+    assert returned[2]['variables']['common_cols_dtypes_df'].equals(predicted_dtypes_df)
 
     # Different columns, some common, different values
     # Equal dtypes, w report, no show common dtypes
@@ -1046,8 +1053,8 @@ def test_dtypes_equal_review() -> None:
     assert returned[0] is False
     assert compare_dtypes_ret[1]['report'] in io_out
     assert compare_dtypes_ret[1]['report'] in returned[2]['report']
-    assert returned[2]['common_cols_dtypes_equality'] is True
-    assert returned[2]['common_cols_dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[2]['variables']['common_cols_dtypes_equality'] is True
+    assert returned[2]['variables']['common_cols_dtypes_df'].equals(predicted_dtypes_df)
 
     # Different columns, some common, different values
     # Equal dtypes, no report, w show common dtypes
@@ -1069,8 +1076,8 @@ def test_dtypes_equal_review() -> None:
     assert returned[0] is False
     assert io_out == ''
     assert compare_dtypes_ret[1]['report'] in returned[2]['report']
-    assert returned[2]['common_cols_dtypes_equality'] is True
-    assert returned[2]['common_cols_dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[2]['variables']['common_cols_dtypes_equality'] is True
+    assert returned[2]['variables']['common_cols_dtypes_df'].equals(predicted_dtypes_df)
 
     # Different columns, some common, different values
     # Equal dtypes, no report, no show common dtypes
@@ -1092,8 +1099,8 @@ def test_dtypes_equal_review() -> None:
     assert returned[0] is False
     assert io_out == ''
     assert compare_dtypes_ret[1]['report'] in returned[2]['report']
-    assert returned[2]['common_cols_dtypes_equality'] is True
-    assert returned[2]['common_cols_dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[2]['variables']['common_cols_dtypes_equality'] is True
+    assert returned[2]['variables']['common_cols_dtypes_df'].equals(predicted_dtypes_df)
 
 
 def test_dtypes_diff_review() -> None:
@@ -1127,8 +1134,8 @@ def test_dtypes_diff_review() -> None:
     assert returned[0] is False
     assert compare_dtypes_ret[1]['report'] in io_out
     assert compare_dtypes_ret[1]['report'] in returned[2]['report']
-    assert returned[2]['common_cols_dtypes_equality'] is False
-    assert returned[2]['common_cols_dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[2]['variables']['common_cols_dtypes_equality'] is False
+    assert returned[2]['variables']['common_cols_dtypes_df'].equals(predicted_dtypes_df)
 
     # Same columns, different dtypes, w report, no show common dtypes
     # ************************************
@@ -1149,8 +1156,8 @@ def test_dtypes_diff_review() -> None:
     assert returned[0] is False
     assert compare_dtypes_ret[1]['report'] in io_out
     assert compare_dtypes_ret[1]['report'] in returned[2]['report']
-    assert returned[2]['common_cols_dtypes_equality'] is False
-    assert returned[2]['common_cols_dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[2]['variables']['common_cols_dtypes_equality'] is False
+    assert returned[2]['variables']['common_cols_dtypes_df'].equals(predicted_dtypes_df)
 
     # Same columns, different dtypes, no report, w show common dtypes
     # ************************************
@@ -1171,8 +1178,8 @@ def test_dtypes_diff_review() -> None:
     assert returned[0] is False
     assert io_out == ''
     assert compare_dtypes_ret[1]['report'] in returned[2]['report']
-    assert returned[2]['common_cols_dtypes_equality'] is False
-    assert returned[2]['common_cols_dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[2]['variables']['common_cols_dtypes_equality'] is False
+    assert returned[2]['variables']['common_cols_dtypes_df'].equals(predicted_dtypes_df)
 
     # Same columns, different dtypes, no report, no show common dtypes
     # ************************************
@@ -1193,8 +1200,8 @@ def test_dtypes_diff_review() -> None:
     assert returned[0] is False
     assert io_out == ''
     assert compare_dtypes_ret[1]['report'] in returned[2]['report']
-    assert returned[2]['common_cols_dtypes_equality'] is False
-    assert returned[2]['common_cols_dtypes_df'].equals(predicted_dtypes_df)
+    assert returned[2]['variables']['common_cols_dtypes_equality'] is False
+    assert returned[2]['variables']['common_cols_dtypes_df'].equals(predicted_dtypes_df)
 
 
 def test_dtypes_simplification():
@@ -1663,16 +1670,16 @@ def test_after_compare_values_metadata():
     )
     metadata = returned[2]
     # Equality check
-    assert str(expected_eqlty_df) == str(metadata['equality_df'])
-    assert expected_eqlty_df.equals(metadata['equality_df'])
+    assert str(expected_eqlty_df) == str(metadata['variables']['equality_df'])
+    assert expected_eqlty_df.equals(metadata['variables']['equality_df'])
 
     # Equal columns/rows check
-    assert ['col_nan'] == metadata['cols_equal_list_sorted']
-    assert [3] == metadata['rows_equal_list_sorted']
+    assert ['col_nan'] == metadata['variables']['cols_equal_list_sorted']
+    assert [3] == metadata['variables']['rows_equal_list_sorted']
 
     # Different columns/rows check
-    assert ['col_float', 'col_int', 'col_str', 'col_strnan'] == metadata['cols_diff_list_sorted']
-    assert [0, 1, 2] == metadata['rows_diff_list_sorted']
+    assert ['col_float', 'col_int', 'col_str', 'col_strnan'] == metadata['variables']['cols_diff_list_sorted']
+    assert [0, 1, 2] == metadata['variables']['rows_diff_list_sorted']
 
     # Expected joined_df
     _df1 = bdf.df1
@@ -1701,5 +1708,5 @@ def test_after_compare_values_metadata():
         data.append(data_row)
     expected_joined_df = pd.DataFrame(data, columns=multi_index)
 
-    assert str(expected_joined_df) == str(metadata['joined_df'])
-    assert expected_joined_df.equals(metadata['joined_df'])
+    assert str(expected_joined_df) == str(metadata['variables']['joined_df'])
+    assert expected_joined_df.equals(metadata['variables']['joined_df'])
