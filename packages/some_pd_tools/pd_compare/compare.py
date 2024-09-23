@@ -343,7 +343,7 @@ def compare(
     df2_cp = pd.DataFrame(df2).sort_index(axis=0).sort_index(axis=1)
 
     # MARK: EQLTY FULL
-    # Check if both DataFrames are fully equal using Pandas function
+    # Check if the two DataFrames are fully equal using Pandas' function
     # *************************************************************************
     f.print_title(1, 'Equality check', 'full', file=str_io)
     if df1_cp.equals(df2_cp):  # Are the dfs equal?
@@ -481,7 +481,7 @@ def compare(
 
     # MARK: EQLTY 4 COMMON
     # Only taking into consideration common columns and indexes
-    # Check if both DataFrames are fully equal using Pandas function
+    # Check if the two DataFrames are fully equal using Pandas' function
     # *************************************************************************
     f.print_title(1, 'Checking common columns and indexes', file=str_io)
     are_all_cols_and_idxs_common = (
@@ -491,7 +491,7 @@ def compare(
         and len(idxs_df2_excl_set) == 0
     )
 
-    # If both DataFrames have the same columns and indexes,
+    # If the two DataFrames have the same columns and indexes,
     # df{1,2}_common is indeed equal to df{1,2}_cp
     # but to avoid duplicating code, df{1,2}_common is used from this point on
     df1_common = df1_cp.loc[idxs_common_list_sorted, cols_common_list_sorted]
@@ -502,11 +502,11 @@ def compare(
         'df2_common': df2_common,
     }
 
-    # Do both DataFrames have no exclusive columns and indexes?
+    # Do the two DataFrames have no exclusive columns and indexes?
     if are_all_cols_and_idxs_common:
-        f.print_event(1, '✅ Columns and indexes are equal in both DataFrames', file=str_io)
+        f.print_event(1, '✅ Columns and indexes are equal in the two DataFrames', file=str_io)
     else:
-        f.print_event(1, '😓 Columns and indexes are not equal in both DataFrames', file=str_io)
+        f.print_event(1, '😓 Columns and indexes are not equal in the two DataFrames', file=str_io)
         f.print_event(
             1, '😈 From this point on, comparing only common columns and indexes', file=str_io
         )
