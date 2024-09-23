@@ -54,11 +54,11 @@ def compare_dtypes(
     tuple[bool, dict]
         - tuple[0]: True if all dtypes equal, False if not.
         - tuple[1]: Metadata dict. This contains:
-          - 'dtypes_df': A DataFrame where the index the analyzed column and 3 columns:
+          - 'dtypes_df': DataFrame. A DataFrame where the index is the analyzed column and the following 3 columns:
             1. 'different' representing wether the column is different or not in both input DataFrames (True means different, False means equal).
             2. {df1_name} (stated name for first DataFrame): the dtype for the given column in df1.
             3. {df2_name} (stated name for second DataFrame): the dtype for the given column in df2.
-          - 'report': The report, useful in case the param `report` is False.
+          - 'report': str. The report, useful in case the param `report` is False.
 
     Raises
     ------
