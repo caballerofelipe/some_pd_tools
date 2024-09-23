@@ -98,7 +98,7 @@ def _dtypes_simp_and_eqlty_check(
     else:
         f.print_event(1, f'😓 {df2_name}... simplified', file=str_io)
 
-    changed_dtypes = (
+    dtypes_simplified = (
         df1.dtypes.equals(df1_original_dtypes) is False
         or df2.dtypes.equals(df2_original_dtypes) is False
     )
@@ -113,32 +113,32 @@ def _dtypes_simp_and_eqlty_check(
         report_print=False,  # No report if no dtypes changes were done
     )
 
-    if changed_dtypes is True:
+    after_simp_equality = False
+
+    if dtypes_simplified is False:
+        f.print_event(1, '✅ No dtypes changed', file=str_io)
+        # No report if no dtypes changes were done
+    else:
         f.print_event(1, '😓 dtypes changed', file=str_io)
         # Show report if dtypes changed
         print(dtypes_metadata['report'], end='', file=str_io)
-    else:
-        f.print_event(1, '✅ No dtypes changed', file=str_io)
-        # No report if no dtypes changes were done
 
-    # Equality testing
-    after_simp_equality = False
-    if changed_dtypes:
-        if dtypes_equality is True:
+        # Equality testing
+        if dtypes_equality is False:
+            f.print_title(1, 'Skipping equality check', 'since dtypes are not equal', file=str_io)
+        else:
             f.print_title(1, 'Equality check', 'since dtypes are now equal', file=str_io)
+
             if df1.equals(df2):  # Are the dfs equal?
                 f.print_result('🥳 Equal', file=str_io)
                 after_simp_equality = True
-                # NOTE: After this point a return should be done
-                # This must be done after calling this function
+                # NOTE: After this point a return from compare() should be done
+                # this must be done after the return from ↑↓ this function
             else:
                 f.print_result('😡 Not equal', file=str_io)
-                after_simp_equality = False
-        else:
-            f.print_title(1, 'Skipping equality check', 'since dtypes are not equal', file=str_io)
-            after_simp_equality = False
 
     return (
+        dtypes_simplified,
         after_simp_equality,
         df1,
         df2,
