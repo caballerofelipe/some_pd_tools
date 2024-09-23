@@ -216,10 +216,11 @@ def compare(
     '''
     Some notes for documenting:
     - The whole goal of this function is to find differences in DataFrames, once they are found to be equal, the comparison stops.
+    - The report is the main focus of this function. The goal is to provide insight into how the DataFrames differ (if they do) the usage of the returned tuple might not be needed. However, if more information is needed or could be useful, the variables provided in the metadata might help.
     - This function is meant to be called interactively, possibly using Jupyter. It isn't meant to be run as a verification function, although it can be used like that, than might not be advised depending on the specific situation. The function will return a tuple of 3. In the returned tuple:
-        - The first element will return True if everything is equal in both DataFrame, this uses df1.equals(df2) but using the sorted columns and indexes.
-        - The second element will return True if after some modification in both DataFrames everything is equal. This check happens after several points in the comparison process.
-        - The third element will return metadata. This metadata depends on where in the function it was returned. The metadata is returned if both DataFrames are equal, after some transformation. Or it is returned at the end of the function. The metadata values should be obtained with `.get()` since metadata is a dict and the key might not exist at a given point when returned.
+        - The first element will return True if everything is equal in the two DataFrame, this uses df1.equals(df2) but using the sorted columns and indexes.
+        - The second element will return True if after some modification in the two DataFrames, everything is equal. This check happens after several points in the comparison process.
+        - The third element will return metadata. This metadata depends on where in the function it was returned. The metadata is returned if the two DataFrames are equal, after some transformation. Or it is returned at the end of the function. The metadata values should be obtained with `.get()` since metadata is a dict and the key might not exist at a given point when returned.
     - This function should be ran when df1.equals(df2) is False. It initially sorts the columns and rows of both DataFrames to do all comparisons.
     - The order of columns and indexes are not taken into account. Columns and indexes are sorted using
         `.sort_index(axis=0).sort_index(axis=1)`
@@ -230,7 +231,7 @@ def compare(
         - Returned Metadata: Using metadata, examples. Notation: when wanting to use `joined_df`, either do `metadata['joined_df']` or previously save that to a `joined_df` variable like this: `joined_df = metadata['joined_df']`.
         - To see only different columns and rows, do `joined_df.loc[rows_diff_list_sorted, cols_diff_list_sorted]`.
         - To see only equal columns and rows, do `joined_df.loc[rows_equal_list_sorted, cols_equal_list_sorted]`.
-    - joined_df is returned to allow to see the differences of both DataFrames in one DataFrame. This new DataFrame only takes into account the rows and columns (indexes and columns) that are common to the two DataFrames to be compared. Its structure is as follows:
+    - joined_df is returned to allow to see the differences of the two DataFrames in one DataFrame. This new DataFrame only takes into account the rows and columns (indexes and columns) that are common to the two DataFrames to be compared. Its structure is as follows:
         - It has a column MultiIndex. The first level represent the name of the given column. The second level represents the values. Read on to understand the whole structure.
         - Every column is sorted by its name as the first index. The second index has three columns:
             - The first and second columns correspond to the DataFrames' name provided by `df1_name` and `df2_name` (or their default values).
