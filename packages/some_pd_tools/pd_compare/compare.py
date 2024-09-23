@@ -1,4 +1,5 @@
 import io
+import os
 import pathlib
 
 import pandas as pd
@@ -739,6 +740,7 @@ def compare(
 
         xls_df = pd.merge(fixed_cols_df, joined_for_excel_df, left_index=True, right_index=True)
         freeze_on_colindex = len(fixed_cols_df.columns)
+        f.print_title(1, 'Creating Excel', f'{os.getcwd()}/{xls_path}', file=str_io)
         _save_excel(
             xls_df,
             path=xls_path,
