@@ -1,5 +1,4 @@
 # TODO
-- [ ] (Evaluate) Instead of metadata being a dict, maybe it should be a list and in each position of the list is what has been done and the metadata generated, so maybe dicts inside the list position.
 - [ ] Add Docstrings.
 - [ ] Review README, add documentation for all functions.
 
