@@ -155,21 +155,42 @@ def _returner_for_compare(
     report_print: bool,
     report_file_path,
 ) -> tuple[bool, bool, dict]:
+
+    # Important note:
+    # No verification of report_file_path and report_file_overwrite params
+    # this was done in `compare()` as this function is not meant to be called by itself
+
+    # This is here to include the report of "saving the report to file"
+    # but the actual report saving to file is done later.
+    if report_file_path is not None:
+        f.print_title(1, 'Saving report file', f'{os.getcwd()}/{report_file_path}', file=str_io)
+        equality_metadata['variables'] = {
+            **equality_metadata['variables'],
+            'report_file_path': f'{os.getcwd()}/{report_file_path}',
+        }
+
+    # Adding "Returning" to report
     f.print_title(
         1,
         title='Returning',
         subtitle=f'{equality_full}[equality_full], {equality_partial}[equality_partial], dict[equality_metadata]',
         file=str_io,
     )
+
+    # Adding the report to the equality_metadata
     report = str_io.getvalue()
     equality_metadata = {**equality_metadata, 'report': report}
+
+    # Printing the report
     if report_print is True:
         print(report, end='')
-    # No verification of report_file_path and report_file_overwrite params
-    # this was done in `compare()` as this function is not meant to be called by itself
+
+    # Saving report to file (optionally)
     if report_file_path is not None:
         with open(report_file_path, 'w', encoding='utf-8') as report_file:
             report_file.write(report)
+
+    # The actual return
     return [equality_full, equality_partial, equality_metadata]
 
 
