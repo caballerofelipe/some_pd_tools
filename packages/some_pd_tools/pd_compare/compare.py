@@ -144,7 +144,7 @@ def _dtypes_simp_and_eqlty_check(
         df1,
         df2,
         dtypes_equality,
-        dtypes_metadata,
+        dtypes_metadata['dtypes_df'],
     )
 
 
@@ -165,10 +165,9 @@ def _returner_for_compare(
     # but the actual report saving to file is done later.
     if report_file_path is not None:
         f.print_title(1, 'Saving report file', f'{os.getcwd()}/{report_file_path}', file=str_io)
-        equality_metadata['variables'] = {
-            **equality_metadata['variables'],
-            'report_file_path': f'{os.getcwd()}/{report_file_path}',
-        }
+        equality_metadata['variables'].update(
+            {'report_file_path': f'{os.getcwd()}/{report_file_path}'}
+        )
 
     # Adding "Returning" to report
     f.print_title(
@@ -180,7 +179,7 @@ def _returner_for_compare(
 
     # Adding the report to the equality_metadata
     report = str_io.getvalue()
-    equality_metadata = {**equality_metadata, 'report': report}
+    equality_metadata.update({'report': report})
 
     # Printing the report
     if report_print is True:
@@ -216,6 +215,7 @@ def compare(
 ):
     '''
     Some notes for documenting:
+    - This functions is a little messy but I think: "doing something that works is better than not doing something perfect". There's room for improvement that might or might not come.
     - The whole goal of this function is to find differences in DataFrames, once they are found to be equal, the comparison stops.
     - The report is the main focus of this function. The goal is to provide insight into how the DataFrames differ (if they do) the usage of the returned tuple might not be needed. However, if more information is needed or could be useful, the variables provided in the metadata might help.
     - This function is meant to be called interactively, possibly using Jupyter. It isn't meant to be run as a verification function, although it can be used like that, than might not be advised depending on the specific situation. The function will return a tuple of 3. In the returned tuple:
@@ -262,7 +262,8 @@ def compare(
             'xls_compare_str_diff': xls_compare_str_diff,
             'xls_fixed_cols': xls_fixed_cols,
             'xls_datetime_rpl': xls_datetime_rpl,
-        }
+        },
+        'variables': {},
     }
 
     if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
@@ -392,25 +393,29 @@ def compare(
 
     cols_common_list_sorted = pd_format.obj_as_sorted_list(cols_common_set)
 
-    equality_metadata = {
-        **equality_metadata,
-        'cols_compare_equality': cols_compare_equality,
-        'cols_common_set': cols_common_set,
-        'cols_common_list_sorted': cols_common_list_sorted,
-        'cols_df1_excl_set': cols_df1_excl_set,
-        'cols_df2_excl_set': cols_df2_excl_set,
-        'cols_df1_dups_dict': cols_df1_dups_dict,
-        'cols_df2_dups_dict': cols_df2_dups_dict,
-        'cols_df1_dups_common_dict': cols_df1_dups_common_dict,
-        'cols_df2_dups_common_dict': cols_df2_dups_common_dict,
-    }
+    equality_metadata['variables'].update(
+        {
+            'cols_compare_equality': cols_compare_equality,
+            'cols_common_set': cols_common_set,
+            'cols_common_list_sorted': cols_common_list_sorted,
+            'cols_df1_excl_set': cols_df1_excl_set,
+            'cols_df2_excl_set': cols_df2_excl_set,
+            'cols_df1_dups_dict': cols_df1_dups_dict,
+            'cols_df2_dups_dict': cols_df2_dups_dict,
+            'cols_df1_dups_common_dict': cols_df1_dups_common_dict,
+            'cols_df2_dups_common_dict': cols_df2_dups_common_dict,
+        }
+    )
 
     if len(cols_df1_dups_common_dict) > 0 or len(cols_df2_dups_common_dict) > 0:
         error = '🛑 Duplicate common columns found. Only common non duplicates columns allowed, stopping compare and returning. Either change the columns\' names or compare only one of the duplicates columns at a time. Review the returned metadata (indexes \'cols_df1_dups_common_dict\' and \'cols_df1_dups_common_dict\'.)'
+
         tmp_stream = io.StringIO()
         f.print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
-        equality_metadata = {**equality_metadata, 'error': error}
+
+        equality_metadata['variables'].update({'error': error})
+
         return _returner_for_compare(
             equality_full=False,
             equality_partial=False,
@@ -452,25 +457,29 @@ def compare(
 
     idxs_common_list_sorted = pd_format.obj_as_sorted_list(idxs_common_set)
 
-    equality_metadata = {
-        **equality_metadata,
-        'idxs_compare_equality': idxs_compare_equality,
-        'idxs_common_set': idxs_common_set,
-        'idxs_common_list_sorted': idxs_common_list_sorted,
-        'idxs_df1_excl_set': idxs_df1_excl_set,
-        'idxs_df2_excl_set': idxs_df2_excl_set,
-        'idxs_df1_dups_dict': idxs_df1_dups_dict,
-        'idxs_df2_dups_dict': idxs_df2_dups_dict,
-        'idxs_df1_dups_common_dict': idxs_df1_dups_common_dict,
-        'idxs_df2_dups_common_dict': idxs_df2_dups_common_dict,
-    }
+    equality_metadata['variables'].update(
+        {
+            'idxs_compare_equality': idxs_compare_equality,
+            'idxs_common_set': idxs_common_set,
+            'idxs_common_list_sorted': idxs_common_list_sorted,
+            'idxs_df1_excl_set': idxs_df1_excl_set,
+            'idxs_df2_excl_set': idxs_df2_excl_set,
+            'idxs_df1_dups_dict': idxs_df1_dups_dict,
+            'idxs_df2_dups_dict': idxs_df2_dups_dict,
+            'idxs_df1_dups_common_dict': idxs_df1_dups_common_dict,
+            'idxs_df2_dups_common_dict': idxs_df2_dups_common_dict,
+        }
+    )
 
     if len(idxs_df1_dups_common_dict) > 0 or len(idxs_df2_dups_common_dict) > 0:
         error = '🛑 Duplicate common indexes found. Only common non duplicates indexes allowed, stopping compare and returning. Either change the indexes\' names or compare only one of the duplicates indexes at a time. Review the returned metadata (indexes \'idxs_df1_dups_common_dict\' and \'idxs_df1_dups_common_dict\'.)'
+
         tmp_stream = io.StringIO()
         f.print_event(1, error, file=tmp_stream)  # Used to print and to store result in metadata
         print(tmp_stream.getvalue(), end='', file=str_io)
-        equality_metadata = {**equality_metadata, 'error': error}
+
+        equality_metadata['variables'].update({'error': error})
+
         return _returner_for_compare(
             equality_full=False,
             equality_partial=False,
@@ -497,11 +506,13 @@ def compare(
     # but to avoid duplicating code, df{1,2}_common is used from this point on
     df1_common = df1_cp.loc[idxs_common_list_sorted, cols_common_list_sorted]
     df2_common = df2_cp.loc[idxs_common_list_sorted, cols_common_list_sorted]
-    equality_metadata = {
-        **equality_metadata,
-        'df1_common': df1_common,
-        'df2_common': df2_common,
-    }
+
+    equality_metadata['variables'].update(
+        {
+            'df1_common': df1_common,
+            'df2_common': df2_common,
+        }
+    )
 
     # Do the two DataFrames have no exclusive columns and indexes?
     if are_all_cols_and_idxs_common:
@@ -539,23 +550,27 @@ def compare(
         report_print=False,
     )
     print(common_cols_dtypes_metadata['report'], end='', file=str_io)
-    equality_metadata = {
-        **equality_metadata,
-        'common_cols_dtypes_equality': common_cols_dtypes_equality,
-        'common_cols_dtypes_df': common_cols_dtypes_metadata['dtypes_df'],
-    }
+
+    equality_metadata['variables'].update(
+        {
+            'common_cols_dtypes_equality': common_cols_dtypes_equality,
+            'common_cols_dtypes_df': common_cols_dtypes_metadata['dtypes_df'],
+        }
+    )
 
     # MARK: DTYPES SIMP
     # dtypes simplification, dtypes comparison and testing equality afterwards
     # *************************************************************************
     if common_cols_dtypes_equality is False:
         f.print_title(1, 'Since dtypes are different, will try to simplify', file=str_io)
+
         (
+            common_cols_dtypes_simplified,
             after_simp_equality,
             df1_common,
             df2_common,
             common_cols_dtypes_simplified_equality,
-            common_cols_dtypes_simplified_metadata,
+            common_cols_dtypes_simplified_df,
         ) = _dtypes_simp_and_eqlty_check(
             df1=df1_common,
             df2=df2_common,
@@ -565,21 +580,27 @@ def compare(
             str_io=str_io,
         )
 
-        equality_metadata = {
-            **equality_metadata,
-            'common_cols_dtypes_simplified_equality': common_cols_dtypes_simplified_equality,
-            'common_cols_dtypes_simplified_df': common_cols_dtypes_simplified_metadata['dtypes_df'],
-        }
+        equality_metadata['variables'].update(
+            {'common_cols_dtypes_simplified': common_cols_dtypes_simplified}
+        )
 
-        if after_simp_equality is True:
-            return _returner_for_compare(
-                equality_full=False,
-                equality_partial=True,
-                equality_metadata=equality_metadata,
-                str_io=str_io,
-                report_print=report_print,
-                report_file_path=report_file_path,
+        if common_cols_dtypes_simplified is True:
+            equality_metadata['variables'].update(
+                {
+                    'common_cols_dtypes_simplified_equality': common_cols_dtypes_simplified_equality,
+                    'common_cols_dtypes_simplified_df': common_cols_dtypes_simplified_df,
+                }
             )
+
+            if after_simp_equality is True:
+                return _returner_for_compare(
+                    equality_full=False,
+                    equality_partial=True,
+                    equality_metadata=equality_metadata,
+                    str_io=str_io,
+                    report_print=report_print,
+                    report_file_path=report_file_path,
+                )
     else:
         f.print_title(
             1,
@@ -601,11 +622,12 @@ def compare(
         # dtypes simplification, dtypes comparison and testing equality afterwards
         # *************************************************************************
         (
+            common_cols_post_round_dtypes_simplified,
             after_round_and_simp_equality,
             df1_common,
             df2_common,
-            common_cols_dtypes_simplified_post_round_equality,
-            common_cols_dtypes_simplified_post_round_metadata,
+            common_cols_post_round_dtypes_simplified_equality,
+            common_cols_post_round_dtypes_simplified_df,
         ) = _dtypes_simp_and_eqlty_check(
             df1=df1_common,
             df2=df2_common,
@@ -615,23 +637,30 @@ def compare(
             str_io=str_io,
         )
 
-        equality_metadata = {
-            **equality_metadata,
-            'common_cols_dtypes_simplified_post_round_equality': common_cols_dtypes_simplified_post_round_equality,
-            'common_cols_dtypes_simplified_post_round_df': common_cols_dtypes_simplified_post_round_metadata[
-                'dtypes_df'
-            ],
-        }
+        equality_metadata['variables'].update(
+            {
+                'common_cols_post_round_dtypes_simplified': common_cols_post_round_dtypes_simplified,
+            }
+        )
 
-        if after_round_and_simp_equality is True:
-            return _returner_for_compare(
-                equality_full=False,
-                equality_partial=True,
-                equality_metadata=equality_metadata,
-                str_io=str_io,
-                report_print=report_print,
-                report_file_path=report_file_path,
+        if common_cols_post_round_dtypes_simplified is True:
+
+            equality_metadata['variables'].update(
+                {
+                    'common_cols_post_round_dtypes_simplified_equality': common_cols_post_round_dtypes_simplified_equality,
+                    'common_cols_post_round_dtypes_simplified_df': common_cols_post_round_dtypes_simplified_df,
+                }
             )
+
+            if after_round_and_simp_equality is True:
+                return _returner_for_compare(
+                    equality_full=False,
+                    equality_partial=True,
+                    equality_metadata=equality_metadata,
+                    str_io=str_io,
+                    report_print=report_print,
+                    report_file_path=report_file_path,
+                )
 
     # MARK: COMPARE VALUES
     # Comparing values
@@ -664,14 +693,15 @@ def compare(
     f.print_event(1, f'😓 Not equal rows (count={len(rows_diff_list_sorted)}):', file=str_io)
     f.pprint_wrap(1, pd_format.obj_as_sorted_list(rows_diff_list_sorted), stream=str_io)
 
-    equality_metadata = {
-        **equality_metadata,
-        'equality_df': equality_df,
-        'cols_equal_list_sorted': cols_equal_list_sorted,
-        'rows_equal_list_sorted': rows_equal_list_sorted,
-        'cols_diff_list_sorted': cols_diff_list_sorted,
-        'rows_diff_list_sorted': rows_diff_list_sorted,
-    }
+    equality_metadata['variables'].update(
+        {
+            'equality_df': equality_df,
+            'cols_equal_list_sorted': cols_equal_list_sorted,
+            'rows_equal_list_sorted': rows_equal_list_sorted,
+            'cols_diff_list_sorted': cols_diff_list_sorted,
+            'rows_diff_list_sorted': rows_diff_list_sorted,
+        }
+    )
 
     # MARK: JOINED DF
     # Creating joined_df
@@ -689,10 +719,7 @@ def compare(
         .sort_index(axis=1, level=0, sort_remaining=False)
     )
 
-    equality_metadata = {
-        **equality_metadata,
-        'joined_df': joined_df,
-    }
+    equality_metadata['variables'].update({'joined_df': joined_df})
 
     # MARK: EXCEL
     # Saving to Excel
@@ -748,10 +775,11 @@ def compare(
             datetime_rpl_str=xls_datetime_rpl,
         )
 
-        equality_metadata = {
-            **equality_metadata,
-            'xls_path': xls_path,
-        }
+        equality_metadata['variables'].update(
+            {
+                'xls_path': f'{os.getcwd()}/{xls_path}',
+            }
+        )
 
     # MARK: RETURN
     return _returner_for_compare(
