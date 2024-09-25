@@ -48,14 +48,17 @@ def compare_lists(
     Returns
     -------
     tuple[bool, dict]
-        - tuple[0]: True or False if lists are equal.
-        - tuple[1]: Metadata dict. This contains:
-          - 'list_common_set': set. Items in both lists.
-          - 'list_1_excl_set': set. Items only present in list_1.
-          - 'list_2_excl_set': set. Items only present in list_2.
-          - 'list_1_dups_dict': dict(item:count). Items duplicated in list_1 with their respective count.
-          - 'list_2_dups_dict': dict(item:count). Items duplicated in list_2 with their respective count.
-          - 'report': str. The generated report, this stores the report even if it wasn't shown when executing this function.
+        Explanation:
+        - <b>tuple[0]</b>: True or False if lists are equal.
+        - <b>tuple[1]</b>: Metadata dict. This contains:
+            <ul>
+                <li><b>'list_common_set'</b>: set. Items in both lists.</li>
+                <li><b>'list_1_excl_set'</b>: set. Items only present in list_1.</li>
+                <li><b>'list_2_excl_set'</b>: set. Items only present in list_2.</li>
+                <li><b>'list_1_dups_dict'</b>: dict(item:count). Items duplicated in list_1 with their respective count.</li>
+                <li><b>'list_2_dups_dict'</b>: dict(item:count). Items duplicated in list_2 with their respective count.</li>
+                <li><b>'report'</b>: str. The generated report, this stores the report even if it wasn't shown when executing this function.</li>
+            </ul>
 
     Raises
     ------

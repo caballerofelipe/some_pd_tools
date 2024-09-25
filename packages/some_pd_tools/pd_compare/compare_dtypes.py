@@ -52,13 +52,19 @@ def compare_dtypes(
     Returns
     -------
     tuple[bool, dict]
-        - tuple[0]: True if all dtypes equal, False if not.
-        - tuple[1]: Metadata dict. This contains:
-          - 'dtypes_df': DataFrame. A DataFrame where the index is the analyzed column and the following 3 columns:
-            1. 'different' representing wether the column is different or not in both input DataFrames (True means different, False means equal).
-            2. {df1_name} (stated name for first DataFrame): the dtype for the given column in df1.
-            3. {df2_name} (stated name for second DataFrame): the dtype for the given column in df2.
-          - 'report': str. The report, useful in case the param `report` is False.
+        Explanation:
+        - <b>tuple[0]</b>: True if all dtypes equal, False if not.
+        - <b>tuple[1]</b>: Metadata dict. This contains:
+            <ul>
+                <li><b>'dtypes_df'</b>: DataFrame. A DataFrame where the index is the analyzed column and the following 3 columns:
+                    <ol>
+                        <li><b>'different'</b> representing wether the column is different or not in both input DataFrames (True means different, False means equal).</li>
+                        <li><b>{df1_name}</b> (stated name for first DataFrame): the dtype for the given column in df1.</li>
+                        <li><b>{df2_name}</b> (stated name for second DataFrame): the dtype for the given column in df2.</li>
+                    </ol>
+                </li>
+                <li><b>'report'</b>: str. The report, useful in case the param `report` is False.</li>
+            </ul>
 
     Raises
     ------

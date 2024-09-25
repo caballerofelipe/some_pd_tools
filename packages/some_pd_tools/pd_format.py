@@ -49,9 +49,9 @@ def _series_number_separators(
 ) -> pd.Series:
     """Transform a Series adding a thousands separator. Optionally modifies the thousands and decimals separator.
 
-    Important (1): This transforms a numeric series to dtype 'object' and each cell is a string.
+    **Important (1)**: This transforms a numeric series to dtype 'object' and each cell is a string.
 
-    Important (2): For floats, this uses String Formatting Operations. The formatting is like this: `f'{x:,f}'` and from the documentation: "The precision determines the number of significant digits before and after the decimal point and defaults to 6." So keep in mind that this will round to 6 digits. If you need a different precision use the precision parameter.
+    **Important (2)**: For floats, this uses String Formatting Operations. The formatting is like this: `f'{x:,f}'` and from the documentation: "The precision determines the number of significant digits before and after the decimal point and defaults to 6." So keep in mind that this will round to 6 digits. If you need a different precision use the precision parameter.
     See: https://docs.python.org/2/library/stdtypes.html#string-formatting-operations .
 
     See https://stackoverflow.com/a/69190425/1071459 .
@@ -133,10 +133,9 @@ def number_separators(
 ) -> pd.DataFrame | pd.Series:
     """Transform a DataFrame or Series adding a thousands separator and optionally modifying it and the decimals separator.
 
-    Important (1): This transforms a numeric series to dtype 'object' and each cell is a string.
+    **Important (1)**: This transforms a numeric series to dtype 'object' and each cell is a string.
 
-    Important (2): For floats, this uses String Formatting Operations. The formatting is like this: `f'{x:,f}'` and from the documentation: "The precision determines the number of significant digits before and after the decimal point and defaults to 6." So keep in mind that this will round to 6 digits. If you need a different precision use the precision parameter.
-    See: https://docs.python.org/2/library/stdtypes.html#string-formatting-operations .
+    **Important (2)**: For floats, this uses String Formatting Operations. The formatting is like this: `f'{x:,f}'` and from the documentation: "The precision determines the number of significant digits before and after the decimal point and defaults to 6." So keep in mind that this will round to 6 digits. If you need a different precision use the precision parameter. See: https://docs.python.org/2/library/stdtypes.html#string-formatting-operations .
 
     Parameters
     ----------
@@ -185,12 +184,12 @@ def approximate(
     df : pd.DataFrame
         The DataFrame to be approximated.
     round_to : None | int | str, optional
-        Possible values:
-        - None: nothing is done.
-        - 'int': rounds floating numbers to this decimal.
-        - 'floor': does a floor operation on floats columns. Uses np.floor. From np.floor's documentation: "The floor of the scalar x is the largest integer i, such that i <= x."
-        - 'ceil': does a ceil operation on floats columns. Uses np.ceil. From np.ceil's documentation: "The ceil of the scalar x is the smallest integer i, such that i >= x.".
-        - 'trunc': removes decimals from floats columns. Uses np.trunc. From np.trunc's documentation: "The truncated value of the scalar x is the nearest integer i which is closer to zero than x is.".
+        The way to approximate, by default None. Possible values and their meaning:
+        - **None**: nothing is done.
+        - **'int'**: rounds floating numbers to this decimal.
+        - **'floor'**: does a floor operation on floats columns. Uses np.floor. From np.floor's documentation: "The floor of the scalar x is the largest integer i, such that i <= x."
+        - **'ceil'**: does a ceil operation on floats columns. Uses np.ceil. From np.ceil's documentation: "The ceil of the scalar x is the smallest integer i, such that i >= x.".
+        - **'trunc'**: removes decimals from floats columns. Uses np.trunc. From np.trunc's documentation: "The truncated value of the scalar x is the nearest integer i which is closer to zero than x is.".
 
     Returns
     -------
@@ -291,7 +290,7 @@ def trunc(df: pd.DataFrame | pd.Series) -> pd.DataFrame:
 def simplify_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     """Allows to simplify dtypes, for instance, pass from float64 to int64 if no decimals are present.
 
-    Doesn't convert to a dtype that supports pd.NA, like `DataFrame.convert_dtypes()` although it uses it. See https://github.com/pandas-dev/pandas/issues/58543#issuecomment-2101240339 . It might create a performance impact but this hasn't been tested.
+    Doesn't convert to a dtype that supports pd.NA, like `DataFrame.convert_dtypes()` although it uses it. See https://github.com/pandas-dev/pandas/issues/58543#issuecomment-2101240339 . It might create a performance impact (not tested).
 
     Parameters
     ----------
