@@ -23,7 +23,7 @@ The next section (**The Report**) explains what happens in each part of the repo
 For each Title the following is explained:
 - **What is done.**
 - **Metadata ['variables']**: the variables added while doing the comparison.
-- **Flow considerations**: if the function will return, if it will go to a specific Title or if the flow will continue.
+- **Logic considerations**: if the function will return, if it will go to a specific Title or if the flow will continue.
 
 About **Metadata ['variables']**:
 - If the function hits a `return` the following variables are not created (each title is shown as a header).
@@ -42,7 +42,7 @@ About **Metadata ['variables']**:
 ## Equality Check (full)
 - **What is done**: Checks wether the two DataFrames are equal or not, **note** that columns and indexes are ordered before doing the comparison.
 - **Metadata ['variables']**: No variables created.
-- **Flow considerations**: Depending on the equality result:
+- **Logic considerations**: Depending on the equality result:
 	- `True`: shows **Returning (\<bool>[equality_full], \<bool>[equality_partial], dict[equality_metadata])** and then returns:
 	  ```python
 		True,
@@ -68,8 +68,8 @@ About **Metadata ['variables']**:
 	- **cols_df2_dups_dict**: dict(column:count). Columns duplicated in df2 with their respective count.
 	- **cols_df1_dups_common_dict**: dict(column:count). Columns duplicated in df1 **that also exist in df2** with their respective count.
 	- **cols_df2_dups_common_dict**: dict(column:count). Columns duplicated in df2 **that also exist in df1** with their respective count.
-	- **error**: str. If there are column duplicates, read on **Flow considerations**.
-- **Flow considerations**:
+	- **error**: str. If there are column duplicates, read on **Logic considerations**.
+- **Logic considerations**:
 	- If there are duplicate columns in either DataFrame that appear in the other DataFrame, the function will return and an error will be added to the report and as a key to the 'variables' section of the metadata returned. Shows the title **Returning (\<bool>[equality_full], \<bool>[equality_partial], dict[equality_metadata])** and then returns:
 	  ```python
 	  False,
@@ -95,8 +95,8 @@ About **Metadata ['variables']**:
 	- **cols_df2_dups_dict**: dict(index:count). Indexes duplicated in df2 with their respective count.
 	- **cols_df1_dups_common_dict**: dict(index:count). Indexes duplicated in df1 **that also exist in df2** with their respective count.
 	- **cols_df2_dups_common_dict**: dict(index:count). Indexes duplicated in df2 **that also exist in df1** with their respective count.
-	- **error**: str. If there are index duplicates, read on **Flow considerations**.
-- **Flow considerations**:
+	- **error**: str. If there are index duplicates, read on **Logic considerations**.
+- **Logic considerations**:
 	- If there are duplicate indexes in either DataFrame that appear in the other DataFrame, the function will return and an error will be added to the report and as a key to the 'variables' section of the metadata returned. Shows the title **Returning (\<bool>[equality_full], \<bool>[equality_partial], dict[equality_metadata])** and then returns:
 	  ```python
 	  False,
@@ -118,14 +118,14 @@ About **Metadata ['variables']**:
 	- The variables created in this part are used from this point on and replace df1 and df2. These variables include only the common columns and indexes that exist in both DataFrames.
 	- **But** if all columns and indexes exist in both DataFrames (A.K.A. their columns and indexes are equal) these variables seem redundant and *yes they are*. However, this is on purpose to avoid having to select common columns and indexes in the rest of the code (if not all columns and indexes are equal in both DataFrames), so this is to keep following code cleaner.
 	- **df1_common** and **df2_common** might be changed in next steps to try to compare them according to specific conditions. Read on.
-- **Flow considerations**:
+- **Logic considerations**:
 	- If all columns and indexes are **not** equal, the flow continues to **Equality check for common columns and indexes** since we want to check if the two DataFrames are equal if we only take into consideration the same columns and indexes in both.
 	- If all columns and indexes are equal in the two DataFrames, the flow continues to title **Comparing column dtypes** since we know all columns and indexes are equal and we don't need to redo the same comparison made in the beginning (in **Equality Check (full)**).
 
 ## Equality check (for common columns and indexes)
 - **What is done**: Checks wether the two DataFrames are equal or not, selecting only the columns and indexes that are equal in the two DataFrames, **note** that columns and indexes are ordered before doing the comparison.
 - **Metadata ['variables']**: No variables added.
-- **Flow considerations**: Depending on the equality result:
+- **Logic considerations**: Depending on the equality result:
 	- `True`: shows **Returning (\<bool>[equality_full], \<bool>[equality_partial], dict[equality_metadata])** and then returns:
 	  ```python
 	  False,
@@ -146,21 +146,21 @@ About **Metadata ['variables']**:
 		1. 'different' representing wether the column is different or not in both input DataFrames (True means different, False means equal).
 		2. {df1_name} (stated name for first DataFrame): the dtype for the given column in df1.
 		3. {df2_name} (stated name for second DataFrame): the dtype for the given column in df2.
-- **Flow considerations**:
+- **Logic considerations**:
 	- If all dtypes are equal (**common_cols_dtypes_equality** is True), we know that the two DataFrame must have different values since the dtypes are equal. All bellow sections starting with "CCD / " are omitted.
 	- If there are different dtypes, the function will try simplifying them in **CCD / Since dtypes are different, will try to simplify**.
 
 ### CCD / Since dtypes are different, will try to simplify
 - **What is done**: Does nothing, this is only a message stating that the function will try to simplify the dtypes.
 - **Metadata ['variables']**: No variables added.
-- **Flow considerations**: Flow continues to next **CCD / Trying to simplify dtypes**.
+- **Logic considerations**: Flow continues to next **CCD / Trying to simplify dtypes**.
 
 ### CCD / Trying to simplify dtypes
 - **What is done**: Tries to simplify the dtypes of both DataFrames using `pd_format.simplify_dtypes()`. The goal is to make dtypes as simple as possible and then check if the two DataFrames are equal (in another title), meaning the values are equal but not considered equal because of different dtypes.
 - **Metadata ['variables']**:
 	- **common_cols_dtypes_simplified**: bool. True if dtypes was simplified, False otherwise.
 	- If the dtypes of their columns was simplified (**common_cols_dtypes_simplified** is True), modifies **df1_common** and **df2_common**.
-- **Flow considerations**:
+- **Logic considerations**:
 	- If dtypes could not be simplified (message "✅ No dtypes changed") all remaining "CCD / " titles are skipped.
 	- If dtypes could be simplified the function shows **CCD / Comparing column dtypes**.
 
@@ -172,19 +172,19 @@ About **Metadata ['variables']**:
 		1. 'different' representing wether the column is different or not in both input DataFrames (True means different, False means equal).
 		2. {df1_name} (stated name for first DataFrame): the dtype for the given column in df1.
 		3. {df2_name} (stated name for second DataFrame): the dtype for the given column in df2.
-- **Flow considerations**:
+- **Logic considerations**:
 	- If all simplified dtypes are **not** equal, continues to **CCD / Skipping equality check (since dtypes are not equal)**.
 	- If all simplified dtypes are equal, continues to **CCD / Equality check (since dtypes are now equal)**.
 
 ### CCD / Skipping equality check (since dtypes are not equal)
 - **What is done**: Does nothing, this is only a message to explain that an equality check is not useful at this point since the dtypes are different and an equality would return False.
 - **Metadata ['variables']**: No variables added.
-- **Flow considerations**: Skip remaining "CCD / " titles.
+- **Logic considerations**: Skip remaining "CCD / " titles.
 
 ### CCD / Equality check (since dtypes are now equal)
 - **What is done**: Checks wether the two modified DataFrames are equal or not.
 - **Metadata ['variables']**: No variables created.
-- **Flow considerations**: Depending on the equality result:
+- **Logic considerations**: Depending on the equality result:
 	- `True`: shows **Returning (\<bool>[equality_full], \<bool>[equality_partial], dict[equality_metadata])** and then returns:
 	  ```python
 		False,
@@ -204,7 +204,7 @@ About **Metadata ['variables']**:
 	- **cleil**: ceils floats (e.g. 1.8 is transformed to 2).
 	- **trunc**: removes the decimal part from numbers (e.g. 1.8 is transformed to 1).
 - **Metadata ['variables']**: **df1_common** and **df2_common** might be changed if they contain floats.
-- **Flow considerations**:
+- **Logic considerations**:
 	- After the rounding, the function will try to simplify the dtypes in **ROUNDING / Trying to simplify dtypes**.
 	- If the rounding had no effect the simplification will have no effect.
 
@@ -213,7 +213,7 @@ About **Metadata ['variables']**:
 - **Metadata ['variables']**:
 	- **common_cols_post_round_dtypes_simplified**: bool. True if dtypes was simplified, False otherwise.
 	- If the dtypes of their columns was simplified (**common_cols_post_round_dtypes_simplified** is True), modifies **df1_common** and **df2_common**.
-- **Flow considerations**:
+- **Logic considerations**:
 	- If dtypes could not be simplified (message "✅ No dtypes changed") all remaining "ROUNDING / " titles are skipped.
 	- If dtypes could be simplified the function shows **ROUNDING / Comparing column dtypes**.
 
@@ -225,19 +225,19 @@ About **Metadata ['variables']**:
 		1. 'different' representing wether the column is different or not in both input DataFrames (True means different, False means equal).
 		2. {df1_name} (stated name for first DataFrame): the dtype for the given column in df1.
 		3. {df2_name} (stated name for second DataFrame): the dtype for the given column in df2.
-- **Flow considerations**:
+- **Logic considerations**:
 	- If all simplified dtypes are **not** equal, continues to **ROUNDING / Skipping equality check (since dtypes are not equal)**.
 	- If all simplified dtypes are equal, continues to **ROUNDING / Equality check (since dtypes are now equal)**.
 
 ### ROUNDING / Skipping equality check (since dtypes are not equal)
 - **What is done**: Does nothing, this is only a message to explain that an equality check is not useful at this point since the dtypes are different and an equality would return False.
 - **Metadata ['variables']**: No variables added.
-- **Flow considerations**: Skip remaining "ROUNDING / " titles.
+- **Logic considerations**: Skip remaining "ROUNDING / " titles.
 
 ### ROUNDING / Equality check (since dtypes are now equal)
 - **What is done**: Checks wether the two modified DataFrames are equal or not.
 - **Metadata ['variables']**: No variables created.
-- **Flow considerations**: Depending on the equality result:
+- **Logic considerations**: Depending on the equality result:
 	- `True`: shows **Returning (\<bool>[equality_full], \<bool>[equality_partial], dict[equality_metadata])** and then returns:
 	  ```python
 		False,
@@ -259,7 +259,7 @@ About **Metadata ['variables']**:
 	- **cols_diff_list_sorted**: list. Contains a sorted list of all columns that are **not** equal in the two DataFrames (at least one cell is different).
 	- **rows_diff_list_sorted**: list. Contains a sorted list of all rows that are **not** equal in the two DataFrames (at least one cell is different).
 	- **joined_df**: DataFrame. A DataFrame containing the values from **df1_common**, **df2_common** and columns containing a boolean stating if a cell in the two DataFrames is different. This DataFrame has a column MultiIndex, the first index is the column to be compared, for every compared column the second index has three columns: the values from the column in **df1_common** (using df1_name as column name), the values from the column in **df2_common** (using df2_name as column name) and a column called **different** where True means the given cells are different and False otherwise.
-- **Flow considerations**: Flow continues to next title.
+- **Logic considerations**: Flow continues to next title.
 
 ## Creating Excel (\<file location>)
 - **What is done**: This is an optional operation done when setting the `xls_path` parameter, it creates an Excel file. These are the parameters that can be changed on the function call:
@@ -271,7 +271,7 @@ About **Metadata ['variables']**:
 	- **xls_datetime_rpl**: str. A string containing the format to be used for a column with a datetime64 dtype, useful to have a specific format for dates in Excel.
 - **Metadata ['variables']**:
 	- **xls_path**: str. The full path to the created Excel file.
-- **Flow considerations**: Flow continues to next title.
+- **Logic considerations**: Flow continues to next title.
 
 ## Saving report file (\<file location>)
 - **What is done**: This is an optional operation done when setting the `report_file_path` parameter, it creates an file containing the report created by the function. These are the parameters that can be changed on the function call:
@@ -279,9 +279,9 @@ About **Metadata ['variables']**:
 	- **report_file_overwrite**: bool. Defines if an existing file should be overwritten. True overwrites, False raises an exception if the file exists.
 - **Metadata ['variables']**:
 	- **report_file_path**: str. The full path to the created report file.
-- **Flow considerations**: Flow continues to next title.
+- **Logic considerations**: Flow continues to next title.
 
 ## Returning (\<bool>[equality_full], \<bool>[equality_partial], dict[equality_metadata])
 - **What is done**: This states that the function is returning.
 - **Metadata ['variables']**: No variables created.
-- **Flow considerations**: This ends the function.
+- **Logic considerations**: This ends the function.
