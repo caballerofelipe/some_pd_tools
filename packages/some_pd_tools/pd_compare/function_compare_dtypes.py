@@ -4,7 +4,7 @@ from contextlib import redirect_stdout
 import pandas as pd
 
 from . import report_formatting as f
-from .compare_lists import compare_lists
+from .function_compare_lists import compare_lists
 
 
 def compare_dtypes(

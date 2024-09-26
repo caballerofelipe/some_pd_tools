@@ -6,9 +6,9 @@ import pandas as pd
 
 from .. import pd_format
 from . import report_formatting as f
-from .compare_dtypes import compare_dtypes
-from .compare_lists import compare_lists
-from .compute_equality_df import compute_equality_df
+from .function_compare_dtypes import compare_dtypes
+from .function_compare_lists import compare_lists
+from .function_compute_equality_df import compute_equality_df
 
 __all__ = [
     'compare',
