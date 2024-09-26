@@ -212,37 +212,98 @@ def compare(
     xls_compare_str_diff: str = '*_diff_*',
     xls_fixed_cols: None | list = None,
     xls_datetime_rpl: str = '%Y-%m-%d %H:%M:%S',
-):
-    '''
-    Some notes for documenting:
-    - This functions is a little messy but I think: "doing something that works is better than not doing something perfect". There's room for improvement that might or might not come.
-    - The whole goal of this function is to find differences in DataFrames, once they are found to be equal, the comparison stops.
+) -> tuple[bool, bool, dict]:
+    """Compares two DataFrames, creates a report and returns useful information
+    (see the 
+    "Returns" 
+    section).
+
+    **When is this function useful**: This function should be run when `df1.equals(df2)` is False, but if that returns True, there is no use for this function.
+    
+    **Columns and indexes are sorted initially**: The function's initial step is to sort the columns and rows of both DataFrames to do all further comparisons, it then internally does `df1.equals(df2)` with the sorted columns and rows. The sorting is done like `df.sort_index(axis=0).sort_index(axis=1)` which sorts by labels.
+
+    **Important**: Duplicate indexes and columns are not allowed, UNLESS `df1_cp.equals(df2_cp)` is True, which means everything is equal.
+
+    **Further reading**: This docstring contains documentation for this function but for an explanation of what is returned but see [this link](https://github.com/caballerofelipe/some_pd_tools/blob/main/Report\\%20and\\%20logic\\%20explanation\\%20for\\%20pd_compare.compare.md) to understand what the report shows, the logic behind it and what is returned.
+
+    **Some notes**:
+    - The whole goal of this function is to find differences in DataFrames, once they are found to be equal, the comparison stops. While looking for differences a report is created that will be printed (optionally), returned and saved to a file (optionally).
     - The report is the main focus of this function. The goal is to provide insight into how the DataFrames differ (if they do) the usage of the returned tuple might not be needed. However, if more information is needed or could be useful, the variables provided in the metadata might help.
     - This function is meant to be called interactively, possibly using Jupyter. It isn't meant to be run as a verification function, although it can be used like that, than might not be advised depending on the specific situation. The function will return a tuple of 3. In the returned tuple:
         - The first element will return True if everything is equal in the two DataFrame, this uses df1.equals(df2) but using the sorted columns and indexes.
         - The second element will return True if after some modification in the two DataFrames, everything is equal. This check happens after several points in the comparison process.
         - The third element will return metadata. This metadata depends on where in the function it was returned. The metadata is returned if the two DataFrames are equal, after some transformation. Or it is returned at the end of the function. The metadata values should be obtained with `.get()` since metadata is a dict and the key might not exist at a given point when returned.
-    - This function should be ran when df1.equals(df2) is False. It initially sorts the columns and rows of both DataFrames to do all comparisons.
-    - The order of columns and indexes are not taken into account. Columns and indexes are sorted using
-        `.sort_index(axis=0).sort_index(axis=1)`
-    - Duplicate indexes and columns are not allowed, UNLESS `if df1_cp.equals(df2_cp)` is True, which means everything is equal.
-    - When returning, if an equality is returned, use the functions to get to the point where equality was obtained.
-    - fixed_cols must exist in both DataFrames, if not, an exception is raised.
-    - Examples:
-        - Returned Metadata: Using metadata, examples. Notation: when wanting to use `joined_df`, either do `metadata['joined_df']` or previously save that to a `joined_df` variable like this: `joined_df = metadata['joined_df']`.
-        - To see only different columns and rows, do `joined_df.loc[rows_diff_list_sorted, cols_diff_list_sorted]`.
-        - To see only equal columns and rows, do `joined_df.loc[rows_equal_list_sorted, cols_equal_list_sorted]`.
-    - joined_df is returned to allow to see the differences of the two DataFrames in one DataFrame. This new DataFrame only takes into account the rows and columns (indexes and columns) that are common to the two DataFrames to be compared. Its structure is as follows:
-        - It has a column MultiIndex. The first level represent the name of the given column. The second level represents the values. Read on to understand the whole structure.
-        - Every column is sorted by its name as the first index. The second index has three columns:
-            - The first and second columns correspond to the DataFrames' name provided by `df1_name` and `df2_name` (or their default values).
-            - The third column named 'difference' states wether the column is different or not by a boolean True or False.
-    - The Excel created by path is similar to joined_df. This Excel file is useful to have a look at the data and play with it without having to program to do so. It differs in the following:
-        - If used, `xls_fixed_cols`, creates a set of fixed columns in the beginning of the Excel file. These columns are fixed like when using 'Freeze panes' on Excel directly.
-        - Because of the MultiIndex, there are 3 rows at the top, 2 of those are the first and second index. The third row is empty but could be used to the index name (rows' name).
-        - The second row has a filter (or AutoFilter).
-        - This function's parameters `xls_compare_str_equal` and `xls_compare_str_diff` can configure how differences are shown. The default for `xls_compare_str_equal` is an empty string and the default for `xls_compare_str_diff` is a '*_diff_*' string which makes it easy to use Find in Excel to locate differences. These parameters can be any string according to the user's needs.
-    '''
+
+    *A final note*: This functions is a little messy but I think: "doing something that works is better than not doing something perfect". There's room for improvement that might or might not be done in the future.
+
+    Parameters
+    ----------
+    df1 : pd.DataFrame
+        The first DataFrame to compare.
+    df2 : pd.DataFrame
+        The second DataFrame to compare.
+    df1_name : str, optional
+        The name to show in the report for the first DataFrame, by default 'df1'.
+    df2_name : str, optional
+        The name to show in the report for the second DataFrame, by default 'df2'.
+    round_to : None | int | str, optional
+        The way to approximate, by default None. Possible values and their meaning:
+        - **None**: nothing is done.
+        - **'int'**: rounds floating numbers to this decimal.
+        - **'floor'**: does a floor operation on floats columns. Uses np.floor. From np.floor's documentation: "The floor of the scalar x is the largest integer i, such that i <= x."
+        - **'ceil'**: does a ceil operation on floats columns. Uses np.ceil. From np.ceil's documentation: "The ceil of the scalar x is the smallest integer i, such that i >= x.".
+        - **'trunc'**: removes decimals from floats columns. Uses np.trunc. From np.trunc's documentation: "The truncated value of the scalar x is the nearest integer i which is closer to zero than x is.".
+    report_print : bool, optional
+        Whether to print a report when the function ends, by default True.
+    report_file_path : None | str, optional
+        If set to a string, saves the report to the specified file, by default None.
+    report_file_overwrite : bool, optional
+        Whether to overwrite the specified path (when using report_file_path), by default False.
+    show_common_cols : bool, optional
+        Whether to show the common columns between the two compared DataFrames, by default False.
+    show_common_idxs : bool, optional
+        Whether to show the common indexes between the two compared DataFrames, by default False.
+    show_all_dtypes : bool, optional
+        For common columns, whether to show the columns that have the same dtype in the report, by default False.
+    xls_path : None | str, optional
+        If set to a string, creates an Excel file to the specified file, by default None.
+    xls_overwrite : bool, optional
+        Whether to overwrite the specified path (when using xls_overwrite), by default False.
+    xls_compare_str_equal : str, optional
+        A string to be placed inside a cell in the Excel file when both DataFrames contain the same value. Useful to know what cells are equal in the two DataFrames, by default empty. Can be used with the *find* function in Excel. By default ''.
+    xls_compare_str_diff : str, optional
+        A string to be placed inside a cell in the Excel file when the cell's value in the tow DataFrames is different. Useful to know what cells are different in the two DataFrames, by default "`*_diff_*`". Can be used with the *find* function in Excel. By default '*_diff_*'.
+    xls_fixed_cols : None | list, optional
+        A list of str containing columns that will be fixed in the generated Excel file. The columns in the list must exist in both DataFrames. By default None.
+    xls_datetime_rpl : _type_, optional
+        A string containing the format to be used for a column with a datetime64 dtype, useful to have a specific format for dates in Excel, by default '%Y-%m-%d %H:%M:%S'.
+
+    Returns
+    -------
+    tuple[bool, bool, dict]
+        Next is an explanation of what is returned but see [this link](https://github.com/caballerofelipe/some_pd_tools/blob/main/Report\\%20and\\%20logic\\%20explanation\\%20for\\%20pd_compare.compare.md) to understand what the report shows, the logic behind it and what is returned in the key 'variables' of the third tuple; this information was left out of this docstring to avoid too much information.
+        - <b>tuple[0]</b>: bool. Checks for full equality for the two DataFrames **after** sorting columns and indexes.
+            <ul>
+                <li><b>True</b> if the two compared DataFrames are completely equal.</li>
+                <li><b>False</b> otherwise.</li>
+            </ul>
+        - <b>tuple[1]</b>: bool. Checks for full equality for the two DataFrames **after** some operation done to them, see below for explanation of which operations are done.
+            <ul>
+                <li><b>True</b> if the two compared DataFrames are equal after some operation.</li>
+                <li><b>False</b> otherwise.</li>
+            </ul>
+        - <b>tuple[2]</b>: dict. Metadata useful to keep track of what was done during the comparison:
+            <ul>
+                <li><b>['params']</b>: The list of parameters used in the function call.</li>
+                <li><b>['variables']</b>: Some inner variables useful to keep track of what happened in the comparison and have information on what is different.</li>
+                <li><b>['report']</b>: The same report, useful if the report wasn't printed (`report_print` == False) or to do something with it.</li>
+            </ul>
+
+    Raises
+    ------
+    ValueError
+        Parameters are reviewed and an ValueError is raised if they don't have the specified values. No further documentation added to avoid too much information.
+    """
     equality_metadata = {
         'params': {
             'df1': df1,
