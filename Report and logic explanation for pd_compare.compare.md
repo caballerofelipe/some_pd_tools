@@ -285,3 +285,406 @@ About **Metadata ['variables']**:
 - **What is done**: This states that the function is returning.
 - **Metadata ['variables']**: No variables created.
 - **Logic considerations**: This ends the function.
+
+# Example
+
+## DataFrames
+To create the DataFrames for these examples, do:
+```python
+df1 = pd.DataFrame(
+    {
+        'col_int': [1000, -2000, 3000, -4000000],
+        'col_float': [-3333.3333333333, 4444.4444444444, -5555.5555555555, 6666.6666666666],
+        'col_str': ['a', 'b', 'c', '4444.4444444444'],
+        'col_nan': [float('nan'), float('nan'), float('nan'), 8888.8888],
+        'col_strnan': ['d', 'e', 'f', float('nan')],
+        'col_df1extra': [5, 6, 7, 'i'],
+    }
+)
+df2 = pd.DataFrame( # Important: dtype forced to 'object'
+    {
+        'col_int': ['3000endstr', '1000endstr', '-2000endstr', '-4000000endstr'],
+        'col_float': [-5555.5555555555, -3333.3333333333, 4444.4444444444, 6666.6666666666],
+        'col_str': ['c', 'a', 'b', '4444.4444444444'],
+        'col_nan': [float('nan'), float('nan'), float('nan'), 8888.8888],
+        'col_strnan': ['f', 'd', 'e', float('nan')],
+        'col_df2extra': ['j', 'k', 'l', 45],
+    },
+    dtype='object',
+)
+```
+
+### df1
+<table class="dataframe"> <thead> <tr> <th></th> <th>col_int</th> <th>col_float</th> <th>col_str</th> <th>col_nan</th> <th>col_strnan</th> <th>col_df1extra</th> </tr> </thead> <tbody> <tr> <th>0</th> <td>1000</td> <td>-3333.333333</td> <td>a</td> <td>NaN</td> <td>d</td> <td>5</td> </tr> <tr> <th>1</th> <td>-2000</td> <td>4444.444444</td> <td>b</td> <td>NaN</td> <td>e</td> <td>6</td> </tr> <tr> <th>2</th> <td>3000</td> <td>-5555.555556</td> <td>c</td> <td>NaN</td> <td>f</td> <td>7</td> </tr> <tr> <th>3</th> <td>-4000000</td> <td>6666.666667</td> <td>4444.4444444444</td> <td>8888.8888</td> <td>NaN</td> <td>i</td> </tr> </tbody> </table>
+
+### df2
+<table class="dataframe"> <thead> <tr> <th></th> <th>col_int</th> <th>col_float</th> <th>col_str</th> <th>col_nan</th> <th>col_strnan</th> <th>col_df2extra</th> </tr> </thead> <tbody> <tr> <th>0</th> <td>3000endstr</td> <td>-5555.555556</td> <td>c</td> <td>NaN</td> <td>f</td> <td>j</td> </tr> <tr> <th>1</th> <td>1000endstr</td> <td>-3333.333333</td> <td>a</td> <td>NaN</td> <td>d</td> <td>k</td> </tr> <tr> <th>2</th> <td>-2000endstr</td> <td>4444.444444</td> <td>b</td> <td>NaN</td> <td>e</td> <td>l</td> </tr> <tr> <th>3</th> <td>-4000000endstr</td> <td>6666.666667</td> <td>4444.4444444444</td> <td>8888.8888</td> <td>NaN</td> <td>45</td> </tr> </tbody> </table>
+
+## Executing `pd_compare.compare()`
+```python
+# returned is a len=3 tuple
+returned = pd_compare.compare(
+    df1,
+    df2,
+    df1_name='first_df',
+    df2_name='second_df',
+    round_to=None,
+    report_print=True,
+    report_file_path=None,
+    report_file_overwrite=False,
+    show_common_cols=True,  # default=False
+    show_common_idxs=True,  # default=False
+    show_all_dtypes=True,  # default=False
+    xls_path=None,
+    xls_overwrite=False,
+    xls_compare_str_equal='',
+    xls_compare_str_diff='*_diff_*',
+    xls_fixed_cols=None,
+    xls_datetime_rpl='%Y-%m-%d %H:%M:%S',
+)
+```
+Prints:
+```
+————————————————————
+# Equality check
+  (full)
+<<< 😡 Not equal >>>
+————————————————————
+# Comparing columns from [first_df] and [second_df]
+> 😓 Columns not equal
+> ✅ Columns lengths match (6)
+> ✅ Columns in common:
+  ['col_float', 'col_int', 'col_nan', 'col_str', 'col_strnan']
+> first_df
+  > 😓 Exclusive columns:
+    ['col_df1extra']
+  > ✅ No duplicates columns
+> second_df
+  > 😓 Exclusive columns:
+    ['col_df2extra']
+  > ✅ No duplicates columns
+————————————————————
+# Comparing indexes from [first_df] and [second_df]
+> ✅ Indexes equal
+> ✅ Indexes in common:
+  [0, 1, 2, 3]
+> ✅ No duplicates indexes
+————————————————————
+# Checking common columns and indexes
+> 😓 Columns and indexes are not equal in the two DataFrames
+> 😈 From this point on, comparing only common columns and indexes
+————————————————————
+# Equality check
+  (for common columns and indexes)
+<<< 😡 Not equal >>>
+————————————————————
+# Comparing column dtypes
+> 😓 Columns have different dtypes
+  |----------|---------|--------|---------|
+  |column    |different|first_df|second_df|
+  |----------|---------|--------|---------|
+  |col_float |    *    |float64 |object   |
+  |col_int   |    *    |int64   |object   |
+  |col_nan   |    *    |float64 |object   |
+  |col_str   |         |object  |object   |
+  |col_strnan|         |object  |object   |
+  |----------|---------|--------|---------|
+————————————————————
+# Since dtypes are different, will try to simplify
+————————————————————
+# Trying to simplify dtypes
+> ✅ first_df... already simplified
+> 😓 second_df... simplified
+> 😓 dtypes changed
+————————————————————
+# Comparing column dtypes
+> 😓 Columns have different dtypes
+  |----------|---------|--------|---------|
+  |column    |different|first_df|second_df|
+  |----------|---------|--------|---------|
+  |col_float |         |float64 |float64  |
+  |col_int   |    *    |int64   |object   |
+  |col_nan   |         |float64 |float64  |
+  |col_str   |         |object  |object   |
+  |col_strnan|         |object  |object   |
+  |----------|---------|--------|---------|
+————————————————————
+# Skipping equality check
+  (since dtypes are not equal)
+————————————————————
+# Comparing values
+  (from this point on, the DataFrames must have at least one different cell)
+> 😓 Not equal columns (count=4):
+  ['col_float', 'col_int', 'col_str', 'col_strnan']
+> 😓 Not equal rows (count=4):
+  [0, 1, 2, 3]
+————————————————————
+# Returning
+  (False[equality_full], False[equality_partial], dict[equality_metadata])
+```
+
+## returned\[2]\['variables']
+
+### returned[2]['variables']['cols_compare_equality']
+False
+
+### returned[2]['variables']['cols_common_set']
+{'col_int', 'col_nan', 'col_float', 'col_str', 'col_strnan'}
+
+### returned[2]['variables']['cols_common_list_sorted']
+['col_float', 'col_int', 'col_nan', 'col_str', 'col_strnan']
+
+### returned[2]['variables']['cols_df1_excl_set']
+{'col_df1extra'}
+
+### returned[2]['variables']['cols_df2_excl_set']
+{'col_df2extra'}
+
+### returned[2]['variables']['cols_df1_dups_dict']
+{}
+
+### returned[2]['variables']['cols_df2_dups_dict']
+{}
+
+### returned[2]['variables']['cols_df1_dups_common_dict']
+{}
+
+### returned[2]['variables']['cols_df2_dups_common_dict']
+{}
+
+### returned[2]['variables']['idxs_compare_equality']
+True
+
+### returned[2]['variables']['idxs_common_set']
+{0, 1, 2, 3}
+
+### returned[2]['variables']['idxs_common_list_sorted']
+[0, 1, 2, 3]
+
+### returned[2]['variables']['idxs_df1_excl_set']
+set()
+
+### returned[2]['variables']['idxs_df2_excl_set']
+set()
+
+### returned[2]['variables']['idxs_df1_dups_dict']
+{}
+
+### returned[2]['variables']['idxs_df2_dups_dict']
+{}
+
+### returned[2]['variables']['idxs_df1_dups_common_dict']
+{}
+
+### returned[2]['variables']['idxs_df2_dups_common_dict']
+{}
+
+### returned[2]['variables']['df1_common']
+<table class="dataframe">
+  <thead>
+    <tr>
+      <th></th>
+      <th>col_float</th>
+      <th>col_int</th>
+      <th>col_nan</th>
+      <th>col_str</th>
+      <th>col_strnan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th><td>-3333.333333</td><td>1000</td><td>NaN</td><td>a</td><td>d</td>
+    </tr>
+    <tr>
+      <th>1</th><td>4444.444444</td><td>-2000</td><td>NaN</td><td>b</td><td>e</td>
+    </tr>
+    <tr>
+      <th>2</th><td>-5555.555556</td><td>3000</td><td>NaN</td><td>c</td><td>f</td>
+    </tr>
+    <tr>
+      <th>3</th><td>6666.666667</td><td>-4000000</td><td>8888.8888</td><td>4444.4444444444</td><td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+
+### returned[2]['variables']['df2_common']
+<table class="dataframe">
+  <thead>
+    <tr>
+      <th></th>
+      <th>col_float</th>
+      <th>col_int</th>
+      <th>col_nan</th>
+      <th>col_str</th>
+      <th>col_strnan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th><td>-5555.555556</td><td>3000endstr</td><td>NaN</td><td>c</td><td>f</td>
+    </tr>
+    <tr>
+      <th>1</th><td>-3333.333333</td><td>1000endstr</td><td>NaN</td><td>a</td><td>d</td>
+    </tr>
+    <tr>
+      <th>2</th><td>4444.444444</td><td>-2000endstr</td><td>NaN</td><td>b</td><td>e</td>
+    </tr>
+    <tr>
+      <th>3</th><td>6666.666667</td><td>-4000000endstr</td><td>8888.8888</td><td>4444.4444444444</td><td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+
+### returned[2]['variables']['common_cols_dtypes_equality']
+False
+
+### returned[2]['variables']['common_cols_dtypes_df']
+<table class="dataframe">
+  <thead>
+    <tr>
+      <th></th>
+      <th>different</th>
+      <th>first_df</th>
+      <th>second_df</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>col_float</th><td style="color:red;">True</td><td>float64</td><td>object</td>
+    </tr>
+    <tr>
+      <th>col_int</th><td style="color:red;">True</td><td>int64</td><td>object</td>
+    </tr>
+    <tr>
+      <th>col_nan</th><td style="color:red;">True</td><td>float64</td><td>object</td>
+    </tr>
+    <tr>
+      <th>col_str</th><td style="color:blue;">False</td><td>object</td><td>object</td>
+    </tr>
+    <tr>
+      <th>col_strnan</th><td style="color:blue;">False</td><td>object</td><td>object</td>
+    </tr>
+  </tbody>
+</table>
+
+### returned[2]['variables']['common_cols_dtypes_simplified']
+True
+
+### returned[2]['variables']['common_cols_dtypes_simplified_equality']
+False
+
+### returned[2]['variables']['common_cols_dtypes_simplified_df']
+<table class="dataframe">
+  <thead>
+    <tr>
+      <th></th>
+      <th>different</th>
+      <th>first_df</th>
+      <th>second_df</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>col_float</th><td style="color:blue;">False</td><td>float64</td><td>float64</td>
+    </tr>
+    <tr>
+      <th>col_int</th><td style="color:red;">True</td><td>int64</td><td>object</td>
+    </tr>
+    <tr>
+      <th>col_nan</th><td style="color:blue;">False</td><td>float64</td><td>float64</td>
+    </tr>
+    <tr>
+      <th>col_str</th><td style="color:blue;">False</td><td>object</td><td>object</td>
+    </tr>
+    <tr>
+      <th>col_strnan</th><td style="color:blue;">False</td><td>object</td><td>object</td>
+    </tr>
+  </tbody>
+</table>
+
+### returned[2]['variables']['equality_df']
+<table class="dataframe">
+  <thead>
+    <tr>
+      <th></th>
+      <th>col_float</th>
+      <th>col_int</th>
+      <th>col_nan</th>
+      <th>col_str</th>
+      <th>col_strnan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th><td style="color:red;">False</td><td style="color:red;">False</td><td style="color:blue;">True</td><td style="color:red;">False</td><td style="color:red;">False</td>
+    </tr>
+    <tr>
+      <th>1</th><td style="color:red;">False</td><td style="color:red;">False</td><td style="color:blue;">True</td><td style="color:red;">False</td><td style="color:red;">False</td>
+    </tr>
+    <tr>
+      <th>2</th><td style="color:red;">False</td><td style="color:red;">False</td><td style="color:blue;">True</td><td style="color:red;">False</td><td style="color:red;">False</td>
+    </tr>
+    <tr>
+      <th>3</th><td style="color:blue;">True</td><td style="color:red;">False</td><td style="color:blue;">True</td><td style="color:blue;">True</td><td style="color:blue;">True</td>
+    </tr>
+  </tbody>
+</table>
+
+### returned[2]['variables']['cols_equal_list_sorted']
+['col_nan']
+
+### returned[2]['variables']['rows_equal_list_sorted']
+[]
+
+### returned[2]['variables']['cols_diff_list_sorted']
+['col_float', 'col_int', 'col_str', 'col_strnan']
+
+### returned[2]['variables']['rows_diff_list_sorted']
+[0, 1, 2, 3]
+
+### returned[2]['variables']['joined_df']
+<table class="dataframe">
+  <thead>
+    <tr>
+      <th></th>
+      <th colspan="3" halign="left">col_float</th>
+      <th colspan="3" halign="left">col_int</th>
+      <th colspan="3" halign="left">col_nan</th>
+      <th colspan="3" halign="left">col_str</th>
+      <th colspan="3" halign="left">col_strnan</th>
+    </tr>
+    <tr>
+      <th></th>
+      <th>first_df</th>
+      <th>second_df</th>
+      <th>different</th>
+      <th>first_df</th>
+      <th>second_df</th>
+      <th>different</th>
+      <th>first_df</th>
+      <th>second_df</th>
+      <th>different</th>
+      <th>first_df</th>
+      <th>second_df</th>
+      <th>different</th>
+      <th>first_df</th>
+      <th>second_df</th>
+      <th>different</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th><td>-3333.333333</td><td>-5555.555556</td><td style="color:red;">True</td><td>1000</td><td>3000endstr</td><td style="color:red;">True</td><td>NaN</td><td>NaN</td><td style="color:blue">False</td><td>a</td><td>c</td><td style="color:red;">True</td><td>d</td><td>f</td><td style="color:red;">True</td>
+    </tr>
+    <tr>
+      <th>1</th><td>4444.444444</td><td>-3333.333333</td><td style="color:red;">True</td><td>-2000</td><td>1000endstr</td><td style="color:red;">True</td><td>NaN</td><td>NaN</td><td style="color:blue">False</td><td>b</td><td>a</td><td style="color:red;">True</td><td>e</td><td>d</td><td style="color:red;">True</td>
+    </tr>
+    <tr>
+      <th>2</th><td>-5555.555556</td><td>4444.444444</td><td style="color:red;">True</td><td>3000</td><td>-2000endstr</td><td style="color:red;">True</td><td>NaN</td><td>NaN</td><td style="color:blue">False</td><td>c</td><td>b</td><td style="color:red;">True</td><td>f</td><td>e</td><td style="color:red;">True</td>
+    </tr>
+    <tr>
+      <th>3</th><td>6666.666667</td><td>6666.666667</td><td style="color:blue">False</td><td>-4000000</td><td>-4000000endstr</td><td style="color:red;">True</td><td>8888.8888</td><td>8888.8888</td><td style="color:blue">False</td><td>4444.4444444444</td><td>4444.4444444444</td><td style="color:blue">False</td><td>NaN</td><td>NaN</td><td style="color:blue">False</td>
+    </tr>
+  </tbody>
+</table>
+
