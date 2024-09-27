@@ -4,7 +4,7 @@ import pathlib
 
 import pandas as pd
 
-from .. import pd_format as pd_format
+from .. import pd_format
 from . import _module_report_formatting as f
 from ._module_compare_dtypes import compare_dtypes
 from ._module_compare_lists import compare_lists
@@ -216,7 +216,7 @@ def compare(
     """Compares two DataFrames, creates a report and returns useful information (see the "Returns" section).
 
     **When is this function useful**: This function should be run when `df1.equals(df2)` is False, but if that returns True, there is no use for this function.
-    
+
     **Columns and indexes are sorted initially**: The function's initial step is to sort the columns and rows of both DataFrames to do all further comparisons, it then internally does `df1.equals(df2)` with the sorted columns and rows. The sorting is done like `df.sort_index(axis=0).sort_index(axis=1)` which sorts by labels.
 
     **Important**: Duplicate indexes and columns are not allowed, UNLESS `df1_cp.equals(df2_cp)` is True, which means everything is equal.

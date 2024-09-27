@@ -32,6 +32,8 @@
         "lgnd",
         "lsuffix",
         "processings",
+        "pylint",
+        "pytest",
         "rewritable",
         "rsuffix",
         "someitem",
@@ -40,6 +42,7 @@
         "substr",
         "swaplevel",
         "thedf",
+        "trunc",
         "unexisting",
         "xlsxwriter"
     ]
