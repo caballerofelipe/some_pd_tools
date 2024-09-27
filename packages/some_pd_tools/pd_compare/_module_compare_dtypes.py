@@ -3,8 +3,8 @@ from contextlib import redirect_stdout
 
 import pandas as pd
 
-from . import report_formatting as f
-from .function_compare_lists import compare_lists
+from . import _module_report_formatting as f
+from ._module_compare_lists import compare_lists
 
 
 def compare_dtypes(

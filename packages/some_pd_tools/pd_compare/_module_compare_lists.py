@@ -1,8 +1,8 @@
 import io
 from collections import Counter
 
-from .. import pd_format
-from . import report_formatting as f
+from .. import pd_format as pd_format
+from . import _module_report_formatting as f
 
 
 def compare_lists(

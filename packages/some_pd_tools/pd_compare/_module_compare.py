@@ -4,11 +4,11 @@ import pathlib
 
 import pandas as pd
 
-from .. import pd_format
-from . import report_formatting as f
-from .function_compare_dtypes import compare_dtypes
-from .function_compare_lists import compare_lists
-from .function_compute_equality_df import compute_equality_df
+from .. import pd_format as pd_format
+from . import _module_report_formatting as f
+from ._module_compare_dtypes import compare_dtypes
+from ._module_compare_lists import compare_lists
+from ._module_compute_equality_df import compute_equality_df
 
 __all__ = [
     'compare',
