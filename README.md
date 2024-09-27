@@ -24,11 +24,11 @@ some_pd_tools.pd_format.trunc
 pip install some-pd-tools
 ```
 
-# Functions in `pd_compare`
+# Functions in `some_pd_tools.pd_compare`
 
 
 
-## `pd_compare.compare()`
+## `some_pd_tools.pd_compare.compare()`
 
 > Compares two DataFrames, creates a report and returns useful information.
 
@@ -290,7 +290,7 @@ returned = pd_compare.compare(
 </details>
 
 
-## `pd_compare.compare_dtypes()`
+## `some_pd_tools.pd_compare.compare_dtypes()`
 
 > Compare dtypes for columns in two DataFrames.
 
@@ -437,7 +437,7 @@ returned = pd_compare.compare_dtypes(
 
 
 
-## `pd_compare.compare_lists`
+## `some_pd_tools.pd_compare.compare_lists`
 
 > Compares two lists, can show a report.
 
@@ -573,7 +573,7 @@ returned = pd_compare.compare_lists(
 
 
 
-## `pd_compare.compute_equality_df()`
+## `some_pd_tools.pd_compare.compute_equality_df()`
 
 > Compares the cell values of two DataFrames.
 
@@ -668,11 +668,11 @@ print(df)
 
 
 
-# Functions in `pd_format`
+# Functions in `some_pd_tools.pd_format`
 
 
 
-## `pd_format.approximate`
+## `some_pd_tools.pd_format.approximate`
 > Approximate numbers using a `round_to` method.
 
 ### Docstring
@@ -754,7 +754,7 @@ col_int  col_float          col_str  col_nan col_strnan
 
 
 
-## `pd_format.ceil`
+## `some_pd_tools.pd_format.ceil`
 > Does a ceil operation on floats columns. Uses np.ceil. From np.ceil's documentation: "The ceil of the scalar x is the smallest integer i, such that i >= x.".
 
 ### Docstring
@@ -819,7 +819,7 @@ print(returned_df)
 
 
 
-## `pd_format.floor`
+## `some_pd_tools.pd_format.floor`
 > Does a floor operation on floats columns. Uses np.floor. From np.floor's documentation: "The floor of the scalar x is the largest integer i, such that i <= x."
 
 ### Docstring
@@ -884,7 +884,7 @@ print(returned_df)
 
 
 
-## `pd_format.number_separators`
+## `some_pd_tools.pd_format.number_separators`
 > Transform a DataFrame or Series adding a thousands separator and optionally modifying it and the decimals separator.
 
 ### Docstring
@@ -964,7 +964,7 @@ print(returned_df)
 
 
 
-## `pd_format.obj_as_sorted_list`
+## `some_pd_tools.pd_format.obj_as_sorted_list`
 > Return an object as a sorted list. Uses `str()` to transform keys to string, so for instance sorting (1,2,12) will sort to: (1,12,2).
 
 ### Docstring
@@ -1019,7 +1019,7 @@ pd_format.obj_as_sorted_list([1,12,4,1,11,9,10])
 
 
 
-## `pd_format.simplify_dtypes`
+## `some_pd_tools.pd_format.simplify_dtypes`
 > Allows to simplify dtypes, for instance, pass from float64 to int64 if no decimals are present.
 
 ### Docstring
@@ -1101,7 +1101,7 @@ dtype: object
 
 
 
-## `pd_format.trunc`
+## `some_pd_tools.pd_format.trunc`
 > Remove decimals from floats columns. Uses np.trunc. From np.trunc's documentation: "The truncated value of the scalar x is the nearest integer i which is closer to zero than x is.".
 
 ### Docstring
