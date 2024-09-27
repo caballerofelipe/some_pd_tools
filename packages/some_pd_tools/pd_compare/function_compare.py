@@ -213,10 +213,7 @@ def compare(
     xls_fixed_cols: None | list = None,
     xls_datetime_rpl: str = '%Y-%m-%d %H:%M:%S',
 ) -> tuple[bool, bool, dict]:
-    """Compares two DataFrames, creates a report and returns useful information
-    (see the 
-    "Returns" 
-    section).
+    """Compares two DataFrames, creates a report and returns useful information (see the "Returns" section).
 
     **When is this function useful**: This function should be run when `df1.equals(df2)` is False, but if that returns True, there is no use for this function.
     
