@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='some_pd_tools',
-    version='0.1.1',
+    version='1.0.0',
     description='Some tools to be used with Pandas.',
     package_dir={'': 'packages'},
     packages=find_packages(where='packages'),
@@ -22,7 +22,7 @@ setup(
     ],
     install_requires=['pandas>=2'], # Might need review
     extras_require={
-        'dev': ['pytest', 'twine'],
+        'dev': ['pytest', 'twine', 'build'],
         # 'save_load': ['pytables>=3'],
     },
     python_requires='>=3.4',
