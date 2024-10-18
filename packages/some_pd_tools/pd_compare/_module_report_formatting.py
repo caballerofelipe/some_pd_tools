@@ -142,5 +142,5 @@ def pprint_wrap(level: int, obj: object, stream: io.StringIO = None) -> None:
     _stream = io.StringIO()
     pprint.pprint(obj, indent=1, width=100 - len(level_str), compact=True, stream=_stream)
     to_print = level_str + _stream.getvalue()
-    to_print = re.sub('\n.+', f'\n{level_str}', to_print)
+    to_print = re.sub('\n(.+)', f'\n{level_str}\\1', to_print)
     print(to_print, end='', file=stream)
