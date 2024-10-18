@@ -205,8 +205,23 @@ About **Metadata ['variables']**:
   - **trunc**: removes the decimal part from numbers (e.g. 1.8 is transformed to 1).
 - **Metadata ['variables']**: **df1_common** and **df2_common** might be changed if they contain floats.
 - **Logic considerations**:
-  - After the rounding, the function will try to simplify the dtypes in **ROUNDING / Trying to simplify dtypes**.
-  - If the rounding had no effect the simplification will have no effect.
+  - After the rounding, an equality check will be performed in **ROUNDING / Equality check**.
+
+### ROUNDING / Equality check
+- **What is done**: Checks wether the two modified DataFrames, after the rounding, are equal or not.
+- **Metadata ['variables']**:  No variables added.
+- **Logic considerations**:
+  - `True`: shows **Returning (\<bool>[equality_full], \<bool>[equality_partial], dict[equality_metadata])** and then returns:
+	  ```python
+		False,
+		True, 
+		{
+			'params': {...},
+			'variables': {<all variables created up to this point>},
+			'report': <str>
+		}
+		```
+  - `False`: If the equality fails, the function will try to simplify the dtypes in **ROUNDING / Trying to simplify dtypes**. If the rounding had no effect on the DataFrames the simplification will also have no effect.
 
 ### ROUNDING / Trying to simplify dtypes
 - **What is done**: Tries to simplify the dtypes of both DataFrames using `pd_format.simplify_dtypes()`. The goal is to make dtypes as simple as possible and then check if the two DataFrames are equal (in another title), meaning the values are equal but not considered equal because of different dtypes.

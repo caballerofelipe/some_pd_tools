@@ -675,6 +675,21 @@ def compare(
         df1_common = pd_format.approximate(df1_common, round_to=round_to)
         df2_common = pd_format.approximate(df2_common, round_to=round_to)
 
+        # Equality check for common columns and indexes, after rounding
+        f.print_title(1, 'Equality check', 'after rounding', file=str_io)
+        if df1_common.equals(df2_common):  # Are the dfs equal?
+            f.print_result('🥳 Equal', file=str_io)
+            return _returner_for_compare(
+                equality_full=False,
+                equality_partial=True,
+                equality_metadata=equality_metadata,
+                str_io=str_io,
+                report_print=report_print,
+                report_file_path=report_file_path,
+            )
+        else:
+            f.print_result('😡 Not equal', file=str_io)
+
         # MARK: ROUND/DTYPES SIMP
         # if rounding was applied
         # dtypes simplification, dtypes comparison and testing equality afterwards
