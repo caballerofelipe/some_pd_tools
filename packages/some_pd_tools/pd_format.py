@@ -13,8 +13,12 @@ __all__ = [
 ]
 
 
-def obj_as_sorted_list(obj: object) -> list:
-    """Return an object as a sorted list. Uses `str()` to transform keys to string, so for instance sorting (1,2,12) will sort to: (1,12,2).
+def obj_as_sorted_list(obj: object, force_str=False) -> list:
+    """Return an object as a sorted list.
+    
+    If ints are found inside the obj or in its keys, the sorting will be done using int [1,2,12] will be sorted as [1,2,12]. If there is something else than ints, the sorting will be done parsing the value or the key to str, so for instance sorting ("1",2,12) will sort to: (1,12,2).
+
+    The function can be forced to sort using str with the param force_str.
 
     Note: Not implemented for "every" object, only the ones needed in this project: dict, set, tuple and list. Raises exception if none of these types of objects are tried to be transformed.
 
@@ -22,6 +26,8 @@ def obj_as_sorted_list(obj: object) -> list:
     ----------
     obj : object
         The object.
+    force_str : bool, optional
+        Forces the function to use string classification, even if the obj is filled with int or if the obj keys are all int (depending on the type for obj). By default False.
 
     Returns
     -------
@@ -34,9 +40,32 @@ def obj_as_sorted_list(obj: object) -> list:
         Function not implemented for type:{type(obj)}.
     """
     if isinstance(obj, dict):
-        return sorted(obj.items(), key=lambda item: str(item[0]))
+        if force_str is True:
+            return sorted(obj.items(), key=lambda item: str(item[0]))
+        
+        all_ints = True
+        for v in obj.keys():
+            if not isinstance(v, int):
+                all_ints = False
+                break
+        if all_ints:
+            return sorted(obj.items())
+        else:
+            return sorted(obj.items(), key=lambda item: str(item[0]))
+    
     if isinstance(obj, set) or isinstance(obj, list) or isinstance(obj, tuple):
-        return sorted(obj, key=lambda item: str(item))
+        if force_str is True:
+            return sorted(obj, key=lambda item: str(item))
+        
+        all_ints = True
+        for v in obj:
+            if not isinstance(v, int):
+                all_ints = False
+                break
+        if all_ints:
+            return sorted(obj)
+        else:
+            return sorted(obj, key=lambda item: str(item))
 
     raise ValueError(f'Function not implemented for type: {type(obj)}.')
 
@@ -225,6 +254,7 @@ def approximate(
         return df.round(round_to)
 
     if round_to in ('floor', 'ceil', 'trunc'):
+        approximation_fn = None
         if round_to == 'floor':
             approximation_fn = np.floor
         elif round_to == 'ceil':
