@@ -164,9 +164,9 @@ def _returner_for_compare(
     # This is here to include the report of "saving the report to file"
     # but the actual report saving to file is done later.
     if report_file_path is not None:
-        f.print_title(1, 'Saving report file', f'{os.getcwd()}/{report_file_path}', file=str_io)
+        f.print_title(1, 'Saving report file', os.path.realpath(report_file_path), file=str_io)
         equality_metadata['variables'].update(
-            {'report_file_path': f'{os.getcwd()}/{report_file_path}'}
+            {'report_file_path': os.path.realpath(report_file_path)}
         )
 
     # Adding "Returning" to report
@@ -840,17 +840,17 @@ def compare(
 
         xls_df = pd.merge(fixed_cols_df, joined_for_excel_df, left_index=True, right_index=True)
         freeze_on_colindex = len(fixed_cols_df.columns)
-        f.print_title(1, 'Creating Excel', f'{os.getcwd()}/{xls_path}', file=str_io)
+        f.print_title(1, 'Creating Excel', os.path.realpath(xls_path), file=str_io)
         _save_excel(
             xls_df,
-            path=xls_path,
+            path=os.path.realpath(xls_path),
             freeze_on_colindex=freeze_on_colindex,
             datetime_rpl_str=xls_datetime_rpl,
         )
 
         equality_metadata['variables'].update(
             {
-                'xls_path': f'{os.getcwd()}/{xls_path}',
+                'xls_path': os.path.realpath(xls_path),
             }
         )
 
